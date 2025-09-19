@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisionPulse - Cuida tu Salud Visual</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Premium Color Palette */
+            --primary-bg: #0A0A0B;
+            --secondary-bg: #111114;
+            --accent-bg: #1A1A1F;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            
+            /* Gradient Colors */
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-warm: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --gradient-neural: linear-gradient(45deg, #667eea, #764ba2, #667eea);
+            
+            /* Text Colors */
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A0A3;
+            --text-muted: #6B6B70;
+            
+            /* Glow Effects */
+            --glow-primary: 0 0 40px rgba(102, 126, 234, 0.3);
+            --glow-secondary: 0 0 40px rgba(240, 147, 251, 0.3);
+            --glow-accent: 0 0 40px rgba(79, 172, 254, 0.3);
+            
+            /* Fonts */
+            --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            
+            /* Spacing */
+            --section-padding: clamp(4rem, 8vw, 8rem);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Animated Background */
+        .cosmic-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(ellipse at top, #1e2761 0%, #0A0A0B 50%);
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: var(--gradient-accent);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite alternate;
+        }
+
+        .particle:nth-child(1) { top: 20%; left: 20%; animation-delay: 0s; }
+        .particle:nth-child(2) { top: 40%; left: 60%; animation-delay: 1s; }
+        .particle:nth-child(3) { top: 60%; left: 10%; animation-delay: 2s; }
+        .particle:nth-child(4) { top: 80%; left: 80%; animation-delay: 1.5s; }
+        .particle:nth-child(5) { top: 10%; left: 70%; animation-delay: 0.5s; }
+        .particle:nth-child(6) { top: 70%; left: 30%; animation-delay: 2.5s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.7; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+        }
+
+        /* Neural Network Background */
+        .neural-network {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        .neural-node {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            box-shadow: var(--glow-primary);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        .neural-connection {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3), transparent);
+            animation: flow 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.5); opacity: 1; }
+        }
+
+        @keyframes flow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* Glass Morphism Components */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), var(--glow-primary);
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            background: rgba(10, 10, 11, 0.8);
+            backdrop-filter: blur(30px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--glow-primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-cta {
+            padding: 0.75rem 2.1rem;
+            background: var(--gradient-primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: var(--glow-primary);
+        }
+
+        .nav-cta-group {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: var(--section-padding) 2rem;
+            position: relative;
+        }
+
+        .hero-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-content {
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 100px;
+            color: #667eea;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            animation: glow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 10px rgba(102, 126, 234, 0.2); }
+            100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.4); }
+        }
+
+        .hero-title {
+            font-size: clamp(3rem, 6vw, 5rem);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #ffffff 0%, #667eea 50%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1em;
+            background: var(--gradient-primary);
+            animation: blink 1s infinite;
+            margin-left: 4px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+            max-width: 500px;
+            line-height: 1.6;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .cta-primary {
+            padding: 1rem 2rem;
+            background: var(--gradient-primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--glow-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .cta-primary:hover::before {
+            left: 100%;
+        }
+
+        .cta-primary:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+        }
+
+        .cta-secondary {
+            padding: 1rem 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid var(--glass-border);
+            transition: all 0.4s ease;
+        }
+
+        .cta-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-4px);
+        }
+
+        /* Hero Visual */
+        .hero-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .visual-showcase {
+            width: 100%;
+            height: 600px;
+            position: relative;
+            perspective: 1000px;
+        }
+
+        .floating-dashboard {
+            position: absolute;
+            width: 400px;
+            height: 500px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2rem;
+            transform-style: preserve-3d;
+            animation: float-3d 6s ease-in-out infinite;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes float-3d {
+            0%, 100% { transform: rotateY(-10deg) rotateX(5deg) translateY(0); }
+            50% { transform: rotateY(10deg) rotateX(-5deg) translateY(-20px); }
+        }
+
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-avatar {
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .dashboard-info h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .dashboard-info p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .progress-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .progress-card {
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .progress-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateX(8px);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .progress-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .progress-value {
+            color: #4facfe;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-accent);
+            border-radius: 3px;
+            transition: width 2s ease;
+        }
+
+        .progress-fill.math { width: 85%; animation-delay: 0.5s; }
+        .progress-fill.physics { width: 72%; animation-delay: 1s; }
+        .progress-fill.chemistry { width: 94%; animation-delay: 1.5s; }
+
+        /* Floating Elements */
+        .floating-icons {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .float-icon {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            animation: orbit 20s linear infinite;
+        }
+
+        .float-icon:nth-child(1) {
+            top: 10%;
+            right: 10%;
+            animation-delay: 0s;
+            background: rgba(102, 126, 234, 0.1);
+            box-shadow: var(--glow-primary);
+        }
+
+        .float-icon:nth-child(2) {
+            bottom: 20%;
+            left: 10%;
+            animation-delay: -7s;
+            background: rgba(240, 147, 251, 0.1);
+            box-shadow: var(--glow-secondary);
+        }
+
+        .float-icon:nth-child(3) {
+            top: 50%;
+            right: 20%;
+            animation-delay: -14s;
+            background: rgba(79, 172, 254, 0.1);
+            box-shadow: var(--glow-accent);
+        }
+
+        @keyframes orbit {
+            0% { transform: rotate(0deg) translateX(50px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(50px) rotate(-360deg); }
+        }
+
+        /* Benefits Section */
+        .benefits {
+            padding: var(--section-padding) 2rem;
+            position: relative;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .section-title {
+            font-size: clamp(2.5rem, 5vw, 3.5rem);
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #ffffff 0%, #667eea 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .benefits-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .benefit-card {
+            padding: 2.5rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .benefit-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--gradient-primary);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .benefit-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .benefit-card:hover {
+            transform: translateY(-12px);
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3), var(--glow-primary);
+        }
+
+        .benefit-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-primary);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--glow-primary);
+        }
+
+        .benefit-card:nth-child(2) .benefit-icon {
+            background: var(--gradient-secondary);
+            box-shadow: var(--glow-secondary);
+        }
+
+        .benefit-card:nth-child(3) .benefit-icon {
+            background: var(--gradient-accent);
+            box-shadow: var(--glow-accent);
+        }
+
+        .benefit-card:nth-child(4) .benefit-icon {
+            background: var(--gradient-warm);
+            box-shadow: 0 0 40px rgba(250, 112, 154, 0.3);
+        }
+
+        .benefit-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .benefit-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Features Section */
+        .features {
+            padding: var(--section-padding) 2rem;
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .features-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            padding: 2rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            transition: all 0.4s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-primary);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            color: var(--text-secondary);
+        }
+
+        .feature-list li i {
+            color: #4facfe;
+            font-size: 0.875rem;
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: var(--section-padding) 2rem;
+        }
+
+        .pricing-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .pricing-card {
+            padding: 2.5rem 2rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            text-align: center;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .pricing-card.featured {
+            background: rgba(102, 126, 234, 0.05);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            transform: scale(1.05);
+            box-shadow: var(--glow-primary);
+        }
+
+        .pricing-card.featured::before {
+            content: 'Más Popular';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem 1.5rem;
+            background: var(--gradient-primary);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+        }
+
+        .pricing-card.featured:hover {
+            transform: translateY(-8px) scale(1.07);
+        }
+
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .plan-price {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 2rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .plan-features {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .plan-features li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            color: var(--text-secondary);
+        }
+
+        .plan-features li i {
+            color: #4facfe;
+        }
+
+        .plan-btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .plan-btn.primary {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: var(--glow-primary);
+        }
+
+        .plan-btn.primary:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .plan-btn.secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border: 1px solid var(--glass-border);
+        }
+
+        .plan-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-4px);
+        }
+
+        /* CTA Section */
+        .final-cta {
+            padding: var(--section-padding) 2rem;
+            text-align: center;
+        }
+
+        .cta-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.3);
+        }
+
+        .cta-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ffffff 0%, #667eea 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .cta-description {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        .fade-in-delay { animation-delay: 0.2s; }
+        .fade-in-delay-2 { animation-delay: 0.4s; }
+        .fade-in-delay-3 { animation-delay: 0.6s; }
+        .fade-in-delay-4 { animation-delay: 0.8s; }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .hero-container {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+                text-align: center;
+            }
+            
+            .floating-dashboard {
+                width: 350px;
+                height: 450px;
+            }
+            
+            .benefits-grid,
+            .features-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .hero-cta {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .cta-primary,
+            .cta-secondary {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .floating-dashboard {
+                width: 300px;
+                height: 400px;
+                padding: 1.5rem;
+            }
+            
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .pricing-card.featured {
+                transform: none;
+            }
+        }
+
+        /* Dark mode enhancements */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary-bg: #0A0A0B;
+                --secondary-bg: #111114;
+            }
+        }
+
+        /* Scroll animations */
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .scroll-reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Loading animation */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--glass-border);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Animated Background -->
+    <div class="cosmic-bg"></div>
+    
+    <!-- Particles -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- Neural Network -->
+    <div class="neural-network">
+        <div class="neural-node" style="top: 20%; left: 15%;"></div>
+        <div class="neural-node" style="top: 40%; left: 80%;"></div>
+        <div class="neural-node" style="top: 60%; left: 10%;"></div>
+        <div class="neural-node" style="top: 80%; left: 70%;"></div>
+        <div class="neural-node" style="top: 30%; left: 50%;"></div>
+        
+        <div class="neural-connection" style="top: 25%; left: 15%; width: 200px; transform: rotate(45deg);"></div>
+        <div class="neural-connection" style="top: 45%; left: 50%; width: 180px; transform: rotate(-30deg);"></div>
+        <div class="neural-connection" style="top: 65%; left: 20%; width: 150px; transform: rotate(60deg);"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                VisionPulse
+            </a>
+            
+            <ul class="nav-links">
+                <li><a href="#inicio">Inicio</a></li>
+                <li><a href="#beneficios">Beneficios</a></li>
+                <li><a href="#funcionalidades">Funcionalidades</a></li>
+                <li><a href="#precios">Precios</a></li>
+                <li><a href="#contacto">Contacto</a></li>
+            </ul>
+            <div class="nav-cta-group">
+                <a href="{% url 'security:login' %}" class="nav-cta">Iniciar Sesión</a>
+                <a href="{% url 'security:signup' %}" class="nav-cta">Registrarse</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="inicio" class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-badge fade-in">
+                    <i class="fas fa-sparkles"></i>
+                    🚀 Potenciado con IA - Beta Disponible
+                </div>
+                
+                <h1 class="hero-title fade-in fade-in-delay">
+                    Revoluciona tu estudio con IA<span class="typing-cursor"></span>
+                </h1>
+                
+                <p class="hero-subtitle fade-in fade-in-delay-2">
+                    La plataforma más avanzada para estudiantes inteligentes. Organiza, aprende y destaca con tecnología de vanguardia que se adapta a tu estilo único de aprendizaje.
+                </p>
+                
+                <div class="hero-cta fade-in fade-in-delay-3">
+                    <a href="/signup" class="cta-primary">
+                        <i class="fas fa-rocket"></i>
+                        Comenzar Gratis
+                    </a>
+                    <a href="#demo" class="cta-secondary">
+                        <i class="fas fa-play"></i>
+                        Ver Demo
+                    </a>
+                </div>
+            </div>
+
+            <!-- Hero Visual -->
+            <div class="hero-visual fade-in fade-in-delay-2">
+                <div class="visual-showcase">
+                    <div class="floating-dashboard">
+                        <div class="dashboard-header">
+                            <div class="dashboard-avatar">AI</div>
+                            <div class="dashboard-info">
+                                <h3>Progreso de Hoy</h3>
+                                <p>¡Excelente trabajo! 🎉</p>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-cards">
+                            <div class="progress-card">
+                                <div class="progress-header">
+                                    <span class="progress-title">Matemáticas</span>
+                                    <span class="progress-value">85%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill math"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-card">
+                                <div class="progress-header">
+                                    <span class="progress-title">Física</span>
+                                    <span class="progress-value">72%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill physics"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-card">
+                                <div class="progress-header">
+                                    <span class="progress-title">Química</span>
+                                    <span class="progress-value">94%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill chemistry"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Floating Icons -->
+                    <div class="floating-icons">
+                        <div class="float-icon">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <div class="float-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="float-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section id="beneficios" class="benefits">
+        <div class="section-header scroll-reveal">
+            <h2 class="section-title">¿Por qué elegir VisionPulse?</h2>
+            <p class="section-subtitle">
+                Una plataforma todo-en-uno que centraliza tu vida académica y potencia tu aprendizaje con inteligencia artificial avanzada
+            </p>
+        </div>
+        
+        <div class="benefits-grid">
+            <div class="benefit-card scroll-reveal">
+                <div class="benefit-icon">
+                    <i class="fas fa-cube"></i>
+                </div>
+                <h3 class="benefit-title">Todo en Uno</h3>
+                <p class="benefit-description">
+                    Reemplaza múltiples apps dispersas. Notas, calendario, tareas, cursos y más en un solo lugar inteligente y organizado.
+                </p>
+            </div>
+            
+            <div class="benefit-card scroll-reveal">
+                <div class="benefit-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h3 class="benefit-title">Potenciado con IA</h3>
+                <p class="benefit-description">
+                    Asistente inteligente que resume, explica conceptos complejos, genera fichas de estudio y responde tus dudas 24/7.
+                </p>
+            </div>
+            
+            <div class="benefit-card scroll-reveal">
+                <div class="benefit-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3 class="benefit-title">Colaboración Inteligente</h3>
+                <p class="benefit-description">
+                    Estudia en equipo, comparte recursos, participa en grupos dinámicos y aprende de tus compañeros.
+                </p>
+            </div>
+            
+            <div class="benefit-card scroll-reveal">
+                <div class="benefit-icon">
+                    <i class="fas fa-target"></i>
+                </div>
+                <h3 class="benefit-title">Organización Perfecta</h3>
+                <p class="benefit-description">
+                    Sistema inteligente de tareas, recordatorios automáticos y seguimiento detallado de tu progreso académico.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="funcionalidades" class="features">
+        <div class="section-header scroll-reveal">
+            <h2 class="section-title">Funcionalidades que transforman tu estudio</h2>
+            <p class="section-subtitle">
+                Descubre cómo VisionPulse protege tu salud visual durante el trabajo
+            </p>
+        </div>
+        
+        <div class="features-grid">
+            <div class="feature-card scroll-reveal">
+                <div class="feature-header">
+                    <div class="feature-icon">
+                        <i class="fas fa-sticky-note"></i>
+                    </div>
+                    <h3 class="feature-title">Notas Inteligentes</h3>
+                </div>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> Editor rico con markdown</li>
+                    <li><i class="fas fa-check"></i> Organización automática por temas</li>
+                    <li><i class="fas fa-check"></i> Búsqueda avanzada con IA</li>
+                    <li><i class="fas fa-check"></i> Sincronización en tiempo real</li>
+                    <li><i class="fas fa-check"></i> Exportación a múltiples formatos</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card scroll-reveal">
+                <div class="feature-header">
+                    <div class="feature-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <h3 class="feature-title">Gestión de Tareas</h3>
+                </div>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> Planificación inteligente</li>
+                    <li><i class="fas fa-check"></i> Recordatorios adaptativos</li>
+                    <li><i class="fas fa-check"></i> Estimación automática de tiempo</li>
+                    <li><i class="fas fa-check"></i> Priorización por IA</li>
+                    <li><i class="fas fa-check"></i> Seguimiento de progreso</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card scroll-reveal">
+                <div class="feature-header">
+                    <div class="feature-icon">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <h3 class="feature-title">Biblioteca Digital</h3>
+                </div>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> Almacenamiento ilimitado</li>
+                    <li><i class="fas fa-check"></i> Marcadores inteligentes</li>
+                    <li><i class="fas fa-check"></i> Anotaciones colaborativas</li>
+                    <li><i class="fas fa-check"></i> Búsqueda de contenido</li>
+                    <li><i class="fas fa-check"></i> Recomendaciones personalizadas</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card scroll-reveal">
+                <div class="feature-header">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="feature-title">Análisis de Rendimiento</h3>
+                </div>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> Métricas de estudio</li>
+                    <li><i class="fas fa-check"></i> Patrones de aprendizaje</li>
+                    <li><i class="fas fa-check"></i> Predicción de resultados</li>
+                    <li><i class="fas fa-check"></i> Recomendaciones de mejora</li>
+                    <li><i class="fas fa-check"></i> Reportes detallados</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card scroll-reveal">
+                <div class="feature-header">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3 class="feature-title">Asistente IA</h3>
+                </div>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> Respuestas instantáneas</li>
+                    <li><i class="fas fa-check"></i> Explicaciones personalizadas</li>
+                    <li><i class="fas fa-check"></i> Generación de resúmenes</li>
+                    <li><i class="fas fa-check"></i> Creación de quizzes</li>
+                    <li><i class="fas fa-check"></i> Ayuda contextual</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card scroll-reveal">
+                <div class="feature-header">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="feature-title">Grupos de Estudio</h3>
+                </div>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> Salas virtuales</li>
+                    <li><i class="fas fa-check"></i> Chat integrado</li>
+                    <li><i class="fas fa-check"></i> Pizarra colaborativa</li>
+                    <li><i class="fas fa-check"></i> Calendarios compartidos</li>
+                    <li><i class="fas fa-check"></i> Sesiones de estudio guiadas</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="precios" class="pricing">
+        <div class="section-header scroll-reveal">
+            <h2 class="section-title">Elige el plan perfecto para ti</h2>
+            <p class="section-subtitle">
+                Opciones flexibles diseñadas para estudiantes de todos los niveles y necesidades académicas
+            </p>
+        </div>
+        
+        <div class="pricing-grid">
+            <div class="pricing-card scroll-reveal">
+                <div class="plan-name">FREE</div>
+                <div class="plan-price">$0<span style="font-size: 1rem; color: var(--text-secondary);">/mes</span></div>
+                <ul class="plan-features">
+                    <li><i class="fas fa-check"></i> Hasta 50 notas</li>
+                    <li><i class="fas fa-check"></i> 5 tareas por día</li>
+                    <li><i class="fas fa-check"></i> Calendario básico</li>
+                    <li><i class="fas fa-check"></i> 1 grupo de estudio</li>
+                    <li><i class="fas fa-check"></i> Soporte por email</li>
+                </ul>
+                <a href="/signup" class="plan-btn secondary">
+                    Comenzar Gratis
+                </a>
+            </div>
+            
+            <div class="pricing-card featured scroll-reveal">
+                <div class="plan-name">PRO</div>
+                <div class="plan-price">$9<span style="font-size: 1rem; color: var(--text-secondary);">/mes</span></div>
+                <ul class="plan-features">
+                    <li><i class="fas fa-check"></i> Notas ilimitadas</li>
+                    <li><i class="fas fa-check"></i> Tareas ilimitadas</li>
+                    <li><i class="fas fa-check"></i> IA Asistente básica</li>
+                    <li><i class="fas fa-check"></i> 10 grupos de estudio</li>
+                    <li><i class="fas fa-check"></i> Análisis de rendimiento</li>
+                    <li><i class="fas fa-check"></i> Exportación premium</li>
+                    <li><i class="fas fa-check"></i> Soporte prioritario</li>
+                </ul>
+                <a href="/signup" class="plan-btn primary">
+                    Elegir PRO
+                </a>
+            </div>
+            
+            <div class="pricing-card scroll-reveal">
+                <div class="plan-name">PREMIUM</div>
+                <div class="plan-price">$19<span style="font-size: 1rem; color: var(--text-secondary);">/mes</span></div>
+                <ul class="plan-features">
+                    <li><i class="fas fa-check"></i> Todo de PRO +</li>
+                    <li><i class="fas fa-check"></i> IA Asistente avanzada</li>
+                    <li><i class="fas fa-check"></i> Grupos ilimitados</li>
+                    <li><i class="fas fa-check"></i> Biblioteca colaborativa</li>
+                    <li><i class="fas fa-check"></i> Análisis predictivo</li>
+                    <li><i class="fas fa-check"></i> Sesiones 1:1 con tutores</li>
+                    <li><i class="fas fa-check"></i> Soporte 24/7</li>
+                </ul>
+                <a href="/signup" class="plan-btn primary">
+                    Elegir PREMIUM
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="final-cta">
+        <div class="cta-container scroll-reveal">
+            <h2 class="cta-title">¿Listo para revolucionar tu forma de estudiar?</h2>
+            <p class="cta-description">
+                Únete a miles de profesionales que ya están cuidando su salud visual con VisionPulse
+            </p>
+            <a href="/signup" class="cta-primary">
+                <i class="fas fa-rocket"></i>
+                Comenzar Ahora - Es Gratis
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contacto" style="padding: 3rem 2rem; background: rgba(255, 255, 255, 0.02); border-top: 1px solid var(--glass-border);">
+        <div style="max-width: 1400px; margin: 0 auto; text-align: center;">
+            <div class="logo" style="justify-content: center; margin-bottom: 2rem;">
+                <div class="logo-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                VisionPulse
+            </div>
+            
+            <div style="display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem; flex-wrap: wrap;">
+                <a href="/" style="color: var(--text-secondary); text-decoration: none; transition: color 0.3s;">Sobre Nosotros</a>
+                <a href="#funcionalidades" style="color: var(--text-secondary); text-decoration: none; transition: color 0.3s;">Funcionalidades</a>
+                <a href="#precios" style="color: var(--text-secondary); text-decoration: none; transition: color 0.3s;">Precios</a>
+                <a href="/blog" style="color: var(--text-secondary); text-decoration: none; transition: color 0.3s;">Blog</a>
+                <a href="/soporte" style="color: var(--text-secondary); text-decoration: none; transition: color 0.3s;">Soporte</a>
+            </div>
+            
+            <div style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem;">
+                <a href="#" style="color: var(--text-secondary); font-size: 1.5rem; transition: color 0.3s;"><i class="fab fa-twitter"></i></a>
+                <a href="#" style="color: var(--text-secondary); font-size: 1.5rem; transition: color 0.3s;"><i class="fab fa-instagram"></i></a>
+                <a href="#" style="color: var(--text-secondary); font-size: 1.5rem; transition: color 0.3s;"><i class="fab fa-linkedin"></i></a>
+                <a href="#" style="color: var(--text-secondary); font-size: 1.5rem; transition: color 0.3s;"><i class="fab fa-github"></i></a>
+            </div>
+            
+            <p style="color: var(--text-muted); font-size: 0.875rem;">
+                &copy; 2025 VisionPulse. Todos los derechos reservados. Hecho con ❤️ para proteger tu visión.
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Loading animation
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }, 1500);
+        });
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 100) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Scroll reveal animation
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                }
+            });
+        }, observerOptions);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const revealElements = document.querySelectorAll('.scroll-reveal');
+            revealElements.forEach((el) => observer.observe(el));
+        });
+
+        // Typewriter effect
+        function typeWriter() {
+            const cursor = document.querySelector('.typing-cursor');
+            if (cursor) {
+                cursor.style.animation = 'blink 1s infinite';
+            }
+        }
+
+        // Smooth scrolling
+        function scrollToSignup() {
+            document.getElementById('precios').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        }
+
+        // Interactive functions
+        function handleSignup() {
+            // Simulate signup process
+            const btn = event.target.closest('.cta-primary');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            btn.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> ¡Bienvenido!';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.pointerEvents = 'auto';
+                }, 2000);
+            }, 2000);
+        }
+
+        function selectPlan(plan) {
+            // Simulate plan selection
+            const btn = event.target;
+            const originalText = btn.textContent;
+            
+            btn.textContent = 'Procesando...';
+            btn.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                btn.textContent = '¡Seleccionado!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.pointerEvents = 'auto';
+                }, 2000);
+            }, 1500);
+        }
+
+        function handleFinalSignup() {
+            handleSignup();
+        }
+
+        // Enhanced floating animation
+        document.addEventListener('mousemove', (e) => {
+            const floatingElements = document.querySelectorAll('.float-icon');
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            
+            floatingElements.forEach((el, i) => {
+                const speed = (i + 1) * 0.5;
+                const xPos = x * speed * 10;
+                const yPos = y * speed * 10;
+                
+                el.style.transform += ` translate(${xPos}px, ${yPos}px)`;
+            });
+        });
+
+        // Parallax effect for hero section
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const parallaxElements = document.querySelectorAll('.hero-visual');
+            
+            parallaxElements.forEach(el => {
+                const speed = scrolled * -0.5;
+                el.style.transform = `translateY(${speed}px)`;
+            });
+        });
+
+        // Add interactive hover effects
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.glass-card, .benefit-card, .feature-card, .pricing-card');
+            
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function(e) {
+                    this.style.transform += ' scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function(e) {
+                    this.style.transform = this.style.transform.replace(' scale(1.02)', '');
+                });
+            });
+        });
+
+        // Dynamic gradient animation
+        function animateGradients() {
+            const gradientElements = document.querySelectorAll('.cta-primary, .nav-cta, .logo-icon');
+            
+            gradientElements.forEach(el => {
+                el.addEventListener('mouseenter', function() {
+                    this.style.backgroundSize = '400% 400%';
+                    this.style.animation = 'gradientShift 3s ease infinite';
+                });
+                
+                el.addEventListener('mouseleave', function() {
+                    this.style.animation = '';
+                });
+            });
+        }
+
+        // Initialize animations
+        document.addEventListener('DOMContentLoaded', () => {
+            typeWriter();
+            animateGradients();
+        });
+
+        // Add gradient shift keyframes dynamically
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes gradientShift {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

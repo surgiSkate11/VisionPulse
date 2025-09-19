@@ -1,0 +1,410 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Reportes de Salud Visual | VisionPulse{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-file-medical-alt"></i> Reportes de Salud Visual</h1>
+    <p>Análisis detallado de tu salud visual y progreso</p>
+</div>
+
+<div class="reports-dashboard">
+    <div class="report-summary">
+        <div class="summary-card">
+            <div class="summary-icon health">
+                <i class="fas fa-heart-pulse"></i>
+            </div>
+            <div class="summary-content">
+                <h3>Puntaje General</h3>
+                <span class="score">{{ user.get_health_score|floatformat:0|default:0 }}/100</span>
+                <p class="score-description">
+                    {% if user.get_health_score >= 80 %}
+                        Excelente salud visual
+                    {% elif user.get_health_score >= 60 %}
+                        Buena salud visual
+                    {% elif user.get_health_score >= 40 %}
+                        Salud visual regular
+                    {% else %}
+                        Necesita atención
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-icon warning">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="summary-content">
+                <h3>Alertas del Mes</h3>
+                <span class="score">{{ user.fatigue_episodes|default:0 }}</span>
+                <p class="score-description">Episodios de fatiga detectados</p>
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-icon success">
+                <i class="fas fa-dumbbell"></i>
+            </div>
+            <div class="summary-content">
+                <h3>Ejercicios Realizados</h3>
+                <span class="score">{{ user.exercises_completed|default:0 }}</span>
+                <p class="score-description">Total de ejercicios completados</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="reports-grid">
+        <div class="report-card">
+            <div class="report-header">
+                <h3>Reporte Semanal</h3>
+                <span class="report-date">Última semana</span>
+            </div>
+            <div class="report-content">
+                <div class="report-metric">
+                    <span class="metric-label">Tiempo de monitoreo</span>
+                    <span class="metric-value">{{ user.total_monitoring_time|default:0 }} min</span>
+                </div>
+                <div class="report-metric">
+                    <span class="metric-label">Sesiones completadas</span>
+                    <span class="metric-value">{{ user.total_sessions|default:0 }}</span>
+                </div>
+                <div class="report-metric">
+                    <span class="metric-label">Descansos tomados</span>
+                    <span class="metric-value">{{ user.breaks_taken|default:0 }}</span>
+                </div>
+            </div>
+            <button class="btn-generate">
+                <i class="fas fa-download"></i>
+                Generar Reporte
+            </button>
+        </div>
+
+        <div class="report-card">
+            <div class="report-header">
+                <h3>Análisis Mensual</h3>
+                <span class="report-date">Último mes</span>
+            </div>
+            <div class="report-content">
+                <div class="trend-indicator positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>Mejora del 15% en salud visual</span>
+                </div>
+                <div class="report-metric">
+                    <span class="metric-label">Promedio de parpadeo</span>
+                    <span class="metric-value">18/min</span>
+                </div>
+                <div class="report-metric">
+                    <span class="metric-label">Tiempo frente a pantalla</span>
+                    <span class="metric-value">7.2h/día</span>
+                </div>
+            </div>
+            <button class="btn-generate">
+                <i class="fas fa-download"></i>
+                Generar Reporte
+            </button>
+        </div>
+
+        <div class="report-card">
+            <div class="report-header">
+                <h3>Reporte Personalizado</h3>
+                <span class="report-date">Configurable</span>
+            </div>
+            <div class="report-content">
+                <p>Crea un reporte personalizado seleccionando fechas específicas y métricas de interés.</p>
+                <div class="custom-options">
+                    <label>
+                        <input type="checkbox" checked> Sesiones de monitoreo
+                    </label>
+                    <label>
+                        <input type="checkbox" checked> Ejercicios oculares
+                    </label>
+                    <label>
+                        <input type="checkbox"> Alertas de fatiga
+                    </label>
+                </div>
+            </div>
+            <button class="btn-generate primary">
+                <i class="fas fa-cog"></i>
+                Configurar Reporte
+            </button>
+        </div>
+    </div>
+
+    <div class="recommendations-section">
+        <h2>Recomendaciones Personalizadas</h2>
+        <div class="recommendations-grid">
+            <div class="recommendation-card">
+                <div class="recommendation-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="recommendation-content">
+                    <h4>Frecuencia de Descansos</h4>
+                    <p>Basado en tu patrón de trabajo, te recomendamos tomar descansos cada 20 minutos.</p>
+                </div>
+            </div>
+            
+            <div class="recommendation-card">
+                <div class="recommendation-icon">
+                    <i class="fas fa-dumbbell"></i>
+                </div>
+                <div class="recommendation-content">
+                    <h4>Ejercicios Recomendados</h4>
+                    <p>Los ejercicios de enfoque lejano-cercano serían beneficiosos para tu rutina diaria.</p>
+                </div>
+            </div>
+            
+            <div class="recommendation-card">
+                <div class="recommendation-icon">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <div class="recommendation-content">
+                    <h4>Iluminación del Ambiente</h4>
+                    <p>Considera ajustar la iluminación de tu espacio de trabajo para reducir el contraste.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.page-header h1 {
+    color: var(--primary-health);
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.reports-dashboard {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.report-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.summary-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.summary-icon.health {
+    background: var(--gradient-health);
+}
+
+.summary-icon.warning {
+    background: var(--gradient-fatigue);
+}
+
+.summary-icon.success {
+    background: var(--gradient-vision);
+}
+
+.summary-content h3 {
+    margin: 0 0 0.5rem 0;
+    color: #374151;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.score {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary-health);
+    display: block;
+    line-height: 1;
+}
+
+.score-description {
+    margin: 0.25rem 0 0 0;
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.report-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.report-header h3 {
+    margin: 0;
+    color: #374151;
+    font-size: 1.1rem;
+}
+
+.report-date {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.report-content {
+    margin-bottom: 1.5rem;
+}
+
+.report-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.metric-value {
+    font-weight: 600;
+    color: #374151;
+}
+
+.trend-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.trend-indicator.positive {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--primary-health);
+}
+
+.btn-generate {
+    width: 100%;
+    background: var(--gradient-vision);
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: transform 0.2s;
+}
+
+.btn-generate:hover {
+    transform: translateY(-1px);
+}
+
+.btn-generate.primary {
+    background: var(--gradient-health);
+}
+
+.custom-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.custom-options label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #374151;
+    cursor: pointer;
+}
+
+.recommendations-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.recommendations-section h2 {
+    margin-bottom: 1.5rem;
+    color: #374151;
+    text-align: center;
+}
+
+.recommendations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.recommendation-card {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.recommendation-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: var(--gradient-fatigue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.recommendation-content h4 {
+    margin: 0 0 0.5rem 0;
+    color: #374151;
+    font-size: 0.9rem;
+}
+
+.recommendation-content p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+</style>
+{% endblock %}

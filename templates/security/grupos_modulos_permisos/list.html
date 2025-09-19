@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+<title>{% block title %}Asignaciones de Grupo-Módulo-Permiso{% endblock %}</title>
+{% block content %}
+    {% load static %}
+    {% include 'fragments/messages.html' %}
+    <section class="dark:bg-principal mt-2">
+        <div class="text-center" data-aos="fade-up" data-aos-delay="200">
+            <div class="sm:pt-8 lg:pt-4">
+                <h1 class="rounded-2xl bg-gradient-to-r from-cyan-500 via-fuchsia-600 to-blue-700 px-2 py-1 text-white uppercase text-4xl font-orbitron tracking-widest shadow-lg">
+                    Asignaciones de Grupo-Módulo-Permiso
+                </h1>
+            </div>
+            <div class="lg:p-2 rounded-3xl" data-aos="fade-up" data-aos-delay="200">
+                <!-- Barra de búsqueda -->
+                <div class="p-4 flex justify-center">
+                    <label for="table-search" class="sr-only">Buscar</label>
+                    <div class="relative mt-1">
+                        <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                            <svg class="w-4 h-4 text-cyan-400" aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                            </svg>
+                        </div>
+                        <form method="GET">
+                            <input type="text" name="q" id="table-search"
+                                class="text-center pl-10 shadow-sm bg-cyan-950/60 border border-cyan-700 text-cyan-100 rounded-lg focus:ring-fuchsia-500 focus:border-fuchsia-500 block p-2.5 pr-12 font-mono placeholder-cyan-400"
+                                placeholder="Buscar grupo, módulo o permiso..." value="{{ request.GET.q }}">
+                        </form>
+                    </div>
+                </div>
+                <!-- Tabla de asignaciones -->
+                <div class="overflow-x-auto rounded-3xl shadow-2xl border-4 border-cyan-500/30 bg-gradient-to-br from-[#0b1121] via-[#18182f] to-[#1e293b] backdrop-blur-md">
+                    <table class="w-full text-center text-lg font-mono text-cyan-100">
+                        <thead class="uppercase font-orbitron bg-cyan-900/80 text-fuchsia-300 border-b-4 border-fuchsia-400/30">
+                            <tr>
+                                <th class="px-6 py-3">ID</th>
+                                <th class="px-6 py-3">Grupo</th>
+                                <th class="px-6 py-3">Módulo</th>
+                                <th class="px-6 py-3">Permisos</th>
+                                <th class="px-6 py-3">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in GroupModulePermissions %}
+                            <tr class="transition-all duration-200 bg-cyan-950/60 border-b border-fuchsia-800 hover:bg-cyan-900/80 hover:shadow-xl">
+                                <td class="px-6 py-4">{{ item.id }}</td>
+                                <td class="px-6 py-4 font-bold tracking-wide text-cyan-100">{{ item.group.name }}</td>
+                                <td class="px-6 py-4 font-bold tracking-wide text-cyan-100">{{ item.module.name }}</td>
+                                <td class="px-6 py-4">
+                                    {% for perm in item.permissions.all %}
+                                        <span class="inline-block bg-fuchsia-700 text-white rounded px-2 py-1 text-xs font-mono mr-1 mb-1">{{ perm.name }}</span>
+                                    {% empty %}
+                                        <span class="italic text-cyan-400">Sin permisos</span>
+                                    {% endfor %}
+                                </td>
+                                <td class="px-6 py-4 flex items-center justify-center gap-2">
+                                    {% if perms.security.change_groupmodulepermission %}
+                                    <a href="{% url 'security:group_module_permission_update' item.id %}"
+                                        class="cyber-btn bg-gradient-to-r from-cyan-600 via-blue-700 to-fuchsia-700 text-white px-3 py-1 rounded-lg shadow-md hover:from-cyan-400 hover:to-fuchsia-500 transition-all duration-200 flex items-center gap-1">
+                                        <i class="fa-solid fa-edit"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if perms.security.delete_groupmodulepermission %}
+                                    <a href="#"
+                                        class="cyber-btn bg-gradient-to-r from-pink-600 via-fuchsia-700 to-cyan-700 text-white px-3 py-1 rounded-lg shadow-md hover:from-pink-400 hover:to-cyan-500 transition-all duration-200 flex items-center gap-1"
+                                        onclick="openDeleteModal('{{ item.id }}', '{{ item.group.name }} - {{ item.module.name }}')">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="py-4 text-cyan-500 italic">No hay asignaciones registradas.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Paginación -->
+                <div class="flex justify-center mt-4">
+                    <nav aria-label="Page navigation example">
+                        <ul class="inline-flex -space-x-px">
+                            {% if page_obj.has_previous %}
+                            <li>
+                                <a href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+                                    class="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-cyan-400 bg-cyan-950 border border-e-0 border-cyan-700 rounded-s-lg hover:bg-cyan-900 hover:text-fuchsia-300">Anterior</a>
+                            </li>
+                            {% endif %}
+                            {% for num in page_obj.paginator.page_range %}
+                            <li>
+                                <a href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+                                    class="flex items-center justify-center px-3 h-8 leading-tight {% if num == page_obj.number %}text-fuchsia-300 bg-cyan-900 border border-fuchsia-500 hover:bg-fuchsia-900 hover:text-cyan-200{% else %}text-cyan-400 bg-cyan-950 border border-cyan-700 hover:bg-cyan-900 hover:text-fuchsia-300{% endif %}">
+                                    {{ num }}
+                                </a>
+                            </li>
+                            {% endfor %}
+                            {% if page_obj.has_next %}
+                            <li>
+                                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+                                    class="flex items-center justify-center px-3 h-8 leading-tight text-cyan-400 bg-cyan-950 border border-cyan-700 rounded-e-lg hover:bg-cyan-900 hover:text-fuchsia-300">Siguiente</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                <!-- Enlaces adicionales -->
+                <div class="flex flex-col md:flex-row justify-center form-group text-center p-4">
+                    {% if perms.security.add_groupmodulepermission %}
+                    <a class="bg-gradient-to-r from-cyan-600 via-blue-700 to-fuchsia-700 hover:from-cyan-400 hover:to-fuchsia-500 text-white py-2 px-4 rounded-full mr-0 md:mr-2 mb-2 md:mb-0 flex items-center justify-center transition-colors duration-300 font-orbitron shadow-lg"
+                        href="{% url 'security:group_module_permission_create' %}">
+                        <i class="fa-solid fa-plus mr-2"></i> Nueva Asignación
+                    </a>
+                    {% endif %}
+                    <a class="bg-gradient-to-r from-cyan-600 via-blue-700 to-fuchsia-700 hover:from-cyan-400 hover:to-fuchsia-500 text-white py-2 px-4 rounded-full flex items-center justify-center transition-colors duration-300 font-orbitron shadow-lg"
+                        href="{% url 'security:home' %}">
+                        <i class="fa-solid fa-house"></i>
+                    </a>
+              
+                </div>
+            </div>
+        </div>
+    </section>
+    {% include 'fragments/delete.html' %}
+    <script>
+    // Modal de eliminación para asignaciones de grupo-módulo-permiso
+    function openDeleteModal(id, descripcion) {
+        const modal = document.getElementById('deleteModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+        const desc = document.getElementById('Description');
+        if (desc) {
+            desc.textContent = `¿Eliminar: ${descripcion}?`;
+        }
+        const form = document.getElementById('deleteForm');
+        if (form) {
+            form.action = `/security/group_module_permission_delete/${id}/`;
+        }
+    }
+    function closeModal() {
+        const modal = document.getElementById('deleteModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+        const form = document.getElementById('deleteForm');
+        if (form) {
+            form.action = '';
+        }
+        const desc = document.getElementById('Description');
+        if (desc) {
+            desc.textContent = '';
+        }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteForm = document.getElementById('deleteForm');
+        if (deleteForm) {
+            deleteForm.addEventListener('submit', function(e) {
+                const submitBtn = deleteForm.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Eliminando...';
+                    submitBtn.disabled = true;
+                }
+            });
+        }
+    });
+    </script>
+{% endblock %}

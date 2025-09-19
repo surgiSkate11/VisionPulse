@@ -1,0 +1,29 @@
+<script>
+// Fragmento robusto para búsqueda en tiempo real de tablas (AJAX)
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('.premium-search-input');
+    const tablaBody = document.getElementById('tabla-medicamentos-body');
+    if (!searchInput || !tablaBody) return;
+    let lastQuery = '';
+    searchInput.addEventListener('input', function() {
+        const query = this.value;
+        if (query === lastQuery) return;
+        lastQuery = query;
+        fetch(window.location.pathname + '?q=' + encodeURIComponent(query), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.text())
+        .then(html => {
+            // Extrae solo los <tr> del HTML recibido
+            const temp = document.createElement('tbody');
+            temp.innerHTML = html;
+            const filas = temp.querySelectorAll('tr');
+            tablaBody.innerHTML = '';
+            filas.forEach(tr => tablaBody.appendChild(tr));
+        })
+        .catch(() => {
+            tablaBody.innerHTML = '<tr><td colspan="7" class="text-center text-red-500">Error al filtrar. Intenta de nuevo.</td></tr>';
+        });
+    });
+});
+</script>

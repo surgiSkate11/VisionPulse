@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario Moderno</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .event-card {
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 2px 6px;
+            margin: 1px 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .event-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .day-cell {
+            min-height: 120px;
+            transition: background-color 0.2s ease;
+        }
+        .day-cell:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #e5e7eb;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .today-highlight {
+            background-color: #3b82f6;
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Banner superior blanco -->
+    <div class="bg-white shadow-sm border-b h-14 flex items-center"></div>
+    <!-- Barra de navegación de vistas y acción -->
+    <div class="max-w-7xl mx-auto px-4 pt-4">
+        <div class="flex items-center justify-between">
+            <div class="flex space-x-0 rounded-lg overflow-hidden shadow-sm">
+                <a href="diaria.html" class="px-5 py-2 text-sm font-medium focus:outline-none transition-colors border-r border-gray-200 bg-white text-gray-700 hover:bg-blue-50">Diario</a>
+                <a href="semanal.html" class="px-5 py-2 text-sm font-medium focus:outline-none transition-colors border-r border-gray-200 bg-white text-gray-700 hover:bg-blue-50">Semanal</a>
+                <a href="calendario.html" class="px-5 py-2 text-sm font-medium focus:outline-none transition-colors bg-blue-500 text-white">Mensual</a>
+            </div>
+            <button class="ml-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+                + Nueva Cita
+            </button>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <div class="flex gap-6 flex-row-reverse">
+            <!-- Sidebar izquierdo -->
+            <div class="w-64 space-y-6">
+                <!-- Mini calendario -->
+                <div class="bg-white rounded-xl shadow-sm border p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <button id="mini-prev" class="p-1 rounded hover:bg-gray-100 transition-colors">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h3 class="font-medium text-gray-900" id="mini-calendar-month">Julio 2025</h3>
+                        <button id="mini-next" class="p-1 rounded hover:bg-gray-100 transition-colors">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-xs" id="mini-calendar-days">
+                        <!-- Días generados por JS -->
+                    </div>
+                </div>
+
+                <!-- Lista de calendarios -->
+                <div class="bg-white rounded-xl shadow-sm border p-4">
+                    <h3 class="font-medium text-gray-900 mb-3">Mis calendarios</h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" checked class="w-4 h-4 text-purple-600 rounded">
+                            <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
+                            <span class="text-sm text-gray-700">Personal</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" checked class="w-4 h-4 text-green-600 rounded">
+                            <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                            <span class="text-sm text-gray-700">Cumpleaños</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" checked class="w-4 h-4 text-blue-600 rounded">
+                            <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                            <span class="text-sm text-gray-700">Trabajo</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" checked class="w-4 h-4 text-orange-600 rounded">
+                            <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
+                            <span class="text-sm text-gray-700">Planificación</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <!-- Calendario principal -->
+            <div class="flex-1">
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                    <!-- Encabezados de días -->
+                    <div class="grid grid-cols-7 bg-gray-50 border-b">
+                        <div class="p-4 text-center text-sm font-medium text-gray-600">LUN</div>
+                        <div class="p-4 text-center text-sm font-medium text-gray-600">MAR</div>
+                        <div class="p-4 text-center text-sm font-medium text-gray-600">MIÉ</div>
+                        <div class="p-4 text-center text-sm font-medium text-gray-600">JUE</div>
+                        <div class="p-4 text-center text-sm font-medium text-gray-600">VIE</div>
+                        <div class="p-4 text-center text-sm font-medium text-gray-600">SÁB</div>
+                        <div class="p-4 text-center text-sm font-medium text-gray-600">DOM</div>
+                    </div>
+                    <!-- Grid del calendario -->
+                    <div class="calendar-grid" id="main-calendar-grid">
+                        <!-- Las celdas y eventos se generan por JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal de Información del Paciente -->
+    <div id="patient-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="modal bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Información del Paciente</h2>
+                <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Paciente</label>
+                    <p class="text-lg font-semibold text-gray-800" id="modal-patient-name"></p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Tipo de Consulta</label>
+                    <p class="text-gray-800" id="modal-consultation-type"></p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Hora Programada</label>
+                        <p class="text-gray-800" id="modal-scheduled-time"></p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Duración Estimada</label>
+                        <p class="text-gray-800" id="modal-estimated-duration"></p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label class="text-sm font-medium text-gray-600">Estado de Atención:</label>
+                    <div id="attendance-status"></div>
+                </div>
+                <div class="pt-4 space-y-3">
+                    <button id="close-modal-btn" class="btn w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-4 rounded-2xl flex items-center justify-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        <span>Cerrar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Pacientes de muestra para eventos de tipo cita médica
+        const samplePatients = [
+            { name: "Maria González", type: "Consulta General", time: "09:00", duration: 30, attended: true },
+            { name: "Carlos Ruiz", type: "Control Diabetes", time: "10:30", duration: 45, attended: false },
+            { name: "Ana Martínez", type: "Pediatría", time: "11:00", duration: 30, attended: true },
+            { name: "Isabel Torres", type: "Ginecología", time: "13:00", duration: 45, attended: false },
+            { name: "Pedro Jiménez", type: "Cardiología", time: "14:00", duration: 30, attended: true },
+        ];
+        // Eventos de ejemplo para el mes (algunos con pacientes)
+        const monthlyEvents = {
+            '2025-6': [
+                { day: 1, patient: samplePatients[0] },
+                { day: 3, patient: samplePatients[1] },
+                { day: 8, patient: samplePatients[2] },
+                { day: 12, patient: samplePatients[3] },
+                { day: 14, patient: samplePatients[4] },
+                { day: 19, title: "Cena romántica", type: "Personal", duration: 120, details: "Cena con pareja." },
+                { day: 23, title: "Taller creatividad", type: "Taller", duration: 180, details: "Taller de creatividad." },
+            ]
+        };
+        let currentMonth = 6; // Julio (enero=0)
+        let currentYear = 2025;
+        function renderMiniCalendar() {
+            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            document.getElementById('mini-calendar-month').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const startDay = (firstDay.getDay() + 6) % 7; // Lunes=0
+            let days = [];
+            // Días del mes anterior
+            const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
+            for (let i = startDay - 1; i >= 0; i--) {
+                days.push(`<div class='text-center text-gray-400 py-1'>${prevMonthLastDay - i}</div>`);
+            }
+            // Días del mes actual
+            const today = new Date();
+            for (let d = 1; d <= lastDay.getDate(); d++) {
+                let classes = "text-center text-gray-700 py-1 cursor-pointer hover:bg-blue-100 rounded transition-colors";
+                if (d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
+                    classes += " today-highlight";
+                }
+                days.push(`<div class='${classes}'>${d}</div>`);
+            }
+            // Días del siguiente mes para completar la cuadrícula
+            while (days.length % 7 !== 0) {
+                days.push(`<div class='text-center text-gray-400 py-1'>${days.length - (lastDay.getDate() + startDay) + 1}</div>`);
+            }
+            document.getElementById('mini-calendar-days').innerHTML = days.join('');
+        }
+        function renderMainCalendar() {
+            const mainGrid = document.getElementById('main-calendar-grid');
+            mainGrid.innerHTML = '';
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const startDay = (firstDay.getDay() + 6) % 7; // Lunes=0
+            let days = [];
+            // Días del mes anterior
+            const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
+            for (let i = startDay - 1; i >= 0; i--) {
+                days.push({ day: prevMonthLastDay - i, current: false });
+            }
+            // Días del mes actual
+            for (let d = 1; d <= lastDay.getDate(); d++) {
+                days.push({ day: d, current: true });
+            }
+            // Días del siguiente mes para completar la cuadrícula
+            while (days.length % 7 !== 0) {
+                days.push({ day: days.length - (lastDay.getDate() + startDay) + 1, current: false });
+            }
+            // Renderizar celdas
+            const key = `${currentYear}-6`;
+            const events = monthlyEvents[key] || [];
+            days.forEach((info, idx) => {
+                let cell = document.createElement('div');
+                cell.className = 'day-cell bg-white p-3 border-r border-b';
+                if (!info.current) {
+                    cell.innerHTML = `<div class="text-gray-400 text-sm mb-2">${info.day}</div>`;
+                } else {
+                    let content = `<div class="text-sm text-gray-700 mb-2">${info.day}</div>`;
+                    // Buscar evento de paciente
+                    const ev = events.find(e => e.day === info.day);
+                    if (ev && ev.patient) {
+                        content += `<div class="event-card bg-blue-100 text-blue-800 border-l-4 border-blue-500 cursor-pointer" data-patient='${JSON.stringify(ev.patient)}'>${ev.patient.name}</div>`;
+                    } else if (ev) {
+                        content += `<div class="event-card bg-pink-100 text-pink-800 border-l-4 border-pink-500 cursor-pointer">${ev.title}</div>`;
+                    }
+                    cell.innerHTML = content;
+                }
+                mainGrid.appendChild(cell);
+            });
+            // Bind click para pacientes
+            document.querySelectorAll('.event-card[data-patient]').forEach(card => {
+                card.onclick = function() {
+                    const patient = JSON.parse(this.getAttribute('data-patient'));
+                    openPatientModal(patient);
+                };
+            });
+        }
+        function openPatientModal(patient) {
+            document.getElementById('modal-patient-name').textContent = patient.name;
+            document.getElementById('modal-consultation-type').textContent = patient.type;
+            document.getElementById('modal-scheduled-time').textContent = patient.time;
+            document.getElementById('modal-estimated-duration').textContent = `${patient.duration} min`;
+            const attendanceStatus = document.getElementById('attendance-status');
+            attendanceStatus.innerHTML = patient.attended ? '<span class="text-green-600 font-semibold">Atendido</span>' : '<span class="text-yellow-600 font-semibold">Pendiente</span>';
+            document.getElementById('patient-modal').classList.remove('hidden');
+        }
+        function closePatientModal() {
+            document.getElementById('patient-modal').classList.add('hidden');
+        }
+        document.getElementById('mini-prev').onclick = function() {
+            currentMonth--;
+            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            renderMiniCalendar();
+            renderMainCalendar();
+        };
+        document.getElementById('mini-next').onclick = function() {
+            currentMonth++;
+            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+            renderMiniCalendar();
+            renderMainCalendar();
+        };
+        // Inicializar
+        renderMiniCalendar();
+        renderMainCalendar();
+        // Modal close
+        document.getElementById('close-event-modal').onclick = closeEventModal;
+        document.getElementById('close-modal').onclick = closePatientModal;
+        document.getElementById('close-modal-btn').onclick = closePatientModal;
+    </script>
+    <!-- Modal de Evento Detallado -->
+    <div id="event-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="modal bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800" id="modal-title">Evento</h2>
+                <button id="close-event-modal" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Tipo</label>
+                    <p class="text-gray-800" id="modal-type"></p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Duración</label>
+                    <p class="text-gray-800" id="modal-duration"></p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Detalles</label>
+                    <p class="text-gray-800" id="modal-details"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

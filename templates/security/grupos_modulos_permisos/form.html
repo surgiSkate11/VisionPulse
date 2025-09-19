@@ -1,0 +1,975 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{title|default:"Gestión Dinámica de Permisos"}}{% endblock %}
+{% block content %}
+<!-- Fondo animado y partículas -->
+<div class="cyber-bg"></div>
+<div class="particles" id="particles"></div>
+<div class="neural-network" id="neural-network"></div>
+
+<!-- Contenedor de mensajes -->
+<div id="messages-container" style="position: fixed; top: 20px; right: 20px; z-index: 1000; max-width: 400px;">
+    {% include 'fragments/messages.html' %}
+</div>
+
+<div class="main-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="cyber-header fade-in-up">
+            <h1 class="cyber-title glitch" data-text="Gestión Dinámica de Permisos">
+                <i class="fas fa-rocket" style="margin-right: 1rem;"></i>
+                Gestión Dinámica de Permisos
+            </h1>
+            <p class="cyber-subtitle">Sistema Avanzado de Asignación de Permisos Cyberpunk</p>
+            <div class="cyber-divider"></div>
+        </div>
+
+        <!-- Tabla premium de asignaciones -->
+        <div class="cyber-table-container fade-in-up">
+            <table class="cyber-table">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-users" style="margin-right: 0.5rem;"></i>Grupo<br><span style="font-size: 0.8rem; font-weight: 400; opacity: 0.8;">(Módulos disponibles)</span></th>
+                        <th><i class="fas fa-cube" style="margin-right: 0.5rem;"></i>Módulo</th>
+                        <th><i class="fas fa-key" style="margin-right: 0.5rem;"></i>Permisos</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-asignaciones-cyber">
+                    <!-- Filas generadas dinámicamente por JS -->
+                </tbody>
+            </table>
+            <div class="flex justify-center mt-8 fade-in-up w-full">
+                <button id="global-save-btn" class="cyber-btn cyber-btn-save w-full max-w-xl text-2xl" onclick="guardarTodasLasAsignaciones()">
+                    <i class="fas fa-save mr-3"></i>Guardar Todas las Asignaciones
+                </button>
+            </div>
+        </div>
+
+        <!-- Panel derecho: Tabla de asignaciones paginada y modal de eliminación -->
+        <div class="space-y-8 slide-in-right">
+            {% include 'fragments/delete.html' %}
+        </div>
+
+        <!-- Botones de navegación -->
+        <div class="flex justify-center mt-12 gap-6 fade-in-up">
+            <a class="cyber-btn py-4 px-8 rounded-2xl text-lg font-bold shadow-2xl flex items-center gap-3"
+                href="{% url 'security:group_module_permission_list' %}">
+                <i class="fas fa-list"></i>Ver Listado
+            </a>
+            <a class="cyber-btn py-4 px-8 rounded-2xl text-lg font-bold shadow-2xl flex items-center gap-3"
+                href="{% url 'security:home' %}">
+                <i class="fas fa-home"></i>Inicio
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Script principal y lógica JS conservada -->
+<script>
+// =============================
+// FUNCIÓN GLOBAL PARA OBTENER CSRF TOKEN (Django)
+// =============================
+function obtenerCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// =============================
+// FUNCIONES GLOBALES PARA MENSAJES Y PERMISOS
+// =============================
+function mostrarMensaje(tipo, mensaje) {
+    const contenedor = document.getElementById('messages-container');
+    // Iconos y colores según tipo
+    const iconos = {
+        'success': 'fa-check',
+        'error': 'fa-times',
+        'warning': 'fa-exclamation',
+        'info': 'fa-info'
+    };
+    const clases = {
+        'success': 'message-success',
+        'error': 'message-error',
+        'warning': 'message-warning',
+        'info': 'message-info'
+    };
+    const id = 'msg-' + Date.now() + '-' + Math.floor(Math.random()*10000);
+    const htmlMensaje = `
+        <div id="${id}" class="message-alert-cyber ${clases[tipo] || 'message-info'} mensaje-js" data-message-id="${id}">
+            <div class="cyber-glitch-border"></div>
+            <div class="message-content-cyber">
+                <div class="message-body-cyber">
+                    <div class="message-icon-cyber">
+                        <div class="icon-circle-cyber icon-${tipo}-cyber">
+                            <i class="fa-solid ${iconos[tipo] || 'fa-info'} fa-2x"></i>
+                        </div>
+                    </div>
+                    <div class="message-text-cyber">
+                        <p>${mensaje}</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('${id}').remove()" class="close-btn-cyber">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="progress-bar-cyber"></div>
+        </div>
+    `;
+    contenedor.insertAdjacentHTML('beforeend', htmlMensaje);
+    setTimeout(() => {
+        const msg = document.getElementById(id);
+        if (msg) msg.remove();
+    }, 5000);
+}
+
+function cargarPermisos(idGrupo, idModulo) {
+    const contenedorPermisos = document.getElementById(`permissions-container-${idGrupo}`);
+    const checkboxesPermisos = document.getElementById(`permissions-checkboxes-${idGrupo}`);
+    
+    if (!idModulo) {
+        contenedorPermisos.style.display = 'none';
+        checkboxesPermisos.innerHTML = '';
+        return;
+    }
+    
+    const permisos = window.permisosPorModulo[idModulo] || [];
+    
+    if (permisos.length === 0) {
+        checkboxesPermisos.innerHTML = '<div class="text-cyan-400 italic py-2 text-sm">Sin permisos configurados</div>';
+    } else {
+        checkboxesPermisos.innerHTML = `
+            <div class="permissions-grid">
+                ${permisos.map(permiso => `
+                    <label class="permission-checkbox-item">
+                        <input type="checkbox" class="cyber-checkbox-small" value="${permiso.id}" checked onchange="validarAsignacion(${idGrupo})">
+                        <span class="permission-label">${permiso.name}</span>
+                    </label>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    // Mostrar contenedor de permisos
+    contenedorPermisos.style.display = 'block';
+}
+
+// =============================
+// VARIABLES GLOBALES DESDE BACKEND
+// =============================
+// Datos de grupos y módulos, enviados por Django como JSON
+window.datosGrupos = JSON.parse('{{ groups_data|safe|escapejs }}');
+window.permisosPorModulo = JSON.parse('{{ module_permissions|safe|escapejs }}');
+
+// =============================
+// PARTÍCULAS DE FONDO CYBERPUNK
+// =============================
+function crearParticulas() {
+    const contenedorParticulas = document.getElementById('particles');
+    const cantidad = 30;
+    for (let i = 0; i < cantidad; i++) {
+        const particula = document.createElement('div');
+        particula.className = 'particle';
+        particula.style.left = Math.random() * 100 + '%';
+        particula.style.animationDuration = (Math.random() * 10 + 5) + 's';
+        particula.style.animationDelay = Math.random() * 10 + 's';
+        // Alternar colores
+        if (Math.random() > 0.5) {
+            particula.style.background = 'var(--cyber-secondary)';
+            particula.style.boxShadow = '0 0 10px var(--cyber-purple-glow)';
+        }
+        contenedorParticulas.appendChild(particula);
+    }
+}
+
+// =============================
+// RENDERIZAR TABLA PREMIUM DE ASIGNACIONES
+// =============================
+function renderTablaAsignacionesCyber() {
+    const tbody = document.getElementById('tabla-asignaciones-cyber');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    window.datosGrupos.forEach(grupo => {
+        const fila = document.createElement('tr');
+        fila.className = 'cyber-table-row';
+        
+        // Columna Grupo
+        const tdGrupo = document.createElement('td');
+        tdGrupo.className = 'td-grupo';
+        tdGrupo.innerHTML = `
+            <div class="grupo-info">
+                <div class="grupo-nombre">
+                    <i class="fas fa-users text-cyan-400"></i>
+                    <span>${grupo.name}</span>
+                </div>
+                <span class="cyber-badge">${grupo.available_modules.length} módulos</span>
+            </div>
+        `;
+        
+        // Columna Módulo
+        const tdModulo = document.createElement('td');
+        tdModulo.className = 'td-modulo';
+        if (grupo.available_modules.length > 0) {
+            tdModulo.innerHTML = `
+                <select id="module-select-${grupo.id}" class="cyber-select-compact" onchange="cargarPermisos(${grupo.id}, this.value)">
+                    <option value="">-- Seleccionar módulo --</option>
+                    ${grupo.available_modules.map(modulo => `<option value="${modulo.id}">${modulo.name}</option>`).join('')}
+                </select>
+            `;
+        } else {
+            tdModulo.innerHTML = `<span class="no-modules">No hay módulos disponibles</span>`;
+        }
+        
+        // Columna Permisos
+        const tdPermisos = document.createElement('td');
+        tdPermisos.className = 'td-permisos';
+        tdPermisos.innerHTML = `
+            <div id="permissions-container-${grupo.id}" class="permissions-container" style="display: none;">
+                <div id="permissions-checkboxes-${grupo.id}" class="permissions-content">
+                    <!-- Se llenan dinámicamente -->
+                </div>
+            </div>
+        `;
+        
+        fila.appendChild(tdGrupo);
+        fila.appendChild(tdModulo);
+        fila.appendChild(tdPermisos);
+        tbody.appendChild(fila);
+    });
+}
+
+// =============================
+// INICIALIZACIÓN AL CARGAR LA PÁGINA (AJUSTADA)
+// =============================
+document.addEventListener('DOMContentLoaded', function() {
+    crearParticulas();
+    renderTablaAsignacionesCyber(); // Usar tabla premium
+    // Mensaje de bienvenida
+    setTimeout(() => {
+        mostrarMensaje('success', 'Sistema de permisos inicializado correctamente');
+    }, 1000);
+    habilitarNavegacionAjaxTabla();
+});
+
+// =============================
+// INICIALIZAR ACORDEONES (SOBREESCRITA PARA TABLA)
+// =============================
+function inicializarAcordeonesGrupos() {
+    renderTablaAsignacionesCyber();
+}
+
+// =============================
+// AJUSTE PARA NAVEGACIÓN AJAX (NO FALLAR SI NO EXISTE)
+// =============================
+function habilitarNavegacionAjaxTabla() {
+    // Delegación de eventos para paginación
+    document.body.addEventListener('click', function(e) {
+        // Paginación
+        const link = e.target.closest('.cyber-table-container nav a');
+        if (link) {
+            e.preventDefault();
+            fetch(link.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(respuesta => respuesta.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const nuevaTabla = doc.querySelector('.cyber-table-container');
+                    if (nuevaTabla) {
+                        const contenedorTabla = document.querySelector('.cyber-table-container');
+                        contenedorTabla.replaceWith(nuevaTabla);
+                    }
+                });
+        }
+    });
+    // Búsqueda
+    const tablaContainer = document.querySelector('.cyber-table-container');
+    if (tablaContainer) {
+        const formularioBusqueda = tablaContainer.closest('.slide-in-right')?.querySelector('form');
+        if (formularioBusqueda) {
+            formularioBusqueda.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const params = new URLSearchParams(new FormData(formularioBusqueda)).toString();
+                const url = window.location.pathname + (params ? '?' + params : '');
+                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(respuesta => respuesta.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const nuevaTabla = doc.querySelector('.cyber-table-container');
+                        if (nuevaTabla) {
+                            const contenedorTabla = document.querySelector('.cyber-table-container');
+                            contenedorTabla.replaceWith(nuevaTabla);
+                        }
+                    });
+            });
+        }
+    }
+}
+
+// =============================
+// GUARDAR ASIGNACIÓN (CON CSRF SEGURO)
+// =============================
+function saveAssignment(groupId) {
+    const moduleSelect = document.getElementById(`module-select-${groupId}`);
+    const checkboxes = document.querySelectorAll(`#permissions-checkboxes-${groupId} input[type="checkbox"]:checked`);
+    const moduleId = moduleSelect.value;
+    const permissionIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+    if (!moduleId || permissionIds.length === 0) {
+        showMessage('error', 'Por favor selecciona un módulo y al menos un permiso.');
+        return;
+    }
+    const saveBtn = document.getElementById(`save-btn-${groupId}`);
+    const originalText = saveBtn ? saveBtn.innerHTML : '';
+    if (saveBtn) {
+        saveBtn.innerHTML = '<div class="cyber-loader inline-block mr-3"></div>Guardando...';
+        saveBtn.disabled = true;
+    }
+    fetch('{% url "security:group_module_permission_ajax" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify({
+            group_id: groupId,
+            module_id: moduleId,
+            permission_ids: permissionIds
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('success', data.message);
+            refreshGroupsData(() => {
+                reloadAssignmentsTable(true);
+            });
+            setTimeout(() => {}, 300);
+            setTimeout(reloadAssignmentsTable, 200);
+        } else {
+            showMessage('error', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('error', 'Error de conexión. Inténtalo de nuevo.');
+    })
+    .finally(() => {
+        if (saveBtn) {
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        }
+    });
+}
+
+// =============================
+// NUEVA FUNCIÓN PARA GUARDAR TODAS LAS ASIGNACIONES
+// =============================
+function guardarTodasLasAsignaciones() {
+    // Recolectar todas las selecciones de todos los grupos
+    const asignaciones = [];
+    window.datosGrupos.forEach(grupo => {
+        const selectModulo = document.getElementById(`module-select-${grupo.id}`);
+        if (selectModulo && selectModulo.value) {
+            const idModulo = selectModulo.value;
+            const checkboxes = document.querySelectorAll(`#permissions-checkboxes-${grupo.id} input[type='checkbox']:checked`);
+            const idsPermisos = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            if (idsPermisos.length > 0) {
+                asignaciones.push({
+                    group_id: grupo.id,
+                    module_id: idModulo,
+                    permission_ids: idsPermisos
+                });
+            }
+        }
+    });
+    console.log('Asignaciones a guardar:', asignaciones); // Debug
+    if (asignaciones.length === 0) {
+        mostrarMensaje('error', 'Selecciona al menos un grupo con módulo y permisos.');
+        return;
+    }
+    const btnGuardar = document.getElementById('global-save-btn');
+    const textoOriginal = btnGuardar.innerHTML;
+    btnGuardar.innerHTML = '<div class="cyber-loader inline-block mr-3"></div>Guardando...';
+    btnGuardar.disabled = true;
+
+    // Enviar cada asignación por separado
+    let exitos = 0;
+    let errores = 0;
+    let ultimoMensaje = '';
+    let ultimasAsignaciones = [];
+    const promesas = asignaciones.map(asignacion => {
+        return fetch('{% url "security:group_module_permission_ajax" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': obtenerCookie('csrftoken'),
+            },
+            body: JSON.stringify(asignacion)
+        })
+        .then(parsearRespuestaAJAX)
+        .then(data => {
+            if (data && data.success) {
+                exitos++;
+                ultimoMensaje = data.message;
+                if (data.assignment) ultimasAsignaciones.push(data.assignment);
+            } else if (data) {
+                errores++;
+                ultimoMensaje = data.message;
+            }
+        })
+        .catch(error => {
+            errores++;
+            if (error && error.message === 'No autorizado') {
+                ultimoMensaje = 'No autorizado o sesión expirada.';
+            } else {
+                ultimoMensaje = 'Error de conexión o respuesta inesperada.';
+            }
+            console.error('Error:', error);
+        });
+    });
+    Promise.all(promesas).then(() => {
+        if (exitos > 0) {
+            mostrarMensaje('success', ultimoMensaje || 'Asignaciones guardadas correctamente.');
+            refrescarDatosGrupos(() => {
+                // Espera 200ms para asegurar que la sesión esté actualizada antes de refrescar la tabla
+                setTimeout(refrescarTablaAsignacionesRecientes, 200);
+            });
+        } else {
+            mostrarMensaje('error', ultimoMensaje || 'No se pudo guardar ninguna asignación.');
+        }
+        btnGuardar.innerHTML = textoOriginal;
+        btnGuardar.disabled = false;
+    });
+}
+
+// Utilidad global para parsear respuesta AJAX de forma segura
+async function parsearRespuestaAJAX(respuesta) {
+    const contentType = respuesta.headers.get('content-type') || '';
+    if (respuesta.status === 403 || respuesta.status === 401) {
+        mostrarMensaje('error', 'No autorizado o sesión expirada. Por favor, recarga la página e inicia sesión.');
+        throw new Error('No autorizado');
+    }
+    if (contentType.includes('application/json')) {
+        try {
+            return await respuesta.json();
+        } catch (e) {
+            mostrarMensaje('error', 'Respuesta JSON inválida del servidor.');
+            throw new Error('Respuesta JSON inválida');
+        }
+    } else {
+        const text = await respuesta.text();
+        if (text.includes('login') || text.toLowerCase().includes('csrf')) {
+            mostrarMensaje('error', 'Sesión expirada o autenticación requerida. Por favor, recarga la página e inicia sesión.');
+        } else {
+            mostrarMensaje('error', 'Error inesperado del servidor. Intenta recargar la página.');
+        }
+        console.error('Respuesta inesperada del servidor:', text.substring(0, 300));
+        throw new Error('Respuesta inesperada del servidor');
+    }
+}
+
+// Refresca los datos de grupos y módulos desde el backend tras guardar
+function refrescarDatosGrupos(callback) {
+    // Usar la URL del listado, no la del formulario
+    const urlListado = '{% url "security:group_module_permission_list" %}?refresh=1';
+    fetch(urlListado, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(parsearRespuestaAJAX)
+        .then(data => {
+            window.datosGrupos = data.groupsData;
+            window.permisosPorModulo = data.modulePermissions;
+            inicializarAcordeonesGrupos();
+            if (typeof callback === 'function') callback();
+        })
+        .catch(error => {
+            mostrarMensaje('error', 'Error al refrescar datos de grupos.');
+            console.error('Error refrescando datos de grupos:', error);
+        });
+}
+
+// =============================
+// MODAL DE ELIMINACIÓN: ABRIR Y GESTIONAR
+// =============================
+// Esta función muestra el modal de confirmación y prepara el formulario para eliminar el registro seleccionado.
+function openDeleteModal(id, descripcion) {
+    // Mostrar el modal
+    const modal = document.getElementById('deleteModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+    // Cambiar el texto de descripción
+    const desc = document.getElementById('Description');
+    if (desc) {
+        desc.textContent = `¿Eliminar: ${descripcion}?`;
+    }
+    // Guardar el id a eliminar en el formulario
+    const form = document.getElementById('deleteForm');
+    if (form) {
+        // Cambia la acción del form para que apunte al endpoint correcto
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            eliminarAsignacion(id);
+        };
+    }
+}
+
+// Cierra el modal de eliminación
+function closeModal() {
+    const modal = document.getElementById('deleteModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+// Elimina la asignación vía AJAX y recarga la tabla y los acordeones
+function eliminarAsignacion(id) {
+    fetch(`/security/group-module-permission-ajax/${id}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': obtenerCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    })
+    .then(parsearRespuestaAJAX)
+    .then(data => {
+        if (data.success) {
+            mostrarMensaje('success', data.message);
+            closeModal();
+            refrescarDatosGrupos(() => {
+                recargarTablaAsignaciones();
+            });
+        } else {
+            mostrarMensaje('error', data.message);
+        }
+    })
+    .catch(error => {
+        mostrarMensaje('error', 'Error al eliminar.');
+        console.error('Error al eliminar:', error);
+    });
+}
+
+// =============================
+// ACTUALIZAR TABLA DE ASIGNACIONES RECIENTES EN TIEMPO REAL
+// =============================
+function refrescarTablaAsignacionesRecientes() {
+    // Petición AJAX para obtener el fragmento HTML actualizado de la tabla SOLO de la sesión
+    const urlListado = '{% url "security:group_module_permission_list" %}?form=1';
+    fetch(urlListado, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.text())
+    .then(html => {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        const nuevaTabla = tempDiv.querySelector('.cyber-table-container');
+        const tablaActual = document.querySelector('.cyber-table-container');
+        if (nuevaTabla && tablaActual) {
+            tablaActual.replaceWith(nuevaTabla);
+        }
+    });
+}
+
+// Si tienes un formulario AJAX para guardar, llama refrescarTablaAsignacionesRecientes() tras éxito
+// Ejemplo:
+// fetch('URL', { ... })
+//   .then(res => res.json())
+//   .then(data => {
+//      if (data.success) refrescarTablaAsignacionesRecientes();
+//   });
+</script>
+
+<!-- Nuevo CSS cyberpunk -->
+<style>
+:root {
+    --cyber-primary: #00ffff;
+    --cyber-secondary: #ff00ff;
+    --cyber-accent: #ffff00;
+    --cyber-success: #00ff88;
+    --cyber-warning: #ff9900;
+    --cyber-error: #ff0066;
+    --cyber-dark: #0a0a0f;
+    --cyber-darker: #050507;
+    --cyber-grid: #1a1a2e;
+    --cyber-surface: #16213e;
+    --cyber-glow: rgba(0, 255, 255, 0.5);
+    --cyber-purple-glow: rgba(255, 0, 255, 0.5);
+    --cyber-yellow-glow: rgba(255, 255, 0, 0.5);
+    --cyber-gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --cyber-gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --cyber-gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --cyber-gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--cyber-darker);
+    color: #fff;
+    overflow-x: hidden;
+    position: relative;
+    min-height: 100vh;
+}
+.cyber-bg {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 255, 0, 0.05) 0%, transparent 50%),
+        linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%);
+    animation: bgShift 20s ease-in-out infinite;
+}
+@keyframes bgShift { 0%,100%{filter:hue-rotate(0deg) brightness(1);} 50%{filter:hue-rotate(30deg) brightness(1.1);} }
+.particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+.particle { position: absolute; width: 2px; height: 2px; background: var(--cyber-primary); border-radius: 50%; animation: particleFloat 15s linear infinite; box-shadow: 0 0 10px var(--cyber-glow); }
+.particle:nth-child(odd) { background: var(--cyber-secondary); box-shadow: 0 0 10px var(--cyber-purple-glow); animation-duration: 20s; }
+.particle:nth-child(3n) { background: var(--cyber-accent); box-shadow: 0 0 8px var(--cyber-yellow-glow); animation-duration: 25s; }
+@keyframes particleFloat { 0%{transform:translateY(100vh) rotate(0deg);opacity:0;} 10%{opacity:1;} 90%{opacity:1;} 100%{transform:translateY(-100px) rotate(360deg);opacity:0;} }
+.neural-network { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; opacity: 0.3; }
+.main-container { position: relative; z-index: 10; min-height: 100vh; padding: 2rem 1rem; }
+.container { max-width: 1400px; margin: 0 auto; padding: 0 1rem; }
+.cyber-header {
+    text-align: center;
+    margin-bottom: 0rem;
+    margin-top: -2.5rem; /* Subir el header aún más arriba */
+    position: relative;
+}
+.cyber-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(2.2rem, 5vw, 4.2rem);
+    font-weight: 900;
+    background: none;
+    color: #00ffd0;
+    text-shadow: 0 0 18px #00ffd0, 0 0 2px #fff, 0 0 40px #00ffd0;
+    letter-spacing: 2.5px;
+    filter: brightness(1.5) drop-shadow(0 0 10px #00ffd0);
+    margin-bottom: 0rem !important;
+    margin-top: -1.2rem !important; /* Subir el título aún más cerca del header */
+    padding-bottom: 0rem !important;
+    padding-top: 0rem !important;
+    line-height: 1.05;
+}
+.cyber-subtitle { font-size: 1.5rem; color: var(--cyber-primary); margin-top: 1rem; opacity: 0.9; font-weight: 300; letter-spacing: 2px; }
+.cyber-divider { width: 200px; height: 3px; background: linear-gradient(90deg, transparent, var(--cyber-primary), var(--cyber-secondary), transparent); margin: 2rem auto; border-radius: 2px; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:0.5;transform:scaleX(1);} 50%{opacity:1;transform:scaleX(1.1);} }
+/* --- COLUMNAS Y CELDAS --- */
+.cyber-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: rgba(10,10,15,0.5);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    table-layout: fixed;
+}
+.cyber-table-container {
+    background: rgba(10,10,15,0.7);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 0 40px 8px var(--cyber-primary), 0 0 0 2px var(--cyber-secondary), 0 10px 30px rgba(0,0,0,0.7);
+    backdrop-filter: blur(16px) saturate(180%);
+    border: 2px solid var(--cyber-secondary);
+    position: relative;
+}
+.cyber-table thead tr {
+    background: linear-gradient(90deg, rgba(0,255,255,0.25) 0%, rgba(255,0,255,0.18) 100%);
+    border-bottom: 3px solid var(--cyber-accent);
+    box-shadow: 0 2px 12px 0 var(--cyber-primary);
+}
+.cyber-table th {
+    padding: 1.2rem 0.7rem;
+    text-align: center;
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 1.15rem;
+    color: #fff;
+    text-shadow: 0 0 18px var(--cyber-primary), 0 0 2px var(--cyber-secondary);
+    letter-spacing: 1.5px;
+    border-right: 1px solid rgba(0,255,255,0.15);
+    background: linear-gradient(90deg, rgba(0,255,255,0.08), rgba(255,0,255,0.08));
+}
+.cyber-table th:last-child { border-right: none; }
+.cyber-table-row {
+    background: rgba(10,10,15,0.45);
+    border-bottom: 1.5px solid rgba(0,255,255,0.13);
+    transition: all 0.3s cubic-bezier(.4,2,.6,1);
+}
+.cyber-table-row:hover {
+    background: rgba(0,255,255,0.13);
+    box-shadow: 0 0 24px 0 var(--cyber-accent), 0 0 0 2px var(--cyber-primary);
+    z-index: 2;
+    position: relative;
+}
+.cyber-table td {
+    padding: 1.1rem 0.7rem;
+    vertical-align: top;
+    position: relative;
+    border-right: 1px solid rgba(0,255,255,0.08);
+    background: linear-gradient(90deg, rgba(0,255,255,0.04), rgba(255,0,255,0.04));
+}
+.cyber-table td:last-child { border-right: none; }
+
+/* SELECT CYBERPUNK PREMIUM */
+.cyber-select-compact {
+    width: 100%;
+    max-width: 320px; /* Aumentado para mostrar más texto */
+    min-width: 220px;
+    padding: 1.1rem 2.8rem 1.1rem 1.4rem; /* Más padding para hacerlo más grande */
+    background: rgba(22,33,62,0.90);
+    border: 2.5px solid var(--cyber-primary);
+    border-radius: 14px;
+    color: #fff;
+    font-family: 'Orbitron', monospace;
+    font-size: 1.18rem; /* Más grande */
+    font-weight: 800;
+    transition: all 0.3s cubic-bezier(.4,2,.6,1);
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+    box-shadow: 0 0 18px 0 var(--cyber-primary), 0 0 0 2px var(--cyber-secondary);
+    background-image: url('https://cdn.jsdelivr.net/gh/encharm/Font-Awesome-SVG-PNG/black/svg/caret-down.svg'), linear-gradient(45deg, transparent 50%, var(--cyber-primary) 50%), linear-gradient(135deg, var(--cyber-primary) 50%, transparent 50%);
+    background-position: calc(100% - 22px) center, calc(100% - 34px) center, calc(100% - 28px) center;
+    background-size: 22px 22px, 7px 7px, 7px 7px;
+    background-repeat: no-repeat;
+    filter: drop-shadow(0 0 10px var(--cyber-primary));
+}
+.cyber-select-compact:focus {
+    border-color: var(--cyber-accent);
+    box-shadow: 0 0 24px 0 var(--cyber-accent), 0 0 0 2px var(--cyber-primary);
+    background: rgba(22,33,62,0.97);
+    transform: scale(1.04);
+}
+.cyber-select-compact:hover {
+    border-color: var(--cyber-secondary);
+    box-shadow: 0 0 18px 0 var(--cyber-secondary), 0 0 0 2px var(--cyber-accent);
+}
+
+/* GRUPO CENTRADO Y PREMIUM */
+.td-grupo {
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.7rem 0.7rem;
+}
+.grupo-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.7rem 0;
+}
+.grupo-nombre {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-family: 'Orbitron', monospace;
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--cyber-primary);
+    text-shadow: 0 0 12px var(--cyber-primary), 0 0 2px var(--cyber-secondary);
+    letter-spacing: 1.2px;
+    background: linear-gradient(90deg, rgba(0,255,255,0.13), rgba(255,0,255,0.10));
+    border-radius: 8px;
+    padding: 0.3rem 1.1rem;
+    box-shadow: 0 0 10px 0 var(--cyber-primary);
+}
+.cyber-badge {
+    display: inline-block;
+    padding: 0.25em 1.1em;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #fff;
+    background: linear-gradient(90deg, var(--cyber-secondary), var(--cyber-primary), var(--cyber-accent));
+    border-radius: 999px;
+    box-shadow: 0 0 12px 0 var(--cyber-accent), 0 0 0 2px var(--cyber-primary);
+    border: 2px solid var(--cyber-primary);
+    margin-top: 0.3rem;
+    letter-spacing: 1px;
+    text-shadow: 0 0 8px var(--cyber-accent);
+    filter: brightness(1.15) saturate(1.2);
+    transition: transform 0.2s cubic-bezier(.4,2,.6,1);
+}
+.cyber-badge:hover {
+    transform: scale(1.08) rotate(-2deg);
+    box-shadow: 0 0 24px 0 var(--cyber-accent), 0 0 0 2px var(--cyber-primary);
+}
+
+/* PERMISOS GRID PREMIUM */
+.permissions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Ahora siempre dos columnas */
+    gap: 0.6rem;
+    max-height: 140px;
+    overflow-y: auto;
+    padding: 0.7rem;
+    background: linear-gradient(120deg, rgba(0,255,255,0.10), rgba(255,0,255,0.10));
+    border-radius: 12px;
+    border: 1.5px solid var(--cyber-primary);
+    box-shadow: 0 0 12px 0 var(--cyber-primary);
+}
+.permission-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.7rem;
+    background: rgba(0,255,255,0.09);
+    border: 1.5px solid rgba(0,255,255,0.25);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(.4,2,.6,1);
+    font-size: 0.97rem;
+    min-height: 36px;
+    box-shadow: 0 0 8px 0 var(--cyber-secondary);
+    position: relative;
+    z-index: 1;
+}
+.permission-checkbox-item:hover {
+    background: rgba(0,255,255,0.18);
+    border-color: var(--cyber-accent);
+    box-shadow: 0 0 16px 0 var(--cyber-accent);
+    transform: scale(1.04);
+    z-index: 2;
+}
+.cyber-checkbox-small {
+    width: 18px;
+    height: 18px;
+    appearance: none;
+    background: rgba(0,0,0,0.6);
+    border: 2.5px solid var(--cyber-primary);
+    border-radius: 4px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(.4,2,.6,1);
+    flex-shrink: 0;
+    box-shadow: 0 0 8px 0 var(--cyber-primary);
+}
+.cyber-checkbox-small:checked {
+    background: var(--cyber-primary);
+    border-color: var(--cyber-secondary);
+    box-shadow: 0 0 16px var(--cyber-accent), 0 0 0 2px var(--cyber-primary);
+}
+.cyber-checkbox-small:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #000;
+    font-weight: bold;
+    font-size: 12px;
+    text-shadow: 0 0 8px var(--cyber-accent);
+}
+.permission-label {
+    color: #fff;
+    font-weight: 700;
+    text-shadow: 0 0 8px var(--cyber-primary);
+    line-height: 1.2;
+    word-break: break-word;
+    flex: 1;
+    letter-spacing: 0.5px;
+}
+
+/* ESTILO DE MENSAJES CON GLASSMORPHISM Y NEÓN */
+.message-alert-cyber {
+    position: relative;
+    margin: 1.2rem 0 1.2rem 0;
+    padding: 1.6rem 1.2rem 1.2rem 1.2rem;
+    border-radius: 18px;
+    backdrop-filter: blur(12px) saturate(180%);
+    border: 2.5px solid var(--cyber-primary);
+    box-shadow: 0 0 24px 0 var(--cyber-accent), 0 0 0 2px var(--cyber-primary);
+    background: linear-gradient(120deg, rgba(0,255,255,0.18), rgba(255,0,255,0.13), rgba(0,0,0,0.7));
+    animation: cyberSlideIn 0.7s cubic-bezier(.4,2,.6,1);
+    overflow: hidden;
+    z-index: 1001;
+}
+@keyframes cyberSlideIn {
+    from { opacity: 0; transform: translateX(80px) scale(0.95); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+.message-success {
+    border-color: var(--cyber-success);
+    background: linear-gradient(120deg, rgba(0,255,136,0.18), rgba(0,255,255,0.10), rgba(0,0,0,0.7));
+    color: var(--cyber-success);
+    box-shadow: 0 0 24px 0 var(--cyber-success), 0 0 0 2px var(--cyber-primary);
+}
+.message-error {
+    border-color: var(--cyber-error);
+    background: linear-gradient(120deg, rgba(255,0,102,0.18), rgba(255,0,255,0.10), rgba(0,0,0,0.7));
+    color: var(--cyber-error);
+    box-shadow: 0 0 24px 0 var(--cyber-error), 0 0 0 2px var(--cyber-primary);
+}
+.message-warning {
+    border-color: var(--cyber-warning);
+    background: linear-gradient(120deg, rgba(255,153,0,0.18), rgba(0,255,255,0.10), rgba(0,0,0,0.7));
+    color: var(--cyber-warning);
+    box-shadow: 0 0 24px 0 var(--cyber-warning), 0 0 0 2px var(--cyber-primary);
+}
+.message-info {
+    border-color: var(--cyber-primary);
+    background: linear-gradient(120deg, rgba(0,255,255,0.18), rgba(255,0,255,0.10), rgba(0,0,0,0.7));
+    color: var(--cyber-primary);
+    box-shadow: 0 0 24px 0 var(--cyber-primary), 0 0 0 2px var(--cyber-secondary);
+}
+.message-content-cyber {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.2rem;
+}
+.message-body-cyber {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+}
+.icon-circle-cyber {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.4);
+    border: 2.5px solid currentColor;
+    box-shadow: 0 0 16px 0 var(--cyber-primary);
+    font-size: 2.1rem;
+}
+.close-btn-cyber {
+    background: none;
+    border: none;
+    color: currentColor;
+    cursor: pointer;
+    font-size: 1.5rem;
+    padding: 0.7rem;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(.4,2,.6,1);
+    box-shadow: 0 0 8px 0 var(--cyber-primary);
+}
+.close-btn-cyber:hover {
+    background: rgba(255,255,255,0.12);
+    transform: scale(1.13);
+    color: var(--cyber-accent);
+}
+.progress-bar-cyber {
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 100%; height: 4px;
+    background: linear-gradient(90deg, var(--cyber-primary), var(--cyber-secondary), var(--cyber-accent));
+    border-radius: 0 0 12px 12px;
+    animation: cyberBar 5s linear forwards;
+    box-shadow: 0 0 8px 0 var(--cyber-accent);
+}
+@keyframes cyberBar {
+    from { width: 100%; opacity: 1; }
+    to   { width: 0%; opacity: 0.7; }
+}
+</style>
+{% endblock %}

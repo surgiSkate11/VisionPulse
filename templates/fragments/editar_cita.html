@@ -1,0 +1,72 @@
+<!-- Modal premium reutilizable para formularios (fragment) -->
+<div id="modal-premium" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 hidden">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full relative premium-form-card animate__animated animate__fadeInDown" style="padding:0;">
+    <button id="cerrar-modal-premium" type="button" class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-red-500 transition-all z-10"><i class="fas fa-times"></i></button>
+    <div id="modal-premium-content" class="p-0">
+      <div class="flex justify-center items-center min-h-[300px] text-gray-400"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
+    </div>
+  </div>
+</div>
+<script>
+// Modal premium reutilizable
+window.abrirModalPremium = function(url, onSuccess) {
+  const modal = document.getElementById('modal-premium');
+  const content = document.getElementById('modal-premium-content');
+  modal.classList.remove('hidden');
+  content.innerHTML = '<div class="flex justify-center items-center min-h-[300px] text-gray-400"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>';
+  fetch(url)
+    .then(r => r.text())
+    .then(html => {
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+      const form = temp.querySelector('form');
+      if (form) {
+        content.innerHTML = '';
+        content.appendChild(form);
+      } else {
+        content.innerHTML = '<div class="p-8 text-center text-danger">No se pudo cargar el formulario.</div>';
+      }
+    })
+    .catch(() => {
+      content.innerHTML = '<div class="p-8 text-center text-danger">Error al cargar el formulario.</div>';
+    });
+  // Cerrar modal
+  document.getElementById('cerrar-modal-premium').onclick = function() {
+    modal.classList.add('hidden');
+  };
+  window.addEventListener('click', function(e) {
+    if (!modal.classList.contains('hidden') && e.target === modal) modal.classList.add('hidden');
+  });
+  // Intercepta el submit del form en el modal
+  window.addEventListener('submit', function(e) {
+    if (!modal.classList.contains('hidden') || (e.target.closest('#modal-premium-content'))) {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+      fetch(form.action, {
+        method: 'POST',
+        body: data,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(r => r.text())
+      .then(html => {
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        const newForm = temp.querySelector('form');
+        if (newForm) {
+          content.innerHTML = '';
+          content.appendChild(newForm);
+        } else {
+          modal.classList.add('hidden');
+          if (typeof onSuccess === 'function') onSuccess();
+          else window.location.reload();
+        }
+      })
+      .catch(() => {
+        modal.classList.add('hidden');
+        window.location.reload();
+      });
+    }
+  }, true);
+};
+</script>

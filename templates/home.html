@@ -1,0 +1,1214 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dashboard de Salud Visual | VisionPulse{% endblock %}
+{% block content %}
+<div class="premium-welcome-card">
+  <div class="premium-welcome-bg"></div>
+  <div class="premium-welcome-content">
+    <div class="premium-welcome-title">
+      <i class="fas fa-eye premium-crown" style="color: var(--primary-health);"></i>
+      ¡Bienvenido, <span class="premium-user-name">{{ user.first_name|default:user.username|default:"Usuario" }}</span>!
+    </div>
+    <div class="premium-welcome-desc">
+      <span class="premium-highlight">VisionPulse</span> te ayuda a cuidar tu salud visual durante el trabajo.<br>
+      <span class="premium-highlight">Monitoreo inteligente</span>, <span class="premium-highlight">ejercicios personalizados</span> y <span class="premium-highlight">alertas de descanso</span> para proteger tus ojos.<br>
+      <span class="premium-quote">“Cuida tus ojos hoy para ver mejor mañana.”</span>
+    </div>
+  </div>
+  {% if user.is_superuser %}
+  <div class="premium-welcome-badge">
+    <i class="fas fa-shield-alt"></i> Usuario Administrador
+  </div>
+  {% endif %}
+</div>
+<style>
+.premium-welcome-card {
+  position: relative;
+  background: linear-gradient(120deg, #6366f1 60%, #22d3ee 100%);
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 40px 0 rgba(99,102,241,0.22);
+  padding: 2.7rem 2.5rem 2.2rem 2.5rem;
+  margin-bottom: 2.9rem;
+  overflow: hidden;
+  color: #fff;
+  animation: fadeIn 1.1s cubic-bezier(.4,2,.3,1);
+  border: 2.5px solid #ffd700;
+  text-align: center;
+}
+.premium-welcome-bg {
+  position: absolute;
+  top: -40px;
+  right: -60px;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, #fff 0%, #6366f1 60%, transparent 100%);
+  opacity: 0.11;
+  z-index: 0;
+}
+.premium-welcome-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.premium-welcome-title {
+  font-size: 2.3rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  margin-bottom: 0.7rem;
+  color: #fff;
+  text-shadow: 0 2px 16px #6366f1cc;
+  justify-content: center;
+}
+.premium-crown {
+  color: #ffd700;
+  font-size: 2.7rem;
+  filter: drop-shadow(0 2px 8px #ffe066);
+  animation: crownPop 1.8s infinite;
+}
+.premium-user-name {
+  color: #fff;
+  font-weight: 800;
+  background: linear-gradient(90deg, #ffd700 0%, #ffe066 60%, #6366f1 100%);
+  border-radius: 0.8rem;
+  padding: 0.13rem 0.9rem;
+  margin-left: 0.2rem;
+  box-shadow: 0 2px 16px #ffe066, 0 2px 8px #ffd70099;
+  font-size: 2.1rem;
+  display: inline-block;
+  border: 2px solid #ffd700;
+  text-shadow: 0 2px 8px #000a, 0 1px 0 #ffe066;
+  letter-spacing: 0.5px;
+  filter: drop-shadow(0 0 8px #ffe066cc);
+  transition: box-shadow 0.18s, border-color 0.18s;
+}
+.premium-user-name:hover {
+  box-shadow: 0 4px 24px #ffd700cc, 0 2px 16px #ffe066;
+  border-color: #fff7b2;
+}
+.premium-welcome-desc {
+  font-size: 1.22rem;
+  font-weight: 500;
+  color: #fff;
+  margin-bottom: 0.2rem;
+  line-height: 1.7;
+  text-align: center;
+  background: linear-gradient(120deg, rgba(30, 41, 59, 0.92) 80%, rgba(99, 102, 241, 0.18) 100%); /* Refuerza el fondo premium sin blur */
+  border-radius: 1.1rem;
+  box-shadow: 0 4px 24px 0 #11182755, 0 2px 16px #ffe066;
+  padding: 1.2rem 1.5rem 1.1rem 1.5rem;
+  border: 2px solid #ffd700;
+  backdrop-filter: blur(2.5px); /* Elimina el blur para evitar el salto al hacer scroll, pero mantiene el fondo premium */
+  /* Add a subtle gold glow for premium feel */
+  text-shadow: 0 2px 8px #000a, 0 1px 0 #e6c97a44;
+}
+.premium-welcome-desc .premium-highlight {
+  color: #fff;
+  background: linear-gradient(90deg, #ffd700 60%, #22d3ee 100%);
+  border-radius: 0.7rem;
+  padding: 0.13rem 0.7rem;
+  margin: 0 0.2rem;
+  box-shadow: 0 2px 8px #ffe066;
+  display: inline-block;
+  font-weight: 700;
+  text-shadow: 0 2px 8px #000a, 0 1px 0 #e6c97a44;
+}
+.premium-welcome-desc .premium-quote {
+  display: block;
+  margin-top: 1.1rem;
+  font-size: 1.08rem;
+  font-style: italic;
+  color: #fff7b2;
+  text-shadow: 0 2px 8px #000a, 0 1px 0 #e6c97a44;
+  background: rgba(99,102,241,0.18);
+  border-radius: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  border-left: 4px solid #ffd700;
+  border-right: 4px solid #22d3ee;
+}
+.premium-welcome-badge {
+  position: absolute;
+  top: 1.2rem;
+  right: 2.2rem;
+  background: linear-gradient(90deg, #ffd700 60%, #6366f1 100%);
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  padding: 0.4rem 1.3rem;
+  box-shadow: 0 2px 8px #e6c97a33;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  z-index: 2;
+  border: 2px solid #fffbe7;
+  animation: badgePop 1.8s infinite;
+}
+.premium-welcome-badge .fa-star {
+  color: #fffbe7;
+  font-size: 1.2rem;
+  filter: drop-shadow(0 2px 8px #e6c97a99);
+}
+@keyframes crownPop {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.13) rotate(-8deg); }
+}
+@keyframes badgePop {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.09) rotate(6deg); }
+}
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+    animation: fadeIn 1.1s cubic-bezier(.4,2,.3,1);
+  }
+  .widget-glass {
+    background: rgba(255,255,255,0.22);
+    border-radius: 1.1rem;
+    box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
+    border: 1.5px solid rgba(255,255,255,0.35);
+    padding: 2rem 1.5rem 1.5rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+    min-height: 170px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: box-shadow 0.22s, transform 0.22s;
+    animation: fadeIn 1.1s cubic-bezier(.4,2,.3,1);
+  }
+  .widget-glass:hover {
+    box-shadow: 0 12px 40px 0 #6366f144, 0 2px 16px #6366f133;
+    transform: translateY(-4px) scale(1.025);
+  }
+  .widget-title {
+    font-size: 1.13rem;
+    font-weight: 600;
+    color: #6366f1;
+    margin-bottom: 0.7rem;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .widget-value {
+    font-size: 2.1rem;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .widget-badge {
+    background: linear-gradient(90deg, #22d3ee 60%, #6366f1 100%);
+    color: #fff;
+    font-size: 0.93rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    padding: 0.13rem 0.8rem;
+    margin-left: 0.7rem;
+    animation: badgePop 1.8s infinite;
+    box-shadow: 0 2px 8px #6366f144;
+  }
+  .widget-icon {
+    font-size: 2.2rem;
+    color: #6366f1;
+    margin-right: 0.7rem;
+    filter: drop-shadow(0 2px 8px #6366f1aa);
+    animation: pulse 2.5s infinite;
+  }
+  .widget-trend-up {
+    color: #22c55e;
+    font-size: 1.2rem;
+    margin-left: 0.5rem;
+    animation: badgePop 1.8s infinite;
+  }
+  .widget-trend-down {
+    color: #ef4444;
+    font-size: 1.2rem;
+    margin-left: 0.5rem;
+    animation: badgePop 1.8s infinite;
+  }
+  /* ========== PREMIUM FUTURISTIC ANATOMY SECTION ========== */
+.anatomy-card {
+  background: linear-gradient(135deg, rgba(20, 30, 48, 0.98) 0%, rgba(36, 54, 89, 0.96) 100%);
+  border-radius: 2rem;
+  box-shadow: 0 24px 64px 0 rgba(99,102,241,0.25), 0 8px 32px 0 rgba(31,38,135,0.18);
+  border: 2.5px solid #6366f1;
+  padding: 2.7rem 2.2rem 2.2rem 2.2rem;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  animation: fadeIn 1.1s cubic-bezier(.4,2,.3,1);
+}
+.anatomy-card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(60deg, #6366f1 0%, #22d3ee 40%, #fbbf24 80%, #e91e63 100%);
+  border-radius: 2rem;
+  z-index: -1;
+  filter: blur(8px) brightness(1.1);
+  opacity: 0.7;
+  animation: borderGlow 4s linear infinite;
+}
+.anatomy-toolbar {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  z-index: 10;
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  justify-content: center;
+}
+.anatomy-btn, #maleBtn, #femaleBtn {
+  flex: 1;
+  background: linear-gradient(135deg, #232946 60%, #6366f1 100%);
+  border: 2.5px solid transparent;
+  border-radius: 1.2rem;
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding: 1.1rem 1.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.13);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+#maleBtn {
+  background: linear-gradient(135deg, #6366f1 60%, #22d3ee 100%);
+  border-color: #6366f1;
+}
+#femaleBtn {
+  background: linear-gradient(135deg, #e91e63 60%, #fbbf24 100%);
+  border-color: #e91e63;
+}
+#maleBtn.active, .anatomy-btn.active.male {
+  transform: scale(1.07);
+  border-color: #6366f1;
+  box-shadow: 0 8px 30px #6366f1cc, 0 4px 20px #22d3ee99;
+}
+#femaleBtn.active, .anatomy-btn.active.female {
+  transform: scale(1.07);
+  border-color: #e91e63;
+  box-shadow: 0 8px 30px #e91e63cc, 0 4px 20px #fbbf2499;
+}
+#maleBtn i, #femaleBtn i {
+  font-size: 1.4rem;
+  filter: drop-shadow(0 2px 4px #fff2);
+}
+#anatomyViewer {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 340px;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  position: relative;
+  z-index: 5;
+  background: linear-gradient(135deg, rgba(255,255,255,0.13) 0%, rgba(99,102,241,0.07) 100%);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid #6366f1;
+  box-shadow: 0 10px 30px #6366f1aa, 0 2px 8px #22d3ee33;
+}
+.body-svg {
+  width: 220px !important;
+  height: 380px !important;
+  max-width: 100%;
+  max-height: 100%;
+  background: #fff;
+  border-radius: 1.2rem;
+  border: 2.5px solid #6366f1;
+  display: block;
+  margin: 0 auto;
+  box-shadow: 0 8px 32px #6366f122, 0 2px 8px #22d3ee33;
+  transition: box-shadow 0.3s, border-color 0.3s;
+}
+#maleBtn.active ~ #anatomyViewer .body-svg {
+  border-color: #6366f1;
+  box-shadow: 0 0 30px #6366f1cc;
+}
+#femaleBtn.active ~ #anatomyViewer .body-svg {
+  border-color: #e91e63;
+  box-shadow: 0 0 30px #e91e63cc;
+}
+#diseasesPanel {
+  margin-top: 2rem;
+  padding: 2rem 2rem 1.5rem 2rem;
+  border-radius: 1.5rem;
+  background: linear-gradient(135deg, rgba(36, 54, 89, 0.97) 0%, rgba(99, 102, 241, 0.13) 100%);
+  backdrop-filter: blur(18px);
+  border: 1.5px solid #6366f1;
+  box-shadow: 0 20px 60px #6366f122, 0 8px 32px #22d3ee22;
+  position: relative;
+  overflow: hidden;
+  z-index: 10;
+  width: 100%;
+  max-width: 600px;
+}
+#diseasesPanelTitle {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  text-shadow: 0 2px 10px #6366f1cc;
+  letter-spacing: 0.5px;
+  position: relative;
+}
+#diseasesPanelTitle::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, #6366f1, #22d3ee);
+  border-radius: 2px;
+}
+.disease-item {
+  background: linear-gradient(135deg, rgba(255,255,255,0.13) 0%, rgba(99,102,241,0.07) 100%);
+  border: 1.5px solid #6366f1;
+  border-radius: 1.1rem;
+  padding: 1.3rem 1.2rem;
+  margin-bottom: 1.1rem;
+  backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  animation: slideInUp 0.6s ease-out;
+}
+.disease-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #6366f1, #22d3ee);
+  transition: width 0.3s ease;
+}
+.disease-item:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 15px 40px #6366f144;
+  border-color: #22d3ee;
+}
+.disease-item:hover::before {
+  width: 100%;
+  opacity: 0.08;
+}
+.disease-name {
+  font-size: 1.22rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 0.7rem;
+  text-shadow: 0 2px 8px #6366f1cc;
+}
+.disease-desc {
+  font-size: 1.02rem;
+  color: #cbd5e1;
+  line-height: 1.6;
+  text-shadow: 0 1px 4px #6366f1aa;
+}
+.anatomy-footer {
+  font-size: 1.13rem;
+  color: #94a3b8;
+  margin-top: 1.7rem;
+  text-align: center;
+  font-weight: 500;
+  text-shadow: 0 2px 8px #6366f1aa;
+  z-index: 10;
+  position: relative;
+}
+/* ========== PREMIUM CHART CARD ========== */
+.premium-chart-card {
+  background: linear-gradient(145deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 2rem;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.1);
+  position: relative;
+  overflow: hidden;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.premium-chart-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 35px 70px -12px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.15), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.premium-chart-card::before {
+  content: '';
+  position: absolute;
+  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #f5576c, #4facfe, #00f2fe);
+  background-size: 300% 300%;
+  border-radius: 2rem;
+  z-index: -1;
+  animation: gradientRotate 8s ease infinite;
+}
+.chart-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 2rem;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  position: relative;
+}
+.chart-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 2px;
+}
+.chart-container {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  min-width: 200px;
+  min-height: 200px;
+  margin: 2rem 0;
+}
+#pieChart {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50%;
+  background: transparent !important;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.8);
+  border: 3px solid rgba(255,255,255,0.3);
+  animation: chartGlow 3s ease-in-out infinite alternate;
+  display: block;
+}
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  justify-content: center;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 2rem;
+  padding: 0.8rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  transition: all 0.3s ease;
+}
+.legend-item:hover {
+  transform: translateY(-2px);
+  background: rgba(255,255,255,0.25);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+.legend-dot {
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.8);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  animation: pulse 2s infinite;
+}
+/* ========== PREMIUM ANATOMY CARD ========== */
+.premium-anatomy-card {
+  background: linear-gradient(145deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 2rem;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.1);
+  position: relative;
+  overflow: hidden;
+  min-height: 700px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.premium-anatomy-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 35px 70px -12px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.15), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.premium-anatomy-card::before {
+  content: '';
+  position: absolute;
+  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7, #dda0dd);
+  background-size: 300% 300%;
+  border-radius: 2rem;
+  z-index: -1;
+  animation: gradientRotate 6s ease infinite;
+}
+.anatomy-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 2rem;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  position: relative;
+}
+.anatomy-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+  border-radius: 2px;
+}
+.anatomy-toolbar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+}
+.anatomy-btn {
+  flex: 1;
+  max-width: 200px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%);
+  backdrop-filter: blur(15px);
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 1.5rem;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.anatomy-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+}
+.anatomy-btn.active {
+  background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+  border-color: #fff;
+  transform: scale(1.05);
+  box-shadow: 0 15px 40px rgba(102,126,234,0.4);
+}
+.anatomy-btn i {
+  font-size: 1.4rem;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+#anatomyViewer {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  border-radius: 1.5rem;
+  background: linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255,255,255,0.3);
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 10px 30px rgba(0,0,0,0.1);
+  position: relative;
+  overflow: hidden;
+}
+.body-svg {
+  width: 280px !important;
+  height: 350px !important;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  animation: anatomyFloat 6s ease-in-out infinite;
+}
+.body-svg:hover {
+  transform: scale(1.05);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+}
+#diseasesPanel {
+  margin-top: 2rem;
+  padding: 2rem;
+  border-radius: 1.5rem;
+  background: linear-gradient(145deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%);
+  backdrop-filter: blur(15px);
+  border: 2px solid rgba(255,255,255,0.2);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  max-height: 300px;
+  overflow-y: auto;
+}
+#diseasesPanelTitle {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+.disease-item {
+  background: linear-gradient(145deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+  animation: slideInUp 0.6s ease-out;
+}
+.disease-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+  background: linear-gradient(145deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.1) 100%);
+}
+.disease-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.disease-desc {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.6;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.hidden { display: none !important; }
+@keyframes gradientRotate {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes chartGlow {
+  0% { box-shadow: 0 20px 40px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.8); }
+  100% { box-shadow: 0 25px 50px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.9); }
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+@keyframes anatomyFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 1024px) {
+  .dashboard-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .chart-container { width: 250px; height: 250px; }
+  .body-svg { width: 220px !important; height: 280px !important; }
+  .premium-anatomy-card { min-height: 600px; }
+}
+@media (max-width: 768px) {
+  .premium-chart-card, .premium-anatomy-card { padding: 2rem 1.5rem; }
+  .chart-title, .anatomy-title { font-size: 1.5rem; }
+  .chart-container { width: 200px; height: 200px; }
+  .body-svg { width: 180px !important; height: 240px !important; }
+  .anatomy-toolbar { flex-direction: column; gap: 0.5rem; }
+  .anatomy-btn { max-width: 100%; }
+}
+  .quick-actions {
+    display: flex;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.5rem;
+    animation: fadeIn 1.1s cubic-bezier(.4,2,.3,1);
+  }
+  .quick-btn {
+    background: rgba(255,255,255,0.22);
+    border-radius: 1.1rem;
+    box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
+    border: 1.5px solid rgba(255,255,255,0.35);
+    color: #6366f1;
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 1.1rem 2.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    cursor: pointer;
+    transition: box-shadow 0.22s, transform 0.22s, background 0.18s;
+    position: relative;
+    outline: none;
+    border: none;
+    animation: fadeIn 1.1s cubic-bezier(.4,2,.3,1);
+  }
+  .quick-btn:focus {
+    box-shadow: 0 0 0 2px #6366f1;
+  }
+  .quick-btn:hover {
+    background: rgba(99,102,241,0.09);
+    color: #2563eb;
+    box-shadow: 0 12px 40px 0 #6366f144, 0 2px 16px #6366f133;
+    transform: translateY(-4px) scale(1.025);
+  }
+  .quick-btn .fa {
+    font-size: 1.5rem;
+    animation: pulse 2.5s infinite;
+  }
+  /* Info cards */
+  .info-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    animation: fadeIn 1.1s cubic-bezier(.4,2,.3,1);
+  }
+  .info-card {
+    background: rgba(255,255,255,0.22);
+    border-radius: 1.1rem;
+    box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
+    border: 1.5px solid rgba(255,255,255,0.35);
+    padding: 1.5rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+    animation: fadeIn 1.1s cubic-bezier(.4,2,.3,1);
+    transition: box-shadow 0.22s, transform 0.22s;
+  }
+  .info-card:hover {
+    box-shadow: 0 12px 40px 0 #6366f144, 0 2px 16px #6366f133;
+    transform: translateY(-4px) scale(1.025);
+  }
+  .info-icon {
+    font-size: 2.1rem;
+    color: #6366f1;
+    filter: drop-shadow(0 2px 8px #6366f1aa);
+    animation: pulse 2.5s infinite;
+  }
+  .info-content {
+    flex-grow: 1;
+  }
+  .info-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #6366f1;
+    margin-bottom: 0.3rem;
+  }
+  .info-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #111827;
+  }
+  .info-badge {
+    background: linear-gradient(90deg, #6366f1 60%, #2563eb 100%);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    padding: 0.13rem 0.7rem;
+    margin-left: 0.7rem;
+    animation: badgePop 1.8s infinite;
+    box-shadow: 0 2px 8px #6366f144;
+  }
+  /* Premium module cards */
+  .module-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+    animation: fadeIn 1.1s cubic-bezier(.4,2,.3,1);
+  }
+  .module-card {
+    background: rgba(255,255,255,0.22);
+    border-radius: 1.1rem;
+    box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
+    border: 1.5px solid rgba(255,255,255,0.35);
+    padding: 2rem 1.5rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 180px;
+    animation: fadeIn 1.1s cubic-bezier(.4,2,.3,1);
+    transition: box-shadow 0.22s, transform 0.22s;
+    position: relative;
+  }
+  .module-card:hover {
+    box-shadow: 0 12px 40px 0 #6366f144, 0 2px 16px #6366f133;
+    transform: translateY(-4px) scale(1.025);
+  }
+  .module-title {
+    font-size: 1.13rem;
+    font-weight: 700;
+    color: #6366f1;
+    margin-bottom: 0.7rem;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .module-desc {
+    font-size: 1.05rem;
+    color: #374151;
+    margin-bottom: 1.1rem;
+  }
+  .module-btn {
+    background: linear-gradient(90deg, #6366f1 60%, #2563eb 100%);
+    color: #fff;
+    font-size: 1.05rem;
+    font-weight: 700;
+    border-radius: 9999px;
+    padding: 0.7rem 1.7rem;
+    border: none;
+    box-shadow: 0 2px 8px #6366f144;
+    transition: box-shadow 0.18s, transform 0.18s, background 0.18s;
+    cursor: pointer;
+    outline: none;
+    animation: fadeIn 1.1s cubic-bezier(.4,2,.3,1);
+  }
+  .module-btn:focus {
+    box-shadow: 0 0 0 2px #6366f1;
+  }
+  .module-btn:hover {
+    background: linear-gradient(90deg, #2563eb 60%, #6366f1 100%);
+    box-shadow: 0 8px 32px 0 #6366f1aa;
+    transform: scale(1.05);
+  }
+  @media (max-width: 900px) {
+    .dashboard-grid, .module-cards {
+      grid-template-columns: 1fr;
+    }
+    .quick-actions {
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+  }
+</style>
+<div class="dashboard-grid">
+  <div class="widget-glass">
+    <div class="widget-title"><i class="fas fa-book widget-icon"></i>Cursos Completados</div>
+    <div class="widget-value">12 <span class="widget-badge">+2</span> <i class="fas fa-arrow-up widget-trend-up"></i></div>
+    <div style="font-size:0.95rem;color:#64748b;">Este año</div>
+  </div>
+  <div class="widget-glass">
+    <div class="widget-title"><i class="fas fa-user-graduate widget-icon"></i>Estudiantes Activos</div>
+    <div class="widget-value">320 <span class="widget-badge">+5%</span> <i class="fas fa-arrow-up widget-trend-up"></i></div>
+    <div style="font-size:0.95rem;color:#64748b;">Actualmente</div>
+  </div>
+  <div class="widget-glass">
+    <div class="widget-title"><i class="fas fa-calendar-check widget-icon"></i>Clases Programadas</div>
+    <div class="widget-value">58 <span class="widget-badge">-2%</span> <i class="fas fa-arrow-down widget-trend-down"></i></div>
+    <div style="font-size:0.95rem;color:#64748b;">Próximos 7 días</div>
+  </div>
+  <div class="widget-glass">
+    <div class="widget-title"><i class="fas fa-chalkboard-teacher widget-icon"></i>Docentes Activos</div>
+    <div class="widget-value">{{ total_teachers|default:0 }} <span class="widget-badge">Activos</span> <i class="fas fa-check widget-trend-up"></i></div>
+    <div style="font-size:0.95rem;color:#64748b;">En sistema</div>
+  </div>
+</div>
+{% if herramientas_menu %}
+  <div class="quick-actions">
+    {% for module_permission in herramientas_menu.group_module_permission_list %}
+      <a href="{% if module_permission.module.url %}{{ module_permission.module.url }}{% else %}#{% endif %}" class="quick-btn">
+        {% if module_permission.module.icon %}
+          <i class="{{ module_permission.module.icon }}"></i>
+        {% else %}
+          <i class="fas fa-cube"></i>
+        {% endif %}
+        {{ module_permission.module.name }}
+      </a>
+    {% empty %}
+      <span class="text-gray-400">No hay módulos disponibles en este menú</span>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="quick-actions">
+    <span class="text-gray-400">No hay menú de Herramientas disponible</span>
+  </div>
+{% endif %}
+<div class="info-cards">
+  <div class="info-card">
+    <i class="fas fa-book-open info-icon"></i>
+    <div class="info-content">
+      <div class="info-title">Tareas Entregadas</div>
+      <div class="info-value">27 <span class="info-badge">Hoy</span></div>
+    </div>
+  </div>
+  <div class="info-card">
+    <i class="fas fa-users info-icon"></i>
+    <div class="info-content">
+      <div class="info-title">Participación en Foros</div>
+      <div class="info-value">124 <span class="info-badge">Semana</span></div>
+    </div>
+  </div>
+  <div class="info-card">
+    <i class="fas fa-user-tie info-icon"></i>
+    <div class="info-content">
+      <div class="info-title">Docentes Activos</div>
+      <div class="info-value">5 <span class="info-badge">Turno</span></div>
+    </div>
+  </div>
+  <div class="info-card">
+    <i class="fas fa-graduation-cap info-icon"></i>
+    <div class="info-content">
+      <div class="info-title">Alumnos Graduados</div>
+      <div class="info-value">68 <span class="info-badge">Año</span></div>
+    </div>
+  </div>
+</div>
+<div class="dashboard-grid">
+  <!-- PREMIUM CHART CARD -->
+  <div class="chart-card premium-chart-card">
+    <div class="chart-title">
+      <i class="fas fa-chart-pie" style="margin-right: 0.5rem;"></i>
+      Distribución de Estudiantes
+    </div>
+    <div class="chart-container" style="width:300px;height:300px;min-width:200px;min-height:200px;">
+      <canvas id="pieChart" width="300" height="300" aria-label="Distribución de estudiantes" role="img" style="width:100%;height:100%;display:block;"></canvas>
+    </div>
+    <div class="chart-legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background: linear-gradient(135deg, #667eea, #764ba2);"></div>
+        <span>Primaria</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: linear-gradient(135deg, #f093fb, #f5576c);"></div>
+        <span>Secundaria</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: linear-gradient(135deg, #4facfe, #00f2fe);"></div>
+        <span>Universidad</span>
+      </div>
+    </div>
+  </div>
+  <!-- PREMIUM ANATOMY CARD -->
+    <div class="academic-map-card premium-academic-map-card">
+    <div class="academic-map-title">
+      <i class="fas fa-lightbulb" style="margin-right: 0.5rem;"></i>
+      Mapa de Áreas Académicas
+    </div>
+    <div class="academic-map-toolbar">
+      <button id="stemBtn" class="academic-map-btn active">
+        <i class="fas fa-atom"></i>
+        <span>STEM</span>
+      </button>
+      <button id="humanBtn" class="academic-map-btn">
+        <i class="fas fa-landmark"></i>
+        <span>Humanidades</span>
+      </button>
+    </div>
+    <div id="academicMapViewer">
+      <object id="svgObject" data="{% static 'img/stem.svg' %}" type="image/svg+xml" class="area-svg" style="width:280px;height:350px;max-width:100%;max-height:100%;background:#fff;border-radius:1rem;display:block;"></object>
+    </div>
+    <div id="topicsPanel" class="hidden">
+      <div id="topicsPanelTitle">Temas Destacados</div>
+      <div id="topicsList"></div>
+    </div>
+  </div>
+</div>
+
+{% if tools_menu %}
+  <div class="module-cards mt-12">
+    {% for module_permission in tools_menu.group_module_permission_list %}
+      <div class="module-card">
+        <div class="module-title">
+          <i class="fas fa-toolbox"></i>
+          {{ module_permission.module.name|default:'Tool' }}
+        </div>
+        <div class="module-desc">
+          {{ module_permission.module.description|default:'No description available.' }}
+        </div>
+        <a href="{% if module_permission.module.url %}{{ module_permission.module.url }}{% else %}#{% endif %}" class="module-btn">
+          <i class="fas fa-arrow-right"></i> Ir al módulo
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<script id="pacientes-stats-json" type="application/json">{"adultos": {{ pacientes_adultos|default:0|escapejs }}, "ninos": {{ pacientes_ninos|default:0|escapejs }}, "mayores": {{ pacientes_mayores|default:0|escapejs }}}</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// PREMIUM PIE CHART
+const pacientesStats = JSON.parse(document.getElementById('pacientes-stats-json').textContent);
+const ctx = document.getElementById('pieChart').getContext('2d');
+const pieChart = new Chart(ctx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Adultos', 'Niños', 'Adultos Mayores'],
+    datasets: [{
+      data: [pacientesStats.adultos, pacientesStats.ninos, pacientesStats.mayores],
+      backgroundColor: [
+        'rgba(102, 126, 234, 0.8)',
+        'rgba(240, 147, 251, 0.8)',
+        'rgba(79, 172, 254, 0.8)'
+      ],
+      borderColor: [
+        'rgba(102, 126, 234, 1)',
+        'rgba(240, 147, 251, 1)',
+        'rgba(79, 172, 254, 1)'
+      ],
+      borderWidth: 3,
+      hoverOffset: 15,
+      cutout: '40%'
+    }]
+  },
+  options: {
+    responsive: false, // Cambiado a false para forzar tamaño fijo
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleColor: 'white',
+        bodyColor: 'white',
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderWidth: 1,
+        cornerRadius: 10,
+        displayColors: true,
+        callbacks: {
+          label: function(context) {
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = ((context.parsed * 100) / total).toFixed(1);
+            return `${context.label}: ${context.parsed} (${percentage}%)`;
+          }
+        }
+      }
+    },
+    animation: {
+      animateScale: true,
+      animateRotate: true,
+      duration: 2000,
+      easing: 'easeInOutQuart'
+    }
+  }
+});
+// PREMIUM KNOWLEDGE MAP INTERACTIVITY
+const academicTopicsData = {
+  stem: [
+    { name: "Matemáticas", desc: "Álgebra, geometría, cálculo y estadística para resolver problemas y analizar datos." },
+    { name: "Física", desc: "Estudio de las leyes del universo, movimiento, energía y materia." },
+    { name: "Química", desc: "Composición, estructura y transformación de la materia." },
+    { name: "Biología", desc: "Ciencia de la vida, organismos y ecosistemas." },
+    { name: "Tecnología", desc: "Innovación, informática y robótica aplicadas al aprendizaje." }
+  ],
+  humanities: [
+    { name: "Historia", desc: "Estudio de los procesos históricos y su impacto en la sociedad actual." },
+    { name: "Lengua y Literatura", desc: "Análisis de obras literarias, géneros y autores destacados." },
+    { name: "Filosofía", desc: "Reflexión sobre el pensamiento, la ética y la existencia humana." },
+    { name: "Arte", desc: "Expresión artística, pintura, escultura, música y teatro." },
+    { name: "Ciencias Sociales", desc: "Sociología, psicología, economía y política." }
+  ]
+};
+const stemBtn = document.getElementById('stemBtn');
+const humanBtn = document.getElementById('humanBtn');
+const academicMapViewer = document.getElementById('academicMapViewer');
+const topicsPanel = document.getElementById('topicsPanel');
+const topicsPanelTitle = document.getElementById('topicsPanelTitle');
+const topicsList = document.getElementById('topicsList');
+let currentArea = null;
+const stemImg = "{% static 'img/stem.svg' %}";
+const humanImg = "{% static 'img/humanities.svg' %}";
+function showSTEM() {
+  if (currentArea === 'stem') return;
+  currentArea = 'stem';
+  stemBtn.classList.add('active');
+  humanBtn.classList.remove('active');
+  academicMapViewer.innerHTML = `<object id='svgObject' data='${stemImg}?v=${Date.now()}' type='image/svg+xml' class='area-svg' style='width:280px;height:350px;max-width:100%;max-height:100%;background:#fff;border-radius:1rem;display:block;'></object>`;
+  setTimeout(() => {
+    const svgObj = document.getElementById('svgObject');
+    if (svgObj && !svgObj.contentDocument) {
+      svgObj.outerHTML = '<div style="color:#6366f1;text-align:center;font-size:2rem;">No se encontró la imagen de STEM.</div>';
+    }
+  }, 1000);
+  topicsPanel.classList.remove('hidden');
+  topicsPanel.style.display = 'block';
+  topicsPanelTitle.textContent = 'Temas Destacados de STEM';
+  loadAcademicTopics('stem');
+}
+function showHumanities() {
+  if (currentArea === 'humanities') return;
+  currentArea = 'humanities';
+  humanBtn.classList.add('active');
+  stemBtn.classList.remove('active');
+  academicMapViewer.innerHTML = `<object id='svgObject' data='${humanImg}?v=${Date.now()}' type='image/svg+xml' class='area-svg' style='width:280px;height:350px;max-width:100%;max-height:100%;background:#fff;border-radius:1rem;display:block;'></object>`;
+  setTimeout(() => {
+    const svgObj = document.getElementById('svgObject');
+    if (svgObj && !svgObj.contentDocument) {
+      svgObj.outerHTML = '<div style="color:#e91e63;text-align:center;font-size:2rem;">No se encontró la imagen de Humanidades.</div>';
+    }
+  }, 1000);
+  topicsPanel.classList.remove('hidden');
+  topicsPanel.style.display = 'block';
+  topicsPanelTitle.textContent = 'Temas Destacados de Humanidades';
+  loadAcademicTopics('humanities');
+}
+document.addEventListener('DOMContentLoaded', function() {
+  showSTEM();
+  topicsPanel.classList.remove('hidden');
+  topicsPanel.style.display = 'block';
+});
+function loadAcademicTopics(area) {
+  const topics = academicTopicsData[area];
+  topicsList.innerHTML = '';
+  topics.forEach((topic, index) => {
+    const topicItem = document.createElement('div');
+    topicItem.className = 'disease-item';
+    topicItem.style.animationDelay = `${index * 0.1}s`;
+    topicItem.innerHTML = `
+      <div class="disease-name">${topic.name}</div>
+      <div class="disease-desc">${topic.desc}</div>
+    `;
+    topicsList.appendChild(topicItem);
+  });
+  topicsPanel.classList.remove('hidden');
+  topicsPanel.style.display = 'block';
+}
+stemBtn.addEventListener('click', showSTEM);
+humanBtn.addEventListener('click', showHumanities);
+// Parallax effect for premium cards
+window.addEventListener('mousemove', function(e) {
+  const cards = document.querySelectorAll('.premium-chart-card, .premium-anatomy-card');
+  const mouseX = e.clientX / window.innerWidth;
+  const mouseY = e.clientY / window.innerHeight;
+  cards.forEach((card, index) => {
+    const intensity = (index + 1) * 0.5;
+    const xOffset = (mouseX - 0.5) * intensity;
+    const yOffset = (mouseY - 0.5) * intensity;
+    card.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
+  });
+});
+{% endblock %}

@@ -1,0 +1,69 @@
+{# Formulario de creación de cita premium, listo para AJAX y modal #}
+<form method="post" action="{% url 'doctor:cita_create_calendario' %}" class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 relative border-2 border-purple-200 animate-fade-in" autocomplete="off" id="form-crear-cita">
+  {% csrf_token %}
+  <input type="hidden" name="hora" value="{{ form.initial.hora_cita|default:request.GET.hora }}">
+  <input type="hidden" name="fecha" value="{{ form.initial.fecha|default:request.GET.fecha }}">
+  <button type="button" class="absolute top-4 right-4 text-gray-400 hover:text-purple-600 text-2xl transition" onclick="cerrarModalCrearCita()">
+    <i class="fas fa-times"></i>
+  </button>
+  <h2 class="text-2xl font-extrabold mb-4 text-purple-700 flex items-center gap-2 drop-shadow">
+    <i class="fas fa-calendar-plus text-purple-500"></i> Nueva Cita
+  </h2>
+  {% if form.non_field_errors %}
+    <div class="mb-4 p-3 bg-red-100 text-red-700 rounded-xl text-sm">
+      {{ form.non_field_errors }}
+    </div>
+  {% endif %}
+  <div class="mb-4">
+    <label for="id_paciente" class="block font-semibold text-purple-700 mb-1">Paciente</label>
+    {{ form.paciente }}
+    {% if form.paciente.errors %}
+      <div class="text-red-600 text-xs mt-1">{{ form.paciente.errors }}</div>
+    {% endif %}
+  </div>
+  <div class="grid grid-cols-2 gap-4 mb-4">
+    <div>
+      <label for="id_fecha" class="block font-semibold text-purple-700 mb-1">Fecha</label>
+      {{ form.fecha }}
+      {% if form.fecha.errors %}
+        <div class="text-red-600 text-xs mt-1">{{ form.fecha.errors }}</div>
+      {% endif %}
+    </div>
+    <div>
+      <label for="id_hora_cita" class="block font-semibold text-purple-700 mb-1">Hora</label>
+      {{ form.hora_cita }}
+      {% if form.hora_cita.errors %}
+        <div class="text-red-600 text-xs mt-1">{{ form.hora_cita.errors }}</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="mb-4">
+    <label for="id_observaciones" class="block font-semibold text-purple-700 mb-1">Observaciones</label>
+    {{ form.observaciones }}
+    {% if form.observaciones.errors %}
+      <div class="text-red-600 text-xs mt-1">{{ form.observaciones.errors }}</div>
+    {% endif %}
+  </div>
+  <div class="flex justify-end gap-4 mt-6">
+    <button type="button" class="px-5 py-2 rounded-xl bg-gray-200 text-gray-700 font-bold shadow hover:bg-gray-300 transition" onclick="cerrarModalCrearCita()">
+      Cancelar
+    </button>
+    <button type="submit" class="px-5 py-2 rounded-xl bg-purple-500 text-white font-bold shadow hover:bg-purple-600 transition">
+      <i class="fas fa-save"></i> Guardar
+    </button>
+  </div>
+</form>
+<script>
+document.getElementById('form-crear-cita')?.addEventListener('submit', function(e) {
+  console.log('Enviando formulario de crear cita...');
+});
+</script>
+<style>
+@keyframes fade-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-fade-in {
+  animation: fade-in 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+</style>

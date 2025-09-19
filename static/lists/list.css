@@ -1,0 +1,623 @@
+/* ====================================================
+   LISTA PREMIUM - ESTILOS REUTILIZABLES
+   Diseño premium para tablas y listas con efectos aurora
+   ==================================================== */
+
+/* Efectos premium base */
+.floating-animation {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+}
+
+.neon-glow {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3),
+                 0 0 20px rgba(255, 255, 255, 0.2),
+                 0 0 30px rgba(255, 255, 255, 0.1);
+}
+
+/* ====================================================
+   TARJETAS DE ESTADÍSTICAS
+   ==================================================== */
+.stat-card {
+    text-align: center;
+    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1rem;
+    backdrop-filter: blur(16px);
+    width: 100%;
+    height: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.stat-number {
+    font-size: 1.75rem;
+    font-weight: bold;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    opacity: 0.9;
+    margin-bottom: 0;
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.1;
+}
+
+/* ====================================================
+   ESTILOS PREMIUM PARA SELECT Y FORMULARIOS
+   ==================================================== */
+.premium-select, 
+select.premium-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px !important;
+    cursor: pointer;
+}
+
+.premium-select option, 
+select.premium-select option {
+    background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.95) 100%);
+    color: #1e293b;
+    padding: 8px 12px;
+    font-weight: 500;
+    border: none;
+    margin: 2px 0;
+}
+
+.premium-select option:hover,
+.premium-select option:focus,
+select.premium-select option:hover,
+select.premium-select option:focus {
+    background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(34,211,238,0.1) 100%);
+    color: #6366f1;
+}
+
+.premium-select option:checked,
+select.premium-select option:checked {
+    background: linear-gradient(135deg, rgba(99,102,241,0.2) 0%, rgba(34,211,238,0.2) 100%);
+    color: #6366f1;
+    font-weight: 600;
+}
+
+/* Webkit specific styles for better option styling */
+.premium-select::-webkit-scrollbar,
+select.premium-select::-webkit-scrollbar {
+    width: 8px;
+}
+
+.premium-select::-webkit-scrollbar-track,
+select.premium-select::-webkit-scrollbar-track {
+    background: rgba(248,250,252,0.95);
+    border-radius: 4px;
+}
+
+.premium-select::-webkit-scrollbar-thumb,
+select.premium-select::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, rgba(99,102,241,0.3) 0%, rgba(34,211,238,0.3) 100%);
+    border-radius: 4px;
+}
+
+.premium-select::-webkit-scrollbar-thumb:hover,
+select.premium-select::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, rgba(99,102,241,0.5) 0%, rgba(34,211,238,0.5) 100%);
+}
+
+/* ====================================================
+   BOTONES DE ACCIÓN PREMIUM
+   ==================================================== */
+.premium-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.premium-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.premium-action-btn:active {
+    transform: translateY(0px);
+}
+
+/* Variantes de botones de acción */
+.btn-view {
+    background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(34,211,238,0.1) 100%);
+    border-color: rgba(99,102,241,0.2);
+    color: var(--aurora1);
+}
+
+.btn-view:hover {
+    border-color: var(--aurora1);
+    box-shadow: 0 8px 20px rgba(99,102,241,0.25);
+}
+
+.btn-edit {
+    background: linear-gradient(135deg, rgba(34,211,238,0.1) 0%, rgba(251,191,36,0.1) 100%);
+    border-color: rgba(34,211,238,0.2);
+    color: var(--aurora2);
+}
+
+.btn-edit:hover {
+    border-color: var(--aurora2);
+    box-shadow: 0 8px 20px rgba(34,211,238,0.25);
+}
+
+.btn-favorite {
+    background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,193,7,0.1) 100%);
+    border-color: rgba(255,215,0,0.2);
+}
+
+.btn-favorite:hover {
+    border-color: var(--gold-premium);
+    box-shadow: 0 8px 20px rgba(255,215,0,0.25);
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(220,38,38,0.1) 100%);
+    border-color: rgba(239,68,68,0.2);
+    color: #dc2626;
+}
+
+.btn-delete:hover {
+    border-color: #dc2626;
+    box-shadow: 0 8px 20px rgba(239,68,68,0.25);
+}
+
+/* ====================================================
+   ELEMENTOS CLICABLES EN TABLAS
+   ==================================================== */
+.premium-icon-container {
+    transition: all 0.3s ease;
+}
+
+.premium-icon-container:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+a.premium-icon-container {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.course-name-link, .item-name-link {
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.course-name-link:hover, .item-name-link:hover {
+    text-shadow: 0 2px 4px rgba(99,102,241,0.3);
+}
+
+/* ====================================================
+   HEADER PREMIUM CON GRADIENTE
+   ==================================================== */
+.premium-list-header {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--gold-premium) 0%, var(--aurora3) 30%, var(--aurora2) 70%, var(--aurora1) 100%);
+    border-bottom: 2px solid rgba(255,215,0,0.3);
+}
+
+.premium-list-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.05) 100%);
+    pointer-events: none;
+}
+
+.premium-list-header::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 8rem;
+    height: 8rem;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    filter: blur(3rem);
+    pointer-events: none;
+}
+
+.premium-list-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    z-index: 10;
+    margin-left: 1.5rem;
+    color: white;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+}
+
+.premium-list-subtitle {
+    color: rgba(255,255,255,0.95);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 10;
+    margin-left: 1.5rem;
+    filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+}
+
+/* ====================================================
+   TABLA PREMIUM CON EFECTOS
+   ==================================================== */
+.premium-table-container {
+    border-radius: 1.5rem;
+    overflow: hidden;
+    position: relative;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 50%, rgba(224,231,255,0.80) 100%);
+    backdrop-filter: blur(16px);
+    border: 2px solid rgba(99,102,241,0.15);
+    box-shadow: 0 8px 32px rgba(34,211,238,0.15), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+.premium-table-scroll {
+    overflow-x: auto;
+    position: relative;
+}
+
+.premium-table-scroll::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.3) 50%, transparent 100%);
+    z-index: 1;
+}
+
+.premium-table {
+    width: 100%;
+    position: relative;
+}
+
+.premium-table-header {
+    background: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(34,211,238,0.08) 50%, rgba(251,191,36,0.08) 100%);
+}
+
+.premium-table-header th {
+    padding: 1rem 1.5rem;
+    text-align: center;
+    font-weight: bold;
+    border-bottom: 2px solid rgba(99,102,241,0.2);
+    position: relative;
+    filter: drop-shadow(0 1px 3px rgba(99,102,241,0.3));
+}
+
+.premium-table-header th::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(99,102,241,0.05) 0%, transparent 100%);
+    pointer-events: none;
+}
+
+.premium-table-header th span {
+    position: relative;
+    z-index: 1;
+}
+
+/* Color slate premium elegante para todas las columnas */
+.premium-table-header .col-primary,
+.premium-table-header .col-secondary,
+.premium-table-header .col-accent,
+.premium-table-header .col-gold { 
+    color: #1e293b; 
+    border-bottom-color: rgba(30,41,59,0.25); 
+    font-weight: 700;
+}
+
+.premium-table tbody tr {
+    border-bottom: 1px solid rgba(148,163,184,0.3);
+}
+
+.premium-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+/* ====================================================
+   TARJETAS DE FILTRO PREMIUM
+   ==================================================== */
+.premium-search-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.95) 100%);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+    border: 1px solid rgba(99,102,241,0.1);
+}
+
+.premium-filters-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.95) 100%);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+    border: 1px solid rgba(99,102,241,0.1);
+}
+
+.premium-search-input {
+    background: rgba(255,255,255,0.9);
+    border: 2px solid rgba(148,163,184,0.2);
+    border-radius: 0.75rem;
+    height: 3rem;
+    padding-left: 1rem;
+    padding-right: 3rem;
+    font-size: 1rem;
+    font-weight: normal;
+    color: rgba(51,65,85,1);
+    transition: all 0.3s ease;
+    outline: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    backdrop-filter: blur(4px);
+    position: relative;
+    z-index: 10;
+}
+
+.premium-search-input:focus {
+    border-color: var(--aurora1);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
+}
+
+.premium-search-input:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.premium-search-input::placeholder {
+    color: rgba(148,163,184,1);
+    font-weight: normal;
+}
+
+/* ====================================================
+   BOTÓN LIMPIAR PREMIUM
+   ==================================================== */
+.premium-clear-btn {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 3rem;
+    width: 3rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    color: white;
+    transition: all 0.5s ease;
+    border: 2px solid rgba(255,255,255,0.4);
+    background: linear-gradient(135deg, rgba(99,102,241,0.90) 0%, rgba(34,211,238,0.95) 30%, rgba(251,191,36,0.85) 70%, rgba(99,102,241,0.90) 100%);
+    box-shadow: 0 8px 24px rgba(99,102,241,0.25), inset 0 2px 0 rgba(255,255,255,0.30);
+    cursor: pointer;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.premium-clear-btn:hover {
+    transform: scale(1.05);
+}
+
+.premium-clear-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(255,255,255,0.25) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.premium-clear-btn:hover::before {
+    opacity: 1;
+}
+
+.premium-clear-btn i {
+    font-size: 0.875rem;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.premium-clear-btn:hover i {
+    transform: scale(1.1);
+}
+
+/* ====================================================
+   FOOTER DE TABLA CON BOTÓN NUEVO
+   ==================================================== */
+.premium-table-footer {
+    padding: 0;
+}
+
+.premium-new-item-btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 1rem;
+    background: var(--premium-gradient, linear-gradient(135deg, var(--aurora1) 0%, var(--aurora2) 100%));
+    color: white;
+    font-weight: bold;
+    font-size: 1.125rem;
+    border-radius: 0 0 1.5rem 1.5rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.premium-new-item-btn:hover {
+    background: linear-gradient(135deg, var(--aurora2) 0%, var(--aurora1) 100%);
+}
+
+.premium-new-item-btn .icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+}
+
+.premium-new-item-btn .icon-container i {
+    font-size: 1.5rem;
+    color: var(--gold-premium);
+}
+
+/* ====================================================
+   UTILIDADES RESPONSIVE
+   ==================================================== */
+@media (max-width: 768px) {
+    .premium-list-title {
+        font-size: 1.25rem;
+        margin-left: 1rem;
+    }
+    
+    .premium-list-subtitle {
+        margin-left: 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .premium-table-header th {
+        padding: 0.75rem;
+        font-size: 0.875rem;
+    }
+    
+    .stat-card {
+        height: 80px;
+        padding: 0.75rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.65rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .premium-search-card,
+    .premium-filters-card {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .premium-search-input {
+        height: 2.75rem;
+        font-size: 0.875rem;
+    }
+    
+    .premium-clear-btn {
+        height: 2.75rem;
+        width: 2.75rem;
+    }
+}
+
+/* ====================================================
+   ANIMACIONES ADICIONALES
+   ==================================================== */
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.premium-shimmer {
+    position: relative;
+    overflow: hidden;
+}
+
+.premium-shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+    animation: shimmer 2s infinite;
+    pointer-events: none;
+}
+
+/* ====================================================
+   ESTADOS DE CARGA
+   ==================================================== */
+.premium-loading {
+    opacity: 0.7;
+    pointer-events: none;
+    position: relative;
+}
+
+.premium-loading::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.8);
+    border-radius: inherit;
+    z-index: 9999;
+}
+
+.premium-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2rem;
+    height: 2rem;
+    margin: -1rem 0 0 -1rem;
+    border: 2px solid rgba(99,102,241,0.3);
+    border-top-color: var(--aurora1);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 10000;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

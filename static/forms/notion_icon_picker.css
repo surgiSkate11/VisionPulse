@@ -1,0 +1,441 @@
+/* Notion-style Icon Picker - Reutilizable */
+.notion-icon-picker {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 5px;
+    width: 320px;
+    height: 500px;
+    background: white;
+    border: 1px solid #e1e5e9;
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+    z-index: 9999;
+    display: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    /* Estructura simple sin flexbox */
+}
+
+.notion-icon-picker.show {
+    display: block;
+    animation: notionFadeIn 0.2s ease-out;
+}
+
+.notion-icon-picker.picker-hover {
+    display: block !important;
+}
+
+/* Ajuste para pantallas pequeñas */
+@media (max-width: 768px) {
+    .notion-icon-picker {
+        right: 0;
+        left: auto;
+        width: 280px;
+    }
+}
+
+/* Contenedor del emoji picker */
+.emoji-picker-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* Input del emoji con mejor interacción */
+.emoji-input {
+    cursor: pointer !important;
+    /* Evitar selección de texto */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.emoji-input:focus {
+    /* Mantener el cursor como pointer even en focus */
+    cursor: pointer !important;
+}
+
+@keyframes notionFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.notion-picker-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e1e5e9;
+    background: #f8f9fa;
+    border-radius: 12px 12px 0 0;
+}
+
+.notion-picker-tabs {
+    display: flex;
+    gap: 4px;
+}
+
+.notion-picker-tab {
+    padding: 6px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    /* Evitar que redirija */
+    text-decoration: none;
+    outline: none;
+    /* Asegurar interactividad */
+    pointer-events: auto;
+}
+
+.notion-picker-tab:hover {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.notion-picker-tab:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+.notion-picker-tab.active {
+    background: #3b82f6;
+    color: white;
+}
+
+.notion-picker-content {
+    height: 440px;
+    overflow-y: scroll !important;
+    overflow-x: hidden;
+    border-radius: 0 0 12px 12px;
+}
+
+.notion-picker-tab-content {
+    padding: 12px;
+    height: 100%;
+    box-sizing: border-box;
+    min-height: 800px;
+}
+
+.notion-picker-search-container {
+    margin-bottom: 12px;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 2;
+    padding-bottom: 8px;
+}
+
+.emojis-sections,
+.icons-sections {
+    padding-bottom: 80px;
+    min-height: 600px;
+}
+
+/* Asegurar scroll específico para emojis */
+.notion-picker-tab-content[data-content="emojis"] {
+    height: 100% !important;
+    overflow: visible !important;
+}
+
+.notion-picker-tab-content[data-content="emojis"] .emojis-sections {
+    min-height: 800px !important;
+    padding-bottom: 100px !important;
+}
+
+/* Forzar espacio adicional para todas las categorías de emojis */
+.emojis-sections {
+    min-height: 900px !important;
+    padding-bottom: 120px !important;
+}
+
+.notion-picker-search {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 12px;
+    outline: none;
+    /* Evitar zoom en móviles */
+    font-size: 16px;
+    /* Asegurar interactividad */
+    pointer-events: auto;
+}
+
+.notion-picker-search:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.notion-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.notion-picker-item {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.15s ease;
+    position: relative;
+    /* Evitar que se comporte como enlace */
+    text-decoration: none;
+    outline: none;
+    /* Asegurar interactividad */
+    pointer-events: auto;
+}
+
+.notion-picker-item:hover {
+    background: #f1f5f9;
+    transform: scale(1.1);
+}
+
+.notion-picker-item:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+.notion-picker-item:active {
+    transform: scale(0.95);
+}
+
+.notion-picker-section {
+    margin-bottom: 30px;
+    /* Asegurar espacio adicional para la última sección */
+}
+
+.notion-picker-section:last-child {
+    margin-bottom: 60px;
+    padding-bottom: 40px;
+}
+
+/* Asegurar que la sección de Animales se vea completamente */
+.emojis-sections .notion-picker-section:nth-child(6) {
+    margin-bottom: 80px !important;
+    padding-bottom: 60px !important;
+}
+
+.notion-picker-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.notion-picker-upload-area {
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 32px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    position: relative;
+    overflow: hidden;
+    /* Asegurar interactividad */
+    pointer-events: auto;
+}
+
+.notion-picker-upload-area::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.notion-picker-upload-area:hover {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+}
+
+.notion-picker-upload-area:hover::before {
+    left: 100%;
+}
+
+.notion-picker-upload-area.dragover {
+    border-color: #10b981;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    transform: scale(1.02);
+    box-shadow: 0 12px 32px rgba(16, 185, 129, 0.2);
+}
+
+.notion-picker-upload-icon {
+    font-size: 32px;
+    color: #3b82f6;
+    margin-bottom: 12px;
+    display: block;
+    transition: all 0.2s ease;
+}
+
+.notion-picker-upload-area:hover .notion-picker-upload-icon {
+    transform: scale(1.1);
+    color: #2563eb;
+}
+
+.notion-picker-upload-text {
+    font-size: 14px;
+    color: #1f2937;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 4px;
+}
+
+.notion-picker-upload-text strong {
+    color: #3b82f6;
+}
+
+.notion-picker-upload-info {
+    font-size: 12px;
+    color: #6b7280;
+    opacity: 0.8;
+}
+
+.notion-picker-preview {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.notion-picker-no-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+    text-align: center;
+}
+
+.notion-picker-no-results-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    opacity: 0.6;
+}
+
+.notion-picker-no-results-text {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .notion-icon-picker {
+        background: #1f2937;
+        border-color: #374151;
+        color: #f9fafb;
+    }
+    
+    .notion-picker-header {
+        background: #111827;
+        border-color: #374151;
+    }
+    
+    .notion-picker-tab {
+        color: #9ca3af;
+    }
+    
+    .notion-picker-tab:hover {
+        background: #374151;
+        color: #d1d5db;
+    }
+    
+    .notion-picker-search-container {
+        background: #1f2937;
+    }
+    
+    .notion-picker-search {
+        background: #374151;
+        border-color: #4b5563;
+        color: #f9fafb;
+    }
+    
+    .notion-picker-item:hover {
+        background: #374151;
+    }
+    
+    .notion-upload-area {
+        border-color: #4b5563;
+        background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+    }
+    
+    .notion-upload-area:hover {
+        border-color: #3b82f6;
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    }
+    
+    .notion-picker-upload-text {
+        color: #f9fafb;
+    }
+    
+    .notion-picker-upload-info {
+        color: #9ca3af;
+    }
+    
+    .notion-picker-upload-icon {
+        color: #60a5fa;
+    }
+}
+
+/* Estilos para la barra de scroll - mucho más visible */
+.notion-picker-content::-webkit-scrollbar {
+    width: 12px;
+    background: #f8f9fa;
+}
+
+.notion-picker-content::-webkit-scrollbar-track {
+    background: #e2e8f0;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+}
+
+.notion-picker-content::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 6px;
+    border: 2px solid #e2e8f0;
+}
+
+.notion-picker-content::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .notion-icon-picker {
+        width: 280px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    .notion-picker-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+    
+    .notion-picker-search {
+        font-size: 16px; /* Evitar zoom en iOS */
+    }
+}

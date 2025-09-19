@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario Semanal - Médico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .appointment-card {
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: 2px 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 4px solid;
+        }
+        .appointment-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .today-highlight {
+            background-color: #3b82f6;
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        .calendar-day {
+            transition: all 0.2s ease;
+        }
+        .calendar-day:hover {
+            background-color: #f3f4f6;
+        }
+        .calendar-day.selected {
+            background-color: #ef4444;
+            color: white;
+        }
+        .btn {
+            transition: all 0.2s ease;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Banner superior blanco -->
+    <div class="bg-white shadow-sm border-b h-14 flex items-center"></div>
+    <!-- Barra de navegación de vistas y acción -->
+    <div class="max-w-7xl mx-auto px-4 pt-4">
+        <div class="flex items-center justify-between">
+            <div class="flex space-x-0 rounded-lg overflow-hidden shadow-sm">
+                <a href="diaria.html" class="px-5 py-2 text-sm font-medium focus:outline-none transition-colors border-r border-gray-200 bg-white text-gray-700 hover:bg-blue-50">Diario</a>
+                <a href="semanal.html" class="px-5 py-2 text-sm font-medium focus:outline-none transition-colors bg-blue-500 text-white">Semanal</a>
+                <a href="calendario.html" class="px-5 py-2 text-sm font-medium focus:outline-none transition-colors border-l border-gray-200 bg-white text-gray-700 hover:bg-blue-50">Mensual</a>
+            </div>
+            <button class="ml-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+                + Nueva Cita
+            </button>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <div id="spa-main-content">
+            <div class="flex gap-6 flex-row-reverse">
+                <!-- Sidebar derecho -->
+                <div class="w-64 space-y-6">
+                    <!-- Mini calendario -->
+                    <div class="bg-white rounded-xl shadow-sm border p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <button id="mini-prev" class="p-1 rounded hover:bg-gray-100 transition-colors">
+                                <i class="fas fa-chevron-left text-gray-500"></i>
+                            </button>
+                            <h3 class="font-medium text-gray-900" id="mini-calendar-month">Julio 2025</h3>
+                            <button id="mini-next" class="p-1 rounded hover:bg-gray-100 transition-colors">
+                                <i class="fas fa-chevron-right text-gray-500"></i>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-7 gap-1 text-xs">
+                            <div class="text-center text-gray-500 font-medium py-1">L</div>
+                            <div class="text-center text-gray-500 font-medium py-1">M</div>
+                            <div class="text-center text-gray-500 font-medium py-1">X</div>
+                            <div class="text-center text-gray-500 font-medium py-1">J</div>
+                            <div class="text-center text-gray-500 font-medium py-1">V</div>
+                            <div class="text-center text-gray-500 font-medium py-1">S</div>
+                            <div class="text-center text-gray-500 font-medium py-1">D</div>
+                            <div id="mini-calendar-days" class="col-span-7 grid grid-cols-7 gap-1 mt-1"></div>
+                        </div>
+                    </div>
+                    <!-- Resumen semanal -->
+                    <div class="bg-white rounded-xl shadow-sm border p-4">
+                        <h3 class="font-medium text-gray-900 mb-3">Resumen semanal</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Citas totales:</span>
+                                <span class="font-medium">12</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Atendidas:</span>
+                                <span class="font-medium">9</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Pendientes:</span>
+                                <span class="font-medium">3</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg font-medium transition-colors">
+                        Ver Atenciones
+                    </button>
+                </div>
+                <!-- Calendario semanal principal -->
+                <div class="flex-1">
+                    <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                        <div class="grid grid-cols-8 bg-gray-50 border-b" id="week-header-row">
+                            <div class="p-4 text-center text-sm font-medium text-gray-600">Hora</div>
+                            <div class="p-4 text-center text-sm font-medium text-gray-600 transition-all duration-300" id="header-day-0">LUN</div>
+                            <div class="p-4 text-center text-sm font-medium text-gray-600 transition-all duration-300" id="header-day-1">MAR</div>
+                            <div class="p-4 text-center text-sm font-medium text-gray-600 transition-all duration-300" id="header-day-2">MIÉ</div>
+                            <div class="p-4 text-center text-sm font-medium text-gray-600 transition-all duration-300" id="header-day-3">JUE</div>
+                            <div class="p-4 text-center text-sm font-medium text-gray-600 transition-all duration-300" id="header-day-4">VIE</div>
+                            <div class="p-4 text-center text-sm font-medium text-gray-600 transition-all duration-300" id="header-day-5">SÁB</div>
+                            <div class="p-4 text-center text-sm font-medium text-gray-600 transition-all duration-300" id="header-day-6">DOM</div>
+                        </div>
+                        <div class="grid grid-cols-8 min-h-96">
+                            <div class="space-y-8 p-4 text-xs text-gray-500">
+                                <div>08:00</div>
+                                <div>09:00</div>
+                                <div>10:00</div>
+                                <div>11:00</div>
+                                <div>12:00</div>
+                                <div>13:00</div>
+                                <div>14:00</div>
+                                <div>15:00</div>
+                                <div>16:00</div>
+                                <div>17:00</div>
+                                <div>18:00</div>
+                            </div>
+                            <!-- Día Lunes -->
+                            <div class="relative p-2">
+                                <div class="appointment-card bg-blue-100 border-blue-300 text-blue-800 mb-2">09:00 - Maria Rodriguez</div>
+                                <div class="appointment-card bg-green-100 border-green-300 text-green-800 mb-2">14:00 - Ana Garcia</div>
+                            </div>
+                            <!-- Día Martes -->
+                            <div class="relative p-2">
+                                <div class="appointment-card bg-red-100 border-red-300 text-red-800 mb-2">10:30 - Carlos Martinez</div>
+                            </div>
+                            <!-- Día Miércoles -->
+                            <div class="relative p-2">
+                                <div class="appointment-card bg-yellow-100 border-yellow-300 text-yellow-800 mb-2">11:00 - Luis Fernandez</div>
+                            </div>
+                            <!-- Día Jueves -->
+                            <div class="relative p-2">
+                                <div class="appointment-card bg-purple-100 border-purple-300 text-purple-800 mb-2">16:30 - Sofia Chen</div>
+                            </div>
+                            <!-- Día Viernes -->
+                            <div class="relative p-2"></div>
+                            <!-- Día Sábado -->
+                            <div class="relative p-2"></div>
+                            <!-- Día Domingo -->
+                            <div class="relative p-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Datos de ejemplo de citas médicas
+        const appointments = [
+            { id: 1, patient: "Maria Rodriguez", time: "09:00", duration: 30, type: "Consulta General", status: "completed", attended: true, actualDuration: 25, day: 1, color: "bg-blue-100 border-blue-300 text-blue-800" },
+            { id: 2, patient: "Carlos Martinez", time: "10:30", duration: 45, type: "Cardiología", status: "completed", attended: true, actualDuration: 50, day: 2, color: "bg-red-100 border-red-300 text-red-800" },
+            { id: 3, patient: "Ana Garcia", time: "14:00", duration: 30, type: "Dermatología", status: "scheduled", attended: false, day: 1, color: "bg-green-100 border-green-300 text-green-800" },
+            { id: 4, patient: "Luis Fernandez", time: "11:00", duration: 60, type: "Psicología", status: "completed", attended: true, actualDuration: 55, day: 3, color: "bg-yellow-100 border-yellow-300 text-yellow-800" },
+            { id: 5, patient: "Sofia Chen", time: "16:30", duration: 30, type: "Pediatría", status: "scheduled", attended: false, day: 4, color: "bg-purple-100 border-purple-300 text-purple-800" }
+        ];
+
+        // Modal logic
+        function openPatientModal(appointment) {
+            document.getElementById('modal-patient-name').textContent = appointment.patient;
+            document.getElementById('modal-consultation-type').textContent = appointment.type;
+            document.getElementById('modal-scheduled-time').textContent = appointment.time;
+            document.getElementById('modal-estimated-duration').textContent = `${appointment.duration} min`;
+            if (appointment.actualDuration) {
+                document.getElementById('actual-duration-container').classList.remove('hidden');
+                document.getElementById('modal-actual-duration').textContent = `${appointment.actualDuration} min`;
+            } else {
+                document.getElementById('actual-duration-container').classList.add('hidden');
+            }
+            const attendanceStatus = document.getElementById('attendance-status');
+            attendanceStatus.innerHTML = appointment.attended ? '<span class="text-green-600 font-semibold">Atendido</span>' : '<span class="text-yellow-600 font-semibold">Pendiente</span>';
+            const viewAttentionBtn = document.getElementById('view-attention-btn');
+            if (appointment.attended) {
+                viewAttentionBtn.classList.remove('hidden');
+            } else {
+                viewAttentionBtn.classList.add('hidden');
+            }
+            document.getElementById('patient-modal').classList.remove('hidden');
+        }
+        function closePatientModal() {
+            document.getElementById('patient-modal').classList.add('hidden');
+        }
+        // Bind click events to appointment cards
+        document.querySelectorAll('.appointment-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const text = this.textContent;
+                const appt = appointments.find(a => text.includes(a.patient));
+                if (appt) openPatientModal(appt);
+            });
+        });
+        document.getElementById('close-modal').addEventListener('click', closePatientModal);
+        document.getElementById('close-modal-btn').addEventListener('click', closePatientModal);
+        document.getElementById('patient-modal').addEventListener('click', function(e) {
+            if (e.target === this) closePatientModal();
+        });
+    </script>
+
+    <!-- Modal de Información del Paciente -->
+    <div id="patient-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="modal bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Información del Paciente</h2>
+                <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times-circle text-2xl"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Paciente</label>
+                    <p class="text-lg font-semibold text-gray-800" id="modal-patient-name"></p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Tipo de Consulta</label>
+                    <p class="text-gray-800" id="modal-consultation-type"></p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Hora Programada</label>
+                        <p class="text-gray-800" id="modal-scheduled-time"></p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Duración Estimada</label>
+                        <p class="text-gray-800" id="modal-estimated-duration"></p>
+                    </div>
+                </div>
+                <div id="actual-duration-container" class="hidden">
+                    <label class="text-sm font-medium text-gray-600">Duración Real</label>
+                    <p class="text-gray-800" id="modal-actual-duration"></p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label class="text-sm font-medium text-gray-600">Estado de Atención:</label>
+                    <div id="attendance-status"></div>
+                </div>
+                <div class="pt-4 space-y-3">
+                    <button id="view-attention-btn" class="btn w-full bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-2xl flex items-center justify-center space-x-2 hidden">
+                        <i class="fas fa-eye"></i>
+                        <span>Ver Atención</span>
+                    </button>
+                    <button id="close-modal-btn" class="btn w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-4 rounded-2xl flex items-center justify-center space-x-2">
+                        <i class="fas fa-times"></i>
+                        <span>Cerrar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        let selectedDate = new Date(currentYear, currentMonth, new Date().getDate());
+
+        const dayNames = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+        const monthNames = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
+        function getMonday(d) {
+            d = new Date(d);
+            const day = d.getDay();
+            const diff = d.getDate() - ((day + 6) % 7);
+            return new Date(d.setDate(diff));
+        }
+
+        function getWeekRange(date) {
+            const monday = getMonday(date);
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            let range = `Semana del ${monday.getDate()} al ${sunday.getDate()} de ${monthNames[sunday.getMonth()]}`;
+            return range;
+        }
+
+        function renderWeekHeader(date) {
+            const monday = getMonday(date);
+            let headerHtml = '<div class="p-4 text-center text-sm font-medium text-gray-600">Hora</div>';
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                headerHtml += `<div class='p-4 text-center text-sm font-medium text-gray-700 transition-all duration-300'>${dayNames[i]} ${d.getDate()}</div>`;
+            }
+            const headerRow = document.getElementById('week-header-row');
+            headerRow.innerHTML = headerHtml;
+        }
+
+        function updateWeekView() {
+            // Transición suave para el rango
+            const weekRange = document.getElementById('week-range');
+            weekRange.style.opacity = 0;
+            setTimeout(() => {
+                weekRange.textContent = getWeekRange(selectedDate);
+                weekRange.style.opacity = 1;
+            }, 200);
+            // Transición suave para encabezados
+            const headerRow = document.getElementById('week-header-row');
+            headerRow.style.opacity = 0;
+            setTimeout(() => {
+                renderWeekHeader(selectedDate);
+                headerRow.style.opacity = 1;
+            }, 200);
+        }
+
+        function renderMiniCalendar() {
+            document.getElementById('mini-calendar-month').textContent = `${monthNames[currentMonth].charAt(0).toUpperCase() + monthNames[currentMonth].slice(1)} ${currentYear}`;
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const startDay = (firstDay.getDay() + 6) % 7; // Lunes=0
+            let days = [];
+            // Días del mes anterior
+            const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
+            for (let i = startDay - 1; i >= 0; i--) {
+                days.push(`<div class='text-center text-gray-400 py-1'>${prevMonthLastDay - i}</div>`);
+            }
+            // Días del mes actual
+            const today = new Date();
+            for (let d = 1; d <= lastDay.getDate(); d++) {
+                let classes = "text-center text-gray-700 py-1 cursor-pointer hover:bg-blue-100 rounded transition-colors";
+                if (d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
+                    classes += " today-highlight";
+                }
+                if (selectedDate.getDate() === d && selectedDate.getMonth() === currentMonth && selectedDate.getFullYear() === currentYear) {
+                    classes += " calendar-day selected";
+                }
+                days.push(`<div class='${classes}' data-day='${d}'>${d}</div>`);
+            }
+            // Días del siguiente mes para completar la cuadrícula
+            while (days.length % 7 !== 0) {
+                days.push(`<div class='text-center text-gray-400 py-1'>${days.length - (lastDay.getDate() + startDay) + 1}</div>`);
+            }
+            document.getElementById('mini-calendar-days').innerHTML = days.join('');
+            // Añadir click para seleccionar día
+            document.querySelectorAll('#mini-calendar-days > div[data-day]').forEach(el => {
+                el.onclick = function() {
+                    selectedDate = new Date(currentYear, currentMonth, parseInt(this.getAttribute('data-day')));
+                    updateWeekView();
+                    renderMiniCalendar();
+                };
+            });
+        }
+
+        document.getElementById('mini-prev').onclick = function() {
+            currentMonth--;
+            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            selectedDate = new Date(currentYear, currentMonth, 1);
+            updateWeekView();
+            renderMiniCalendar();
+        };
+        document.getElementById('mini-next').onclick = function() {
+            currentMonth++;
+            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+            selectedDate = new Date(currentYear, currentMonth, 1);
+            updateWeekView();
+            renderMiniCalendar();
+        };
+
+        // Inicializar
+        renderMiniCalendar();
+        updateWeekView();
+    </script>
+    <script>
+        // SPA-like navigation for calendar views
+        function spaLoadView(view) {
+            let url = '';
+            if (view === 'diaria') url = 'diaria.html';
+            else if (view === 'semanal') url = 'semanal.html';
+            else if (view === 'calendario') url = 'calendario.html';
+            if (!url) return;
+            fetch(url)
+                .then(res => res.text())
+                .then(html => {
+                    // Extract only the main content (spa-main-content)
+                    const temp = document.createElement('div');
+                    temp.innerHTML = html;
+                    const newContent = temp.querySelector('#spa-main-content');
+                    if (newContent) {
+                        document.getElementById('spa-main-content').innerHTML = newContent.innerHTML;
+                        // Re-initialize scripts for the loaded view
+                        if (view === 'semanal') initSemanalScripts();
+                        else if (view === 'calendario') initCalendarioScripts();
+                        else if (view === 'diaria') initDiariaScripts();
+                    }
+                });
+            // Update nav highlight
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-blue-500', 'text-white'));
+            document.getElementById('nav-' + view).classList.add('bg-blue-500', 'text-white');
+            // Update browser history
+            history.pushState({view}, '', url);
+        }
+        // Attach SPA nav events
+        function attachSpaNavEvents() {
+            document.getElementById('nav-diaria').onclick = e => { e.preventDefault(); spaLoadView('diaria'); };
+            document.getElementById('nav-semanal').onclick = e => { e.preventDefault(); spaLoadView('semanal'); };
+            document.getElementById('nav-calendario').onclick = e => { e.preventDefault(); spaLoadView('calendario'); };
+        }
+        // Dummy script initializers (replace with actual per-view logic)
+        function initSemanalScripts() { /* ...existing semanal.js logic... */ }
+        function initCalendarioScripts() { /* ...existing calendario.js logic... */ }
+        function initDiariaScripts() { /* ...existing diaria.js logic... */ }
+        attachSpaNavEvents();
+        window.onpopstate = function(e) {
+            if (e.state && e.state.view) spaLoadView(e.state.view);
+        };
+    </script>
+</body>
+</html>
