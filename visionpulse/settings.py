@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Nuestras apps
-    'theme', # App para Tailwind
     'apps.security',
     'apps.monitoring',
     'apps.exercises',
