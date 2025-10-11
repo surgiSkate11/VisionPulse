@@ -35,36 +35,5 @@ class ModuloTemplateView(TemplateView):
         context['herramientas_menu'] = herramientas_menu
         context['sidebar_menu'] = sidebar_menu
 
-        # Estadísticas del estudiante logeado - Comentado temporalmente
-        # TODO: Implementar cuando se creen los modelos de cursos y estudiantes
-        context['student_stats'] = None
         
-        # user = self.request.user
-        # student = getattr(user, 'student_profile', None)
-        # if student:
-        #     # Cursos inscritos y completados
-        #     total_courses = Enrollment.objects.filter(student=student).count()
-        #     completed_courses = Enrollment.objects.filter(student=student, status='completed').count()
-        #     # Tareas pendientes
-        #     pending_assignments = Assignment.objects.filter(
-        #         course__enrollments__student=student,
-        #         is_active=True,
-        #         is_published=True,
-        #         submissions__student=student,
-        #         submissions__status__in=['draft', 'returned']
-        #     ).distinct().count()
-        #     # Avance promedio
-        #     avg_progress = Progress.objects.filter(student=student, progress_type='course').aggregate(
-        #         avg=Avg('completion_percentage'))['avg'] or 0
-        #     # Última actividad
-        #     last_activity = None
-        #     context['student_stats'] = {
-        #         'total_courses': total_courses,
-        #         'completed_courses': completed_courses,
-        #         'pending_assignments': pending_assignments,
-        #         'avg_progress': round(avg_progress, 1),
-        #         'last_activity': last_activity.last_activity if last_activity else None,
-        #     }
-        # else:
-        #     context['student_stats'] = None
         return context

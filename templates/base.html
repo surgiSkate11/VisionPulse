@@ -1352,15 +1352,15 @@
     <title>{% block title %}VisionPulse - Monitoreo de Salud Visual{% endblock %}</title>
     {% tailwind_css %}
 </head>
-<body style="min-height:100vh;display:flex;">
+<body style="min-height:100vh;display:flex; ">
     {% block sidebar %}{% endblock %}
     {% block header %}{% endblock %}
     {% if user.is_authenticated %}
     <!-- Sidebar Overlay (todas las resoluciones) -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
     <!-- Sidebar Drawer universal -->
-    <aside class="sidebar hide" id="sidebar" aria-label="Menú principal">
-        <div class="sidebar-header">
+    <aside class="sidebar hide " id="sidebar" aria-label="Menú principal">
+        <div class="sidebar-header ">
             <div class="sidebar-logo">
                 <div class="sidebar-logo-icon">
                     <i class="fas fa-eye heartbeat" style="color: var(--primary-health);"></i>
@@ -1374,7 +1374,7 @@
             <div class="sidebar-section">
                 <h3 class="sidebar-section-title">Principal</h3>
                 <a href="{% url 'security:home' %}" class="sidebar-link {% if request.path == '/' %}active{% endif %}" tabindex="0"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
-                <a href="#" class="sidebar-link" tabindex="0"><i class="fas fa-video" style="color: var(--secondary-vision);"></i><span>Monitoreo en Vivo</span></a>
+                <a href="{% url 'monitoring:home' %}" class="sidebar-link" tabindex="0"><i class="fas fa-video" style="color: var(--secondary-vision);"></i><span>Monitoreo en Vivo</span></a>
             </div>
             <div class="sidebar-section">
                 <h3 class="sidebar-section-title">Salud Visual</h3>
