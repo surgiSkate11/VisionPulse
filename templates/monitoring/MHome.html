@@ -1,52 +1,74 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Sesiones de Monitoreo | VisionPulse{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hidden { display: none !important; }
+    #vp_canvas.hidden { 
+        position: absolute;
+        visibility: hidden;
+    }
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    #vp_video {
+        width: 100%;
+        height: auto;
+        max-height: 480px;
+        background: #000;
+    }
+    .video-container {
+        min-height: 360px;
+    }
+</style>
+{% endblock %}
 {% block content %}
 
-
 <div class="page-header flex flex-col items-start mb-4">
-    <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
-        <i class="fas fa-chart-line text-blue-600"></i>
+    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+        <i class="fas fa-chart-line text-cyan-600"></i>
         Monitoreo en Vivo
     </h1>
-    <p class="text-gray-600 mt-2">Revisa tu historial de sesiones de monitoreo visual</p>
+    <p class="text-gray-500 mt-2">Revisa tu historial de sesiones de monitoreo visual</p>
 </div>
 
 <!--Captura en tiempo real-->
-<div class="mx-auto bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl shadow-xl p-8 mb-8 border border-gray-200">
+<div class="mx-auto bg-gradient-to-br from-cyan-50 to-blue-100 rounded-2xl shadow-xl p-8 mb-8 border border-cyan-200">
 
     <!-- Indicadores EAR y Enfoque - Ahora en la parte superior como badges -->
     <div class="flex justify-between items-center mb-8">
-        <div class="bg-gray-700 text-white rounded-full px-6 py-2 shadow-lg">
-            <span class="font-semibold text-sm">EAR: --</span>
+        <div class="bg-teal-100 text-black rounded-full px-6 py-2 shadow-lg">
+            <span class="font-semibold text-sm">EAR: <span class="ear-value">--</span></span>
         </div>
-        <div class="bg-gray-700 text-white rounded-full px-6 py-2 shadow-lg">
-            <span class="font-semibold text-sm">Enfoque: --</span>
+        <div class="bg-blue-700 text-white rounded-full px-6 py-2 shadow-lg">
+            <span class="font-semibold text-sm">Parpadeos: <span class="blinks-value">0</span></span>
         </div>
     </div>
 
     <!-- Estado de la cámara - Área central con ícono grande -->
-    <div
-        class="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-xl p-6 mb-8 text-center shadow-md">
+    <div class="bg-gradient-to-r from-yellow-50 to-orange-100 border-2 border-orange-300 rounded-xl p-6 mb-8 text-center shadow-md">
         <div class="flex items-center justify-center mb-3">
-            <svg class="w-10 h-10 text-yellow-600 mr-3 animate-pulse" fill="none" stroke="currentColor"
+            <svg class="w-10 h-10 text-orange-500 mr-3 animate-pulse" fill="none" stroke="currentColor"
                 viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
                 </path>
             </svg>
-            <span class="text-xl font-bold text-yellow-800">Cámara Desactivada</span>
+            <span class="text-xl font-bold text-orange-700" id="camera-status">Cámara Desactivada</span>
         </div>
-        <p class="text-gray-700 text-base font-medium">Inicia monitoreo para comenzar a monitorear tu salud visual en
+        <p class="text-gray-700 text-base font-medium" id="camera-message">Inicia monitoreo para comenzar a monitorear tu salud visual en
             tiempo real</p>
+        <div id="error-message" class="mt-4 text-red-600 hidden"></div>
     </div>
 
-    <!-- Estados de detección - Badges grises -->
+    <!-- Estados de detección - Badges -->
     <div class="flex justify-center gap-6 mb-8">
-        <div class="bg-gray-600 text-white rounded-full px-8 py-3 shadow-md">
+        <div class="bg-cyan-600 text-white rounded-full px-8 py-3 shadow-md">
             <span class="font-semibold">Rostro: No detectado</span>
         </div>
-        <div class="bg-gray-600 text-white rounded-full px-8 py-3 shadow-md">
+        <div class="bg-blue-600 text-white rounded-full px-8 py-3 shadow-md">
             <span class="font-semibold">Ojos: No detectados</span>
         </div>
     </div>
@@ -54,7 +76,7 @@
     <!-- Botones de control -->
     <div class="flex justify-center gap-4 p-8">
         <button
-            class="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg hover:shadow-emerald-500/50 transform hover:scale-105 hover:-translate-y-1 active:scale-95">
+            class="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg hover:shadow-cyan-500/50 transform hover:scale-105 hover:-translate-y-1 active:scale-95">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z">
@@ -66,7 +88,7 @@
         </button>
 
         <button
-            class="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-300 shadow-lg hover:shadow-amber-500/50 transform hover:scale-105 hover:-translate-y-1 active:scale-95 flex items-center justify-center">
+            class="bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-300 shadow-lg hover:shadow-orange-500/50 transform hover:scale-105 hover:-translate-y-1 active:scale-95 flex items-center justify-center">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -75,7 +97,7 @@
         </button>
 
         <button
-            class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-300 shadow-lg hover:shadow-red-500/50 transform hover:scale-105 hover:-translate-y-1 active:scale-95 flex items-center justify-center">
+            class="bg-gradient-to-r from-red-500 to-pink-600 hover:from-pink-600 hover:to-red-700 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-300 shadow-lg hover:shadow-pink-500/50 transform hover:scale-105 hover:-translate-y-1 active:scale-95 flex items-center justify-center">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -85,34 +107,365 @@
             Detener
         </button>
     </div>
-
-    
 </div>
 
+<!-- Video feed container -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Video feed and controls -->
+    <div class="video-container bg-gradient-to-r from-cyan-50 to-blue-100 rounded-2xl shadow-xl p-6 border border-cyan-200">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Captura en Vivo</h3>
+        
+        <div class="relative bg-black rounded-lg overflow-hidden mb-4">
+            <video id="vp_video" 
+                   class="w-full h-auto mx-auto"
+                   autoplay 
+                   playsinline 
+                   style="max-height: 480px;">
+            </video>
+        </div>
+
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-2">
+                <div id="face-detect-indicator" class="w-3 h-3 rounded-full bg-red-500"></div>
+                <span class="text-sm">Rostro</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div id="eyes-detect-indicator" class="w-3 h-3 rounded-full bg-red-500"></div>
+                <span class="text-sm">Ojos</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metrics and Status -->
+    <div class="bg-gradient-to-r from-blue-50 to-cyan-100 rounded-2xl shadow-xl p-6 border border-blue-200">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Métricas en Tiempo Real</h3>
+        
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-white rounded-lg p-4 shadow">
+                <div class="text-sm text-gray-500 mb-1">Apertura de Ojos</div>
+                <div class="ear-value text-2xl font-bold text-blue-600">--</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 shadow">
+                <div class="text-sm text-gray-500 mb-1">Parpadeos</div>
+                <div class="blinks-value text-2xl font-bold text-blue-600">0</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg p-4 shadow mb-4">
+            <div class="text-sm text-gray-500 mb-2">Estado</div>
+            <div id="camera-status" class="text-lg font-semibold text-gray-800">Esperando inicio...</div>
+            <div id="camera-message" class="text-sm text-gray-600 mt-1">Presiona "Iniciar monitoreo" para comenzar</div>
+        </div>
+
+        <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+        </div>
+    </div>
+</div>
+
+<!-- Hidden canvas for processing -->
+<canvas id="vp_canvas" class="hidden"></canvas>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Estado global
+    let stream = null;
+    let frameInterval = null;
+    let sessionId = null;
+    let isPaused = false;
+    let isProcessing = false;
+
+    // Elementos DOM
+    const video = document.getElementById('vp_video');
+    const canvas = document.getElementById('vp_canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Botones - usando Array.from para mejor compatibilidad
+    const buttons = Array.from(document.querySelectorAll('button'));
+    const startBtn = buttons.find(btn => btn.textContent.includes('Iniciar monitoreo'));
+    const pauseBtn = buttons.find(btn => btn.textContent.includes('Pausar'));
+    const stopBtn = buttons.find(btn => btn.textContent.includes('Detener'));
+
+    // Indicadores
+    const faceIndicator = document.getElementById('face-detect-indicator');
+    const eyesIndicator = document.getElementById('eyes-detect-indicator');
+    
+    console.log("Botones encontrados:", {
+        start: !!startBtn,
+        pause: !!pauseBtn,
+        stop: !!stopBtn
+    });
+
+    // Configuración inicial
+    if (startBtn && pauseBtn && stopBtn) {
+        pauseBtn.disabled = true;
+        stopBtn.disabled = true;
+    } else {
+        showError('No se encontraron los botones de control');
+    }
+
+    // Funciones de utilidad
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+
+    function updateStatus(message) {
+        const statusEl = document.getElementById('camera-status');
+        const messageEl = document.getElementById('camera-message');
+        if (statusEl) statusEl.textContent = message;
+        if (messageEl) messageEl.textContent = message;
+        console.log('Status:', message);
+    }
+
+    function updateMetrics(ear, blinks) {
+        const earEl = document.querySelector('.ear-value');
+        const blinksEl = document.querySelector('.blinks-value');
+        if (earEl) earEl.textContent = (ear * 100).toFixed(0) + '%';
+        if (blinksEl) blinksEl.textContent = blinks;
+    }
+
+    function showError(message) {
+        console.error('Error:', message);
+        const errorDiv = document.getElementById('error-message');
+        if (errorDiv) {
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+        updateStatus('Error: ' + message);
+    }
+
+    // Funciones principales
+    async function startCamera() {
+        try {
+            updateStatus('Solicitando acceso a la cámara...');
+            document.getElementById('error-message').classList.add('hidden');
+            
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: {width: 320, height: 240},
+                audio: false
+            });
+            
+            updateStatus('Acceso concedido, iniciando video...');
+            video.srcObject = stream;
+            await video.play();
+            
+            return true;
+        } catch (e) {
+            console.error('Camera error:', e);
+            showError('Error al acceder a la cámara: ' + (e.message || 'Permiso denegado'));
+            return false;
+        }
+    }
+
+    async function startSession() {
+        try {
+            // 1. Iniciar cámara
+            if (!stream) {
+                const success = await startCamera();
+                if (!success) return;
+            }
+
+            // 2. Crear sesión en backend
+            updateStatus('Iniciando sesión de monitoreo...');
+            const resp = await fetch('{% url "monitoring:api_start" %}', {
+                method: 'POST',
+                headers: {'X-CSRFToken': getCookie('csrftoken')}
+            });
+            const data = await resp.json();
+            sessionId = data.session_id;
+
+            // 3. Iniciar captura de frames
+            startFrameCapture();
+            
+            // 4. Actualizar UI
+            updateStatus('Monitoreo activo');
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            stopBtn.disabled = false;
+
+            // 5. Guardar estado
+            localStorage.setItem('vp_session_id', sessionId);
+            localStorage.setItem('vp_active', '1');
+        } catch (e) {
+            console.error('Session error:', e);
+            showError('Error iniciando sesión');
+        }
+    }
+
+    function pauseSession() {
+        isPaused = !isPaused;
+        if (isPaused) {
+            if (frameInterval) {
+                clearInterval(frameInterval);
+                frameInterval = null;
+            }
+            updateStatus('Monitoreo pausado');
+            pauseBtn.textContent = '▶️ Reanudar';
+        } else {
+            startFrameCapture();
+            updateStatus('Monitoreo reanudado');
+            pauseBtn.textContent = '⏸️ Pausar';
+        }
+    }
+
+    async function stopSession() {
+        // 1. Detener captura
+        if (frameInterval) {
+            clearInterval(frameInterval);
+            frameInterval = null;
+        }
+
+        // 2. Detener cámara
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+
+        // 3. Finalizar sesión en backend
+        if (sessionId) {
+            try {
+                await fetch('{% url "monitoring:api_stop" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({session_id: sessionId})
+                });
+            } catch (e) {
+                console.error('Error stopping session:', e);
+            }
+        }
+
+        // 4. Limpiar estado
+        sessionId = null;
+        isPaused = false;
+        localStorage.removeItem('vp_session_id');
+        localStorage.removeItem('vp_active');
+
+        // 5. Actualizar UI
+        updateStatus('Monitoreo detenido');
+        startBtn.disabled = false;
+        pauseBtn.disabled = true;
+        stopBtn.disabled = true;
+        pauseBtn.textContent = '⏸️ Pausar';
+    }
+
+    function startFrameCapture() {
+        if (frameInterval) return;
+
+        // Configurar tamaño del canvas
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+
+        console.log("Iniciando captura de frames");
+
+        frameInterval = setInterval(async () => {
+            if (isPaused || isProcessing) {
+                return;
+            }
+            
+            try {
+                if (!video.videoWidth) {
+                    console.log('Esperando video...');
+                    return;
+                }
+
+                isProcessing = true;
+
+                // Ajustar tamaño del canvas si es necesario
+                if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                }
+
+                // Capturar frame
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const frame = canvas.toDataURL('image/jpeg', 0.8);
+                
+                // Enviar al backend
+                const response = await fetch('{% url "monitoring:api_upload_frame" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        image: frame
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error en la respuesta: ${response.status}`);
+                }
+
+                // Procesar respuesta
+                const responseData = await response.json();
+                if (responseData.ok) {
+                    // Actualizar métricas e indicadores
+                    updateMetrics(responseData.avg_ear, responseData.total_blinks);
+                    faceIndicator.className = `w-3 h-3 rounded-full ${responseData.face_detected ? 'bg-green-500' : 'bg-red-500'}`;
+                    eyesIndicator.className = `w-3 h-3 rounded-full ${responseData.eyes_detected ? 'bg-green-500' : 'bg-red-500'}`;
+                }
+            } catch (e) {
+                console.error('Frame error:', e);
+                showError('Error procesando frame: ' + e.message);
+            } finally {
+                isProcessing = false;
+            }
+        }, 500); // 2 FPS
+
+        console.log("Captura de frames iniciada");
+    }
+
+    // Event listeners
+    startBtn.addEventListener('click', startSession);
+    pauseBtn.addEventListener('click', pauseSession);
+    stopBtn.addEventListener('click', stopSession);
+
+    // Verificar si hay una sesión activa al cargar
+    const savedSessionId = localStorage.getItem('vp_session_id');
+    if (savedSessionId && localStorage.getItem('vp_active') === '1') {
+        sessionId = savedSessionId;
+        startSession();
+    }
+
+    // Manejar cierre de página
+    window.addEventListener('beforeunload', () => {
+        if (sessionId && !isPaused) {
+            localStorage.setItem('vp_session_id', sessionId);
+            localStorage.setItem('vp_active', '1');
+        }
+    });
+});
+</script>
 
 <!-- Tarjetas de métricas -->
-<div class="monitoring-dashboard bg-white rounded-2xl shadow-xl p-8 border border-gray-100 mb-8 ">
+<div class="monitoring-dashboard bg-white rounded-2xl shadow-xl p-8 border border-blue-100 mb-8 ">
     <div class="dashboard-cards flex gap-6 mb-2">
         <div
-            class="card flex-1 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-6 border border-indigo-200 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div class="card-icon text-indigo-600 text-4xl mb-4">
+            class="card flex-1 bg-gradient-to-br from-cyan-50 to-blue-100 rounded-xl p-6 border border-cyan-200 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div class="card-icon text-cyan-600 text-4xl mb-4">
                 <i class="fas fa-clock"></i>
             </div>
             <div class="card-content">
                 <h3 class="text-gray-700 font-semibold text-sm uppercase tracking-wide mb-2">Tiempo Total</h3>
-                <span class="metric text-3xl font-bold text-indigo-700">{{ user.total_monitoring_time|default:4 }}
+                <span class="metric text-3xl font-bold text-cyan-700">{{ user.total_monitoring_time|default:4 }}
                     min</span>
             </div>
         </div>
 
         <div
-            class="card flex-1 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div class="card-icon text-emerald-600 text-4xl mb-4">
+            class="card flex-1 bg-gradient-to-br from-blue-50 to-cyan-100 rounded-xl p-6 border border-blue-200 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div class="card-icon text-blue-600 text-4xl mb-4">
                 <i class="fas fa-list"></i>
             </div>
             <div class="card-content">
                 <h3 class="text-gray-700 font-semibold text-sm uppercase tracking-wide mb-2">Total Sesiones</h3>
-                <span class="metric text-3xl font-bold text-emerald-700">{{ user.total_sessions|default:0 }}</span>
+                <span class="metric text-3xl font-bold text-blue-700">{{ user.total_sessions|default:0 }}</span>
             </div>
         </div>
 
@@ -127,154 +480,74 @@
             </div>
         </div>
     </div>
-
 </div>
 
 <!--  Sesiones Recientes -->
-<div class="monitoring-dashboard bg-white rounded-2xl shadow-xl p-8 border border-gray-100 mb-8">
+<div class="monitoring-dashboard bg-white rounded-2xl shadow-xl p-8 border border-blue-100 mb-8">
     <div class="sessions-table">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-            <i class="fas fa-history text-blue-600"></i>
-            Sesiones Recientes
-        </h2>
-        <div class="table-container bg-gray-50 rounded-xl border border-gray-200 overflow-hidden shadow-inner">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-history text-cyan-600"></i>
+                Sesiones Recientes
+            </h2>
+            <a href="{% url 'monitoring:session_list' %}" 
+               class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 flex items-center gap-2">
+                <i class="fas fa-list"></i>
+                Ver todas las sesiones
+            </a>
+        </div>
+        <div class="table-container bg-blue-50 rounded-xl border border-blue-200 overflow-hidden shadow-inner">
             <table class="w-full">
-                <thead class="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
+                <thead class="bg-gradient-to-r from-cyan-700 to-blue-800 text-white">
                     <tr>
                         <th class="px-6 py-4 text-left font-bold uppercase tracking-wider text-sm">Fecha</th>
                         <th class="px-6 py-4 text-left font-bold uppercase tracking-wider text-sm">Duración</th>
-                        <th class="px-6 py-4 text-left font-bold uppercase tracking-wider text-sm">Parpadeos/min</th>
+                        <th class="px-6 py-4 text-left font-bold uppercase tracking-wider text-sm">Parpadeos</th>
                         <th class="px-6 py-4 text-left font-bold uppercase tracking-wider text-sm">Alertas</th>
-                        <th class="px-6 py-4 text-left font-bold uppercase tracking-wider text-sm">Estado</th>
+                        <th class="px-6 py-4 text-left font-bold uppercase tracking-wider text-sm">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
+                    {% for session in recent_sessions %}
+                    <tr class="border-t border-blue-200 hover:bg-blue-100 transition-colors">
+                        <td class="px-6 py-4 text-sm text-gray-700">
+                            {{ session.start_time|date:"d/m/Y H:i" }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-700">
+                            {% if session.duration_seconds %}
+                                {{ session.duration_seconds|floatformat:"0" }}s
+                            {% else %}
+                                En curso
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-700">
+                            {{ session.total_blinks }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-700">
+                            {{ session.alerts_count }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-700">
+                            <a href="{% url 'monitoring:session_detail' session.id %}" 
+                               class="text-cyan-600 hover:text-cyan-800 font-medium">
+                                Ver detalles
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
                     <tr>
                         <td colspan="5" class="no-data px-6 py-12 text-center">
-                            <div class="flex flex-col items-center justify-center text-gray-500">
-                                <i class="fas fa-info-circle text-5xl mb-4 text-blue-400"></i>
+                            <div class="flex flex-col items-center justify-center text-blue-400">
+                                <i class="fas fa-info-circle text-5xl mb-4 text-cyan-400"></i>
                                 <p class="text-lg font-medium">No hay sesiones registradas aún. ¡Inicia tu primera
                                     sesión de monitoreo!</p>
                             </div>
                         </td>
                     </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
-
-
-<!--
-<style>
-.page-header {
-    margin-bottom: 2rem;
-    text-align: center;
-}
-
-.page-header h1 {
-    color: var(--primary-health);
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-}
-
-.page-header p {
-    color: #6b7280;
-    font-size: 1.1rem;
-}
-
-.monitoring-dashboard {
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.dashboard-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.card-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
-    background: var(--gradient-health);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.5rem;
-}
-
-.card-content h3 {
-    margin: 0 0 0.5rem 0;
-    color: #374151;
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-.metric {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--primary-health);
-}
-
-.sessions-table {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.sessions-table h2 {
-    margin: 0 0 1.5rem 0;
-    color: #374151;
-    font-size: 1.25rem;
-}
-
-.table-container {
-    overflow-x: auto;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th, td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-th {
-    background: #f9fafb;
-    font-weight: 600;
-    color: #374151;
-}
-
-.no-data {
-    text-align: center;
-    padding: 2rem;
-    color: #6b7280;
-}
-
-.no-data i {
-    margin-right: 0.5rem;
-    color: var(--secondary-vision);
-}
-</style>
--->
 
 {% endblock %}

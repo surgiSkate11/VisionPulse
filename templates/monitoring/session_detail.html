@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Detalles de la Sesión</h1>
+        <div class="space-x-2">
+            <a href="{% url 'monitoring:session_list' %}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                Volver al Historial
+            </a>
+            <a href="{% url 'monitoring:home' %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Nueva Sesión
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Card: Métricas Generales -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Métricas Generales</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-500">Inicio</p>
+                    <p class="text-lg font-medium">{{ session.start_time|date:"d/m/Y H:i" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Duración</p>
+                    <p class="text-lg font-medium">
+                        {% if session.duration_seconds %}
+                            {{ session.duration_seconds|floatformat:"0" }} segundos
+                        {% else %}
+                            En curso
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Total Parpadeos</p>
+                    <p class="text-lg font-medium">{{ blink_count }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Total Alertas</p>
+                    <p class="text-lg font-medium">{{ alert_count }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Ratio de Apertura (promedio)</p>
+                    <p class="text-lg font-medium">{{ session.avg_ear|floatformat:2 }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Puntuación de Enfoque</p>
+                    <p class="text-lg font-medium">{{ focus_score|floatformat:"0" }}%</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card: Gráfico de Enfoque -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Nivel de Enfoque</h2>
+            <div class="flex flex-col items-center justify-center h-40">
+                <div class="relative w-40 h-40">
+                    <div class="absolute inset-0">
+                        <div class="h-full bg-blue-100 rounded-full"></div>
+                    </div>
+                    <div class="absolute inset-0" style="clip-path: polygon(50% 0%, 100% 0%, 100% 100%, 50% 100%);">
+                        <div class="h-full bg-blue-500 rounded-full"></div>
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="text-3xl font-bold text-gray-800">{{ focus_score|floatformat:"0" }}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline de Eventos -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Timeline de Eventos</h2>
+        
+        <div class="relative">
+            <div class="absolute left-4 inset-y-0 w-0.5 bg-gray-200"></div>
+            
+            <div class="space-y-6 relative">
+                {% for event in events %}
+                    <div class="relative flex items-start">
+                        {% if event.type == 'blink' %}
+                            <div class="flex h-6 items-center">
+                                <div class="relative z-10 w-2.5 h-2.5 rounded-full bg-blue-600 ring-8 ring-white"></div>
+                            </div>
+                            <div class="ml-4 min-w-0 flex-1">
+                                <div class="text-sm text-gray-500">
+                                    Parpadeo detectado
+                                    <span class="ml-2 text-gray-400">
+                                        {{ event.timestamp|date:"H:i:s" }}
+                                    </span>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="flex h-6 items-center">
+                                <div class="relative z-10 w-2.5 h-2.5 rounded-full bg-red-600 ring-8 ring-white"></div>
+                            </div>
+                            <div class="ml-4 min-w-0 flex-1">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ event.alert_type }}
+                                    <span class="ml-2 text-gray-400">
+                                        {{ event.timestamp|date:"H:i:s" }}
+                                    </span>
+                                </div>
+                                {% if event.resolved %}
+                                    <div class="text-sm text-gray-500">
+                                        Resuelto a las {{ event.resolved_at|date:"H:i:s" }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <div class="text-center text-gray-500 py-4">
+                        No hay eventos registrados en esta sesión.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

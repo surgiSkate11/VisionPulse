@@ -1,6 +1,32 @@
+# Entornos virtuales
 .venv
-*.log
-*.tmp
+venv/
+.env
+
+# Python
 __pycache__/
-__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# Django
+db.sqlite3
+*.log
+media/
+staticfiles/
+
+# Node.js
 node_modules/
+theme/static_src/node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Archivos temporales
+*.tmp

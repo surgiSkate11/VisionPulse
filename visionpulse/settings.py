@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 
     # Terceros
     'tailwind',
+    'theme',
     'django_browser_reload',
     'rest_framework',
     'social_django',
@@ -92,7 +93,7 @@ WSGI_APPLICATION = 'visionpulse.wsgi.application'
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
-
+'''
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -103,7 +104,17 @@ DATABASES = {
         'PORT': '5432',
     }
 }
-
+'''
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'visionpulse',
+        'USER': 'postgres',
+        'PASSWORD': 'qwerty',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
 # Postgress: visionpulse
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
