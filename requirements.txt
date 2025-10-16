@@ -19,5 +19,4 @@ defusedxml==0.7.1
 weasyprint==62.3
 reportlab==4.2.0
 requests==2.32.3
-opencv-python-headless>=4.5,<5.0
 numpy>=1.21,<2.0

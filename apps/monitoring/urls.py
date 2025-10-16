@@ -6,6 +6,7 @@ app_name = 'monitoring'
 
 urlpatterns = [
     path('home/', ModuloTemplateView.as_view(), name='home'),
+    
     path('sessions/', SessionListView.as_view(), name='session_list'),
     path('sessions/<int:session_id>/', SessionDetailView.as_view(), name='session_detail'),
     
