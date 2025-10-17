@@ -84,13 +84,7 @@ class GroupModulePermissionManager(models.Manager):
             group_id=group_id,
             module__is_active=True
         )
-# modulos_activos_de_grupo = GroupModulePermission.objects.get_group_module_permission_active_list(group_id)
-# El select_related permite optimizar las consultas a la base de datos, hace un join, y une estos tres:
-# GrupoModulePermission | module | menu
 
-# autor = Autor.objects.filter(nombre='Gabriel García Márquez')
-# En mi caso voy a decir:
-# modulos_activos_de_grupo = GroupModulePermission.objects.get_group_module_permission_active_list(group_id = "1", module__is_active=True)
 
 # =========================
 # MODELO: GroupModulePermission
@@ -176,89 +170,29 @@ class UserManager(BaseUserManager):
         return self.create_user(email, first_name, last_name, password, **extra_fields)
 
 # =========================
-# MODELO: User
+# MODELO: User (CONSOLIDADO Y CORRECTO)
 # =========================
-"""
-Modelo User: Extiende el usuario estándar de Django para añadir campos personalizados.
-Utiliza email como identificador principal para login en lugar del username.
-
-Ejemplos:
-1. admin (email: admin@visionpulse.com) - Administrador del sistema
-2. jperez (email: jperez@empresa.com) - Usuario regular con monitoreo activo
-3. mgarcia (email: mgarcia@empresa.com) - Usuario premium con configuraciones avanzadas
-"""
 class User(AbstractUser, PermissionsMixin):
-    # === CONFIGURACIONES DE MONITOREO VISUAL ===
-    # Frecuencia de monitoreo
-    monitoring_frequency = models.PositiveIntegerField(
-        default=30, 
-        validators=[MinValueValidator(10), MaxValueValidator(300)],
-        help_text="Frecuencia de análisis visual en segundos"
-    )
-    # Alertas de descanso
-    break_reminder_interval = models.PositiveIntegerField(
-        default=20, 
-        validators=[MinValueValidator(5), MaxValueValidator(120)],
-        help_text="Intervalo para recordatorios de descanso en minutos"
-    )
-    auto_pause_on_fatigue = models.BooleanField(
-        default=True,
-        help_text="Pausar automáticamente cuando se detecte fatiga extrema"
-    )
-    # Configuración de ejercicios
-    exercise_difficulty = models.CharField(
-        max_length=20,
-        choices=[
-            ('easy', 'Fácil'),
-            ('moderate', 'Moderado'),
-            ('advanced', 'Avanzado'),
-        ],
-        default='moderate'
-    )
-    auto_suggest_exercises = models.BooleanField(
-        default=True,
-        help_text="Sugerir ejercicios automáticamente basado en fatiga detectada"
-    )
-    # Notificaciones
-    visual_fatigue_alerts = models.BooleanField(default=True)
-    break_reminders = models.BooleanField(default=True)
-    daily_reports = models.BooleanField(default=True)
-    """
-    Modelo User personalizado para VisionPulse: Combina funcionalidades de administración
-    del sistema con características específicas para monitoreo de salud visual.
-    """
-    
-    image = models.ImageField(
-        verbose_name='Imagen de perfil',
-        upload_to='security/users/',
-        max_length=1024,
-        blank=True,
-        null=True
-    )
+    # --- Campos Básicos y de Autenticación ---
     email = models.EmailField('Email', unique=True)
-    city = models.CharField('Ciudad', max_length=200, blank=True, null=True)
-    country = models.CharField('País', max_length=100, blank=True, null=True)
-    phone = models.CharField('Teléfono', max_length=50, blank=True, null=True)
-    # === CAMPOS ADICIONALES PARA VISIONPULSE ===
-    user_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     username = models.CharField(
-        max_length=150,
-        unique=True,
-        blank=False,
-        null=False,
-        help_text="Nombre de usuario único. Obligatorio."
+        max_length=150, unique=True,
+        help_text="Nombre de usuario único. Se autogenera desde el email si no se proporciona."
     )
     first_name = models.CharField('Nombres', max_length=150)
     last_name = models.CharField('Apellidos', max_length=150)
-    is_verified = models.BooleanField(default=False, help_text="¿Correo verificado? True si viene de OAuth.")
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    last_activity = models.DateTimeField(auto_now=True)
-    # password, date_joined, last_login: gestionados por Django
-    profile_completed = models.BooleanField(default=False, help_text="¿Completó el onboarding?")
+    image = models.ImageField(upload_to='security/users/', max_length=1024, blank=True, null=True)
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["first_name", "last_name"]
+    objects = UserManager()
 
-    # =========================
-    # CAMPOS OPCIONALES (ONBOARDING / PERFIL)
-    # =========================
+    # --- Campos de Perfil y Onboarding ---
+    bio = models.TextField(max_length=500, blank=True, help_text="Breve descripción sobre ti")
+    birth_date = models.DateField(null=True, blank=True)
+    city = models.CharField('Ciudad', max_length=200, blank=True, null=True)
+    country = models.CharField('País', max_length=100, blank=True, null=True)
+    phone = models.CharField('Teléfono', max_length=50, blank=True, null=True)
+    profile_completed = models.BooleanField(default=False, help_text="¿Completó el onboarding?")
     USER_TYPES = (
         ('office_worker', 'Trabajador de Oficina'),
         ('programmer', 'Programador'),
@@ -282,8 +216,6 @@ class User(AbstractUser, PermissionsMixin):
         ('ultrawide', 'Ultra ancha (> 32")'),
         ('multiple', 'Múltiples pantallas'),
     )
-    bio = models.TextField(max_length=500, blank=True, help_text="Breve descripción sobre ti")
-    birth_date = models.DateField(null=True, blank=True)
     user_type = models.CharField(max_length=20, choices=USER_TYPES, default='office_worker', blank=True)
     work_environment = models.CharField(max_length=20, choices=WORK_ENVIRONMENT, default='office', blank=True)
     company = models.CharField(max_length=200, blank=True, help_text="Nombre de tu empresa u organización")
@@ -301,8 +233,40 @@ class User(AbstractUser, PermissionsMixin):
         blank=True,
         help_text="Horario donde más trabajas frente a la pantalla"
     )
-    # === ESTADÍSTICAS DE SALUD VISUAL ===
-    total_monitoring_time = models.PositiveIntegerField(default=0, help_text="Tiempo total monitoreado en minutos", blank=True)
+
+    # --- Campos de Configuración (Consolidados de UserSettings) ---
+    ear_threshold = models.FloatField("Umbral EAR", default=0.20, validators=[MinValueValidator(0.05), MaxValueValidator(0.40)])
+    blink_window_frames = models.PositiveSmallIntegerField("Ventana confirmación (frames)", default=3, validators=[MinValueValidator(1), MaxValueValidator(10)])
+    blink_rate_threshold = models.PositiveIntegerField(default=15, validators=[MinValueValidator(5), MaxValueValidator(30)], help_text="Parpadeos mínimos por minuto para alerta")
+    monitoring_frequency = models.PositiveIntegerField(
+        default=30,
+        validators=[MinValueValidator(10), MaxValueValidator(300)],
+        help_text="Frecuencia de análisis visual en segundos"
+    )
+    break_reminder_interval = models.PositiveIntegerField(
+        default=20,
+        validators=[MinValueValidator(5), MaxValueValidator(120)],
+        help_text="Intervalo para recordatorios de descanso en minutos"
+    )
+    dark_mode = models.BooleanField(default=False)
+    notification_mode = models.CharField(
+        max_length=10,
+        choices=[('visual', 'Visual'), ('sound', 'Sonora'), ('both', 'Ambos'), ('none', 'Ninguno')],
+        default='both'
+    )
+    alert_volume = models.FloatField(default=0.5, validators=[MinValueValidator(0.0), MaxValueValidator(1.0)])
+    data_collection_consent = models.BooleanField(default=False)
+    anonymous_analytics = models.BooleanField(default=True)
+    camera_enabled = models.BooleanField(default=True)
+    face_detection_sensitivity = models.FloatField(default=0.7, validators=[MinValueValidator(0.1), MaxValueValidator(1.0)], help_text="Sensibilidad de detección facial (0.1-1.0)")
+    fatigue_threshold = models.FloatField(default=0.7, validators=[MinValueValidator(0.1), MaxValueValidator(1.0)], help_text="Umbral para alertas de fatiga (0.1-1.0)")
+    sampling_interval_seconds = models.PositiveIntegerField(default=5, validators=[MinValueValidator(1), MaxValueValidator(60)])
+    notify_inactive_tab = models.BooleanField(default=True)
+    locale = models.CharField("Idioma/Localización", max_length=10, default='es', blank=True)
+    timezone = models.CharField("Zona horaria", max_length=50, default='America/Guayaquil', blank=True)
+
+    # --- Campos de Estadísticas de Salud Visual ---
+    total_monitoring_time = models.PositiveIntegerField(default=0, help_text="Tiempo total monitoreado en minutos")
     total_sessions = models.PositiveIntegerField(default=0, help_text="Número total de sesiones de monitoreo", blank=True)
     current_streak = models.PositiveIntegerField(default=0, help_text="Días consecutivos usando la aplicación", blank=True)
     longest_streak = models.PositiveIntegerField(default=0, blank=True)
@@ -310,18 +274,11 @@ class User(AbstractUser, PermissionsMixin):
     exercises_completed = models.PositiveIntegerField(default=0, help_text="Ejercicios oculares completados", blank=True)
     breaks_taken = models.PositiveIntegerField(default=0, help_text="Descansos tomados por alertas", blank=True)
     fatigue_episodes = models.PositiveIntegerField(default=0, help_text="Episodios de fatiga detectados", blank=True)
-    timezone_field = models.CharField(max_length=50, default='America/Guayaquil', blank=True)
-    language = models.CharField(max_length=10, default='es', blank=True)
-    notifications_enabled = models.BooleanField(default=True)
     email_notifications = models.BooleanField(default=True)
-    is_premium = models.BooleanField(default=False)
-    premium_until = models.DateTimeField(null=True, blank=True)
 
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["first_name", "last_name"]  # username se autogenera si no se provee
-
-    # Manager personalizado
-    objects = UserManager()
+    # --- Timestamps y UUIDs ---
+    user_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Usuario"
@@ -331,8 +288,11 @@ class User(AbstractUser, PermissionsMixin):
             ("change_userpassword", "Cambiar contraseña de Usuario"),
         )
 
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}".strip() or self.username
+
     def __str__(self):
-        # Evita recursión infinita y errores si get_full_name no es seguro
+        # Evitamos recursión infinita y errores si get_full_name no es seguro
         try:
             full_name = f"{self.first_name} {self.last_name}".strip()
             if not full_name or full_name == '':
@@ -342,29 +302,21 @@ class User(AbstractUser, PermissionsMixin):
         return f"{self.email} - {full_name}"
 
     def save(self, *args, **kwargs):
-        # Autogenera username si no se provee (usa la parte antes de la @ del email)
+        # Autogeneramos username si no se provee (usamos la parte antes de la @ del email)
         if not self.username and self.email:
             base_username = self.email.split('@')[0]
             similar = type(self).objects.filter(username__startswith=base_username).exclude(pk=self.pk).count()
             self.username = base_username if similar == 0 else f"{base_username}{similar+1}"
         super().save(*args, **kwargs)
 
-    def get_full_name(self):
-        return f"{self.first_name} {self.last_name}".strip() or self.username
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if not (0.05 <= self.ear_threshold <= 0.40):
+            raise ValidationError("ear_threshold fuera de rango permitido (0.05 - 0.40).")
 
-    def get_groups(self):
-        return self.groups.all()
-
-    def get_short_name(self):
-        return self.username
-
-    def get_image(self):
-        if self.image:
-            return self.image.url
-        else:
-            return '/static/img/usuario_anonimo.png'
-    
-    # === MÉTODOS PARA VISIONPULSE ===
+    # =========================
+    # MÉTODOS ESPECÍFICOS PARA VISIONPULSE
+    # =========================
     
     def get_health_score(self):
         """Calcula un puntaje de salud visual basado en estadísticas"""
@@ -420,16 +372,9 @@ class User(AbstractUser, PermissionsMixin):
         self.last_streak_update = now
         self.save()
     
-    def is_premium_active(self):
-        """Verifica si el usuario tiene premium activo"""
-        if not self.is_premium:
-            return False
-        if self.premium_until and self.premium_until < timezone.now():
-            self.is_premium = False
-            self.save()
-            return False
-        return True
-
+# =========================
+# MODELO: AuditUser
+# =========================
 class AuditUser(models.Model):
     usuario = models.ForeignKey(User, verbose_name='Usuario',on_delete=models.PROTECT)
     tabla = models.CharField(max_length=100, verbose_name='Tabla')
@@ -477,42 +422,6 @@ class NotificationPreference(models.Model):
         return f"{self.user.username} - {self.channel}"
 
 
-class APIKey(models.Model):
-    """
-    Si se exponen APIs o integraciones, claves para servicio.
-    """
-    name = models.CharField(max_length=120)
-    key = models.CharField(max_length=255, unique=True)
-    active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = 'Clave API'
-        verbose_name_plural = 'Claves API'
-
-    def __str__(self):
-        return f"{self.name} - {'active' if self.active else 'inactive'}"
-
-
-class UserProfile(models.Model):
-    """
-    Perfil extendido del usuario para VisionPulse.
-    """
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    full_name = models.CharField("Nombre completo", max_length=200, blank=True)
-    timezone = models.CharField("Zona horaria", max_length=50, default='UTC')
-    locale = models.CharField("Idioma/Localización", max_length=10, default='es')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "Perfil de usuario"
-        verbose_name_plural = "Perfiles de usuario"
-
-    def __str__(self):
-        return f"{self.user.username} - perfil"
-
-
 class CameraDevice(models.Model):
     """
     Dispositivos de cámara registrados por usuario.
@@ -536,96 +445,6 @@ class CameraDevice(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.user.username})"
-
-
-class UserSettings(models.Model):
-    """
-    Ajustes personales del usuario para VisionPulse. Validaciones aplicadas para rangos seguros.
-    """
-    NOTIF_CHOICES = [
-        ('visual', 'Visual'),
-        ('sound', 'Sonora'),
-        ('both', 'Visual y Sonora'),
-        ('none', 'Ninguna'),
-    ]
-    
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='vision_settings')
-    
-    # === CONFIGURACIONES DE DETECCIÓN OCULAR ===
-    ear_threshold = models.FloatField(
-        "Umbral EAR",
-        default=0.20,
-        validators=[MinValueValidator(0.05), MaxValueValidator(0.40)],
-        help_text="Valor recomendado entre 0.08 y 0.25, por defecto 0.20"
-    )
-    blink_window_frames = models.PositiveSmallIntegerField(
-        "Ventana confirmación (frames)",
-        default=3,
-        validators=[MinValueValidator(1), MaxValueValidator(10)]
-    )
-    sampling_interval_seconds = models.PositiveIntegerField(
-        "Intervalo muestreo (s)",
-        default=5,
-        validators=[MinValueValidator(1), MaxValueValidator(60)]
-    )
-    rest_interval_minutes = models.PositiveIntegerField(
-        "Intervalo de descanso (min)",
-        default=20,
-        validators=[MinValueValidator(1), MaxValueValidator(240)]
-    )
-    
-    # === CONFIGURACIONES DE CÁMARA Y DETECCIÓN ===
-    camera_enabled = models.BooleanField(default=True)
-    face_detection_sensitivity = models.FloatField(
-        default=0.7,
-        validators=[MinValueValidator(0.1), MaxValueValidator(1.0)],
-        help_text="Sensibilidad de detección facial (0.1-1.0)"
-    )
-    
-    # === UMBRALES DE ALERTA ===
-    fatigue_threshold = models.FloatField(
-        default=0.7,
-        validators=[MinValueValidator(0.1), MaxValueValidator(1.0)],
-        help_text="Umbral para alertas de fatiga (0.1-1.0)"
-    )
-    blink_rate_threshold = models.PositiveIntegerField(
-        default=15,
-        validators=[MinValueValidator(5), MaxValueValidator(30)],
-        help_text="Parpadeos mínimos por minuto"
-    )
-    
-    # === CONFIGURACIONES DE NOTIFICACIÓN ===
-    notification_mode = models.CharField(max_length=10, choices=NOTIF_CHOICES, default='both')
-    notify_inactive_tab = models.BooleanField(default=True)
-    
-    # === CONFIGURACIONES DE INTERFAZ ===
-    dark_mode = models.BooleanField(default=False)
-    sound_alerts = models.BooleanField(default=True)
-    alert_volume = models.FloatField(
-        default=0.5,
-        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)]
-    )
-    
-    # === CONFIGURACIONES DE PRIVACIDAD ===
-    data_collection_consent = models.BooleanField(default=False)
-    anonymous_analytics = models.BooleanField(default=True)
-    
-    # === TIMESTAMPS ===
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        verbose_name = "Ajustes de usuario"
-        verbose_name_plural = "Ajustes de usuarios"
-
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        # asegurar consistencia de valores
-        if not (0.05 <= self.ear_threshold <= 0.40):
-            raise ValidationError("ear_threshold fuera de rango permitido (0.05 - 0.40).")
-
-    def __str__(self):
-        return f"Ajustes ({self.user.username})"
 
 
 class ConsentRecord(models.Model):

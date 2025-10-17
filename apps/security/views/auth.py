@@ -5,6 +5,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from apps.security.forms.user import CustomUserCreationForm
+from django.views.decorators.http import require_http_methods
 
 # ----------------- Cerrar Sesion -----------------
 @login_required
@@ -56,24 +57,31 @@ def signin(request):
         })
 
 # # ----------------- Registrar Nuevo Usuario -----------------
+@require_http_methods(["GET", "POST"])
 def signup(request):
-    # Si el usuario ya está autenticado, redirigir a home
-    if request.user.is_authenticated:
-        return redirect("core:home")
-    
-    data = {"title1": "Registro", "title2": "Crea tu cuenta"}
-    if request.method == "POST":
+    """
+    Vista para manejar el registro de usuarios usando CustomUserCreationForm.
+    - usa request.POST y request.FILES
+    - al guardar muestra el modal 'cuenta_creada' en la plantilla
+    """
+    cuenta_creada = False
+    if request.method == 'POST':
         form = CustomUserCreationForm(request.POST, request.FILES)
         if form.is_valid():
-            user = form.save()
-            # Autenticar explícitamente para obtener backend
-            user_auth = authenticate(request, email=form.cleaned_data['email'], password=form.cleaned_data['password'])
-            if user_auth is not None:
-                login(request, user_auth)
-            # Mostrar fragmento de éxito y redirigir a signin
-            return render(request, "security/auth/signup.html", {"form": CustomUserCreationForm(), "cuenta_creada": True, **data})
-        else:
-            return render(request, "security/auth/signup.html", {"form": form, **data})
+            # form.save() ya asigna password y otros campos según implementación del form
+            user = form.save(commit=False)
+            # normalizar email por seguridad
+            if getattr(user, 'email', None):
+                user.email = user.email.lower()
+            user.save()
+            messages.success(request, "Cuenta creada correctamente.")
+            cuenta_creada = True
+            # resetear formulario vacío para evitar mostrar datos antiguos
+            form = CustomUserCreationForm()
     else:
         form = CustomUserCreationForm()
-        return render(request, "security/auth/signup.html", {"form": form, **data})
+
+    return render(request, 'security/auth/signup.html', {
+        'form': form,
+        'cuenta_creada': cuenta_creada
+    })

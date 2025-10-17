@@ -1,6 +1,6 @@
 from django.urls import path
 
-from apps.security.views.auth import signin, signout , signup
+from apps.security.views.auth import signin, signout, signup
 from apps.security.views.menu import MenuCreateView, MenuDeleteView, MenuListView, MenuUpdateView
 from apps.security.views.module import ModuleCreateView, ModuleDeleteView, ModuleListView, ModuleUpdateView
 from apps.security.views.usuarios import UserCreateView, UserDeleteView, UserListView, UserUpdateView

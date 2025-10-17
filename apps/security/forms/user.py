@@ -11,42 +11,37 @@ class UserForm(forms.ModelForm):
             'is_active', 'is_staff', 'is_superuser'
         ]
         widgets = {
-            'icon': forms.TextInput(attrs={'placeholder': 'fa-solid fa-user'}),
-            'order': forms.NumberInput(attrs={'min': 0}),
-            'phone': forms.TextInput(attrs={'placeholder': 'Teléfono'}),
+            'username': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Elige tu nombre de usuario', 'autocomplete': 'username'}),
+            'email': forms.EmailInput(attrs={'class': 'form-input', 'placeholder': 'tu@gmail.com', 'autocomplete': 'email'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Tus nombres'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Tus apellidos'}),
+            'phone': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Teléfono'}),
             'image': forms.ClearableFileInput(),
         }
 
 class CustomUserCreationForm(forms.ModelForm):
     password = forms.CharField(
         label='Contraseña',
-        widget=forms.PasswordInput(attrs={'placeholder': 'Mínimo 8 caracteres'}),
+        widget=forms.PasswordInput(attrs={'placeholder': 'Mínimo 8 caracteres', 'class': 'form-input', 'autocomplete': 'new-password'}),
         min_length=8,
         required=True
-    )
-
-    country = forms.CharField(
-        label='País',
-        max_length=100,
-        required=True,
-        widget=forms.TextInput(attrs={'placeholder': 'Selecciona tu país', 'readonly': 'readonly'})
     )
 
     class Meta:
         model = User
         fields = [
-            'username', 'email', 'first_name', 'last_name',
-            'phone', 'image', 'country', 'password'
+            'email', 'username', 'first_name', 'last_name', 'password'
         ]
         widgets = {
-            'phone': forms.TextInput(attrs={'placeholder': 'Teléfono'}),
-            'image': forms.ClearableFileInput(),
+            'username': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Elige tu nombre de usuario', 'autocomplete': 'username'}),
+            'email': forms.EmailInput(attrs={'class': 'form-input', 'placeholder': 'tu@gmail.com', 'autocomplete': 'email'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Tus nombres'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Tus apellidos'}),
         }
 
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password'])
-        user.country = self.cleaned_data['country']
         if commit:
             user.save()
         return user

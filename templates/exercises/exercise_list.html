@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ejercicios Oculares | VisionPulse{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">Ejercicios Oculares</h1>
+        <a href="{% url 'exercises:recommended_exercises' %}" class="inline-flex items-center px-4 py-2 bg-primary-health text-white rounded-lg hover:bg-primary-health/90">
+            <i class="fas fa-star mr-2"></i>
+            Recomendados
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for exercise in exercises %}
+        <div class="bg-white/90 backdrop-blur-xl rounded-xl shadow-sm border border-primary-health/10 overflow-hidden hover:shadow-lg transition-all">
+            <div class="aspect-video bg-gray-100 relative">
+                {% if exercise.video_link %}
+                <img src="https://img.youtube.com/vi/{{ exercise.video_link|slice:'32:' }}/maxresdefault.jpg" alt="{{ exercise.title }}" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <i class="fas fa-play-circle text-4xl text-white opacity-80"></i>
+                </div>
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center bg-primary-health/10">
+                    <i class="fas fa-eye text-4xl text-primary-health/40"></i>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="p-4">
+                <h3 class="font-semibold text-lg mb-2">{{ exercise.title }}</h3>
+                <p class="text-gray-600 text-sm mb-4">{{ exercise.description|truncatechars:100 }}</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">
+                        <i class="far fa-clock mr-1"></i>
+                        {{ exercise.duration_minutes }} min
+                    </span>
+                    <a href="{% url 'exercises:start_exercise' exercise.pk %}" class="inline-flex items-center px-3 py-1.5 bg-accent-eye text-white text-sm rounded-lg hover:bg-accent-eye/90">
+                        Comenzar
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-8">
+            <i class="fas fa-dumbbell text-4xl text-gray-400 mb-2"></i>
+            <p class="text-gray-500">No hay ejercicios disponibles</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

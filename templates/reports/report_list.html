@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reportes | VisionPulse{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Encabezado -->
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">Reportes de Salud Visual</h1>
+        <div class="flex gap-3">
+            <button class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <i class="fas fa-filter mr-2"></i>
+                Filtrar
+            </button>
+            <button class="inline-flex items-center px-4 py-2 bg-primary-health text-white rounded-lg text-sm font-medium hover:bg-primary-health/90">
+                <i class="fas fa-download mr-2"></i>
+                Exportar
+            </button>
+        </div>
+    </div>
+
+    <!-- Grid de Reportes -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Tarjeta de Reporte -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+            <div class="p-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 bg-primary-health/10 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-line text-primary-health text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Reporte Mensual</h3>
+                        <p class="text-sm text-gray-500">Octubre 2023</p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600">Tiempo de pantalla</span>
+                        <span class="font-medium text-gray-900">156.5h</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600">Ejercicios completados</span>
+                        <span class="font-medium text-gray-900">24</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600">Pausas realizadas</span>
+                        <span class="font-medium text-gray-900">85%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                <a href="#" class="text-primary-health hover:text-primary-health/80 text-sm font-medium">
+                    Ver detalles
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- ... más tarjetas de reportes ... -->
+    </div>
+</div>
+{% endblock %}

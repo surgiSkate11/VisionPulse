@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudyFlow - Únete a la Revolución del Aprendizaje</title>
+    <title>Vision Pulse - Únete a la Revolución de la Salud Visual</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
@@ -16,13 +16,11 @@
 
         :root {
             --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            --secondary-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             --dark-bg: #0A0A0B;
             --glass-bg: rgba(255, 255, 255, 0.08);
             --glass-border: rgba(255, 255, 255, 0.12);
             --text-primary: #FFFFFF;
             --text-secondary: #A0A0A3;
-            --accent-glow: 0 0 50px rgba(102, 126, 234, 0.4);
             --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
@@ -32,10 +30,8 @@
             color: var(--text-primary);
             min-height: 100vh;
             position: relative;
-            overflow-x: hidden;
         }
 
-        /* Animated Background */
         .cosmic-background {
             position: fixed;
             top: 0;
@@ -46,879 +42,208 @@
             background: radial-gradient(ellipse at center, #1e2761 0%, #0A0A0B 70%);
         }
 
-        .cosmic-background::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(240, 147, 251, 0.2) 0%, transparent 50%);
-            animation: cosmicShift 10s ease-in-out infinite alternate;
-        }
-
-        @keyframes cosmicShift {
-            0% { opacity: 0.8; transform: scale(1); }
-            100% { opacity: 1; transform: scale(1.1); }
-        }
-
-        /* Floating Particles */
-        .particles-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: var(--secondary-gradient);
-            border-radius: 50%;
-            opacity: 0.7;
-            animation: floatUp 8s linear infinite;
-        }
-
-        .particle::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: inherit;
-            border-radius: 50%;
-            filter: blur(2px);
-            opacity: 0.6;
-        }
-
-        @keyframes floatUp {
-            0% {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: 0.7;
-            }
-            90% {
-                opacity: 0.7;
-            }
-            100% {
-                transform: translateY(-100px) rotate(360deg);
-                opacity: 0;
-            }
-        }
-
-        /* Main Container */
         .main-container {
-            min-height: 70vh;
+            min-height: 100vh;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: center;
-            padding: 5px;
-            position: relative;
-            z-index: 1;
+            padding: 20px;
         }
 
         .content-wrapper {
-            max-width: 1400px;
+            max-width: 1200px;
             width: 100%;
             display: grid;
             grid-template-columns: 1.2fr 1fr;
-            gap: 80px;
+            gap: 60px;
             align-items: center;
         }
 
-        /* Hero Section */
         .hero-section {
-            padding: 28px 0 10px 0;
-            position: relative;
-        }
-
-        .hero-section::before {
-            content: '';
-            position: absolute;
-            top: -50px;
-            left: -50px;
-            width: 200px;
-            height: 200px;
-            background: var(--primary-gradient);
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.3;
-            animation: heroGlow 6s ease-in-out infinite alternate;
-        }
-
-        @keyframes heroGlow {
-            0% { transform: scale(0.8); opacity: 0.2; }
-            100% { transform: scale(1.2); opacity: 0.4; }
+            padding: 20px 0;
         }
 
         .hero-title {
-            font-size: 4.5rem;
+            font-size: 3.5rem;
             font-weight: 900;
             line-height: 1.1;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             background: linear-gradient(135deg, #fff 0%, #667eea 50%, #f093fb 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            position: relative;
-            animation: titleReveal 1s ease-out 0.2s both;
-        }
-
-        @keyframes titleReveal {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .hero-subtitle {
-            font-size: 1.4rem;
-            line-height: 1.7;
+            font-size: 1.2rem;
+            line-height: 1.6;
             color: var(--text-secondary);
-            margin-bottom: 50px;
-            font-weight: 400;
-            animation: subtitleReveal 1s ease-out 0.4s both;
+            margin-bottom: 40px;
         }
 
-        @keyframes subtitleReveal {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Stats Section */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
-            margin-top: 30px;
-            animation: statsReveal 1s ease-out 0.6s both;
-        }
-
-        @keyframes statsReveal {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .stat-card {
             text-align: center;
-            padding: 30px 20px;
+            padding: 20px;
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
-            border-radius: 20px;
+            border-radius: 16px;
             backdrop-filter: blur(20px);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--primary-gradient);
-            transform: translateX(-100%);
-            transition: transform 0.5s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--accent-glow);
-        }
-
-        .stat-card:hover::before {
-            transform: translateX(0);
         }
 
         .stat-number {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 800;
             background: var(--primary-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .stat-label {
-            font-size: 1rem;
+            font-size: 0.9rem;
             color: var(--text-secondary);
-            font-weight: 500;
         }
 
-        /* Form Container */
         .form-container {
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
-            border-radius: 22px;
-            padding: 20px 10px;
-            backdrop-filter: blur(20px) saturate(120%);
-            position: relative;
-            overflow: hidden;
-            box-shadow: 
-                0 10px 20px rgba(0, 0, 0, 0.13),
-                0 0 0 1px var(--glass-border),
-                inset 0 1px 0 rgba(255, 255, 255, 0.06);
-            animation: formReveal 1s ease-out 0.8s both;
-        }
-
-        @keyframes formReveal {
-            from {
-                opacity: 0;
-                transform: translateX(50px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0) scale(1);
-            }
-        }
-
-        .form-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: var(--primary-gradient);
-            background-size: 300% 100%;
-            animation: gradientShift 3s ease-in-out infinite;
-        }
-
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
+            border-radius: 20px;
+            padding: 40px 30px;
+            backdrop-filter: blur(20px);
         }
 
         .form-header {
             text-align: center;
-            margin-bottom: 18px;
+            margin-bottom: 30px;
         }
 
         .form-title {
-            font-size: 2.8rem;
+            font-size: 2.2rem;
             font-weight: 800;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             background: linear-gradient(135deg, #fff 0%, #667eea 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .form-subtitle {
-            color: var(--text-secondary);
-            font-size: 1.2rem;
-            font-weight: 400;
-        }
-
-        /* Progress Bar */
-        .progress-container {
-            margin-bottom: 40px;
-            position: relative;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: var(--primary-gradient);
-            border-radius: 4px;
-            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
-        }
-
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        /* Form Steps */
-        .form-step {
-            display: none;
-            animation: stepSlideIn 0.6s ease-out;
-        }
-
-        .form-step.active {
-            display: block;
-        }
-
-        @keyframes stepSlideIn {
-            from {
-                opacity: 0;
-                transform: translateX(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        /* Form Controls */
         .input-group {
-            margin-bottom: 12px;
-            position: relative;
-        }
-
-        .input-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            margin-bottom: 20px;
         }
 
         .form-label {
             display: block;
-            margin-bottom: 12px;
-            font-weight: 600;
-            font-size: 1.05rem;
+            margin-bottom: 8px;
+            font-weight: 500;
             color: var(--text-primary);
-            transition: color 0.3s ease;
         }
 
         .form-input {
             width: 100%;
-            padding: 18px 24px;
+            padding: 12px 20px;
             background: rgba(255, 255, 255, 0.05);
             border: 2px solid var(--glass-border);
-            border-radius: 16px;
-            font-size: 1.1rem;
+            border-radius: 12px;
+            font-size: 1rem;
             color: var(--text-primary);
             transition: all 0.3s ease;
-            font-family: inherit;
-            position: relative;
-        }
-
-        .form-input::placeholder {
-            color: var(--text-secondary);
-            opacity: 0.7;
         }
 
         .form-input:focus {
             outline: none;
             border-color: #667eea;
             background: rgba(102, 126, 234, 0.1);
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .form-input:focus + .form-label {
-            color: #667eea;
-        }
-
-        /* Premium Buttons */
-        .btn {
-            width: 100%;
-            padding: 20px 32px;
-            border-radius: 16px;
-            font-size: 1.15rem;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            font-family: inherit;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
         }
 
         .btn-primary {
+            width: 100%;
+            padding: 14px 24px;
             background: var(--primary-gradient);
             color: white;
-            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-primary::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
         }
 
         .btn-primary:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-primary:hover::before {
-            left: 100%;
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: #667eea;
-            border: 2px solid #667eea;
-            margin-top: 15px;
-        }
-
-        .btn-secondary:hover {
-            background: #667eea;
-            color: white;
             transform: translateY(-2px);
         }
 
-        .google-btn {
-            width: 100%;
-            padding: 18px 24px;
-            background: rgba(255, 255, 255, 0.95);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
+        .field-error-premium {
+            color: #ef4444;
+            font-size: 0.9rem;
+            margin-top: 6px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 15px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #333;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            margin-bottom: 30px;
-            backdrop-filter: blur(10px);
+            gap: 6px;
         }
 
-        .google-btn:hover {
-            background: white;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(66, 133, 244, 0.2);
-        }
-
-        /* Divider */
-        .divider {
-            position: relative;
-            text-align: center;
-            margin: 35px 0;
-            color: var(--text-secondary);
-            font-size: 1rem;
-        }
-
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: var(--glass-border);
-        }
-
-        .divider span {
-            background: var(--dark-bg);
-            padding: 0 20px;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Checkbox */
-        .checkbox-group {
-            display: flex;
-            align-items: flex-start;
-            gap: 15px;
-            margin: 30px 0;
-            font-size: 1rem;
-        }
-
-        .custom-checkbox {
-            position: relative;
-            width: 24px;
-            height: 24px;
-            margin-top: 2px;
-        }
-
-        .custom-checkbox input {
-            position: absolute;
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-
-        .checkbox-mark {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 24px;
-            width: 24px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid var(--glass-border);
-            border-radius: 6px;
-            transition: all 0.3s ease;
-        }
-
-        .custom-checkbox input:checked ~ .checkbox-mark {
-            background: var(--primary-gradient);
-            border-color: #667eea;
-        }
-
-        .checkbox-mark:after {
-            content: "";
-            position: absolute;
-            display: none;
-            left: 7px;
-            top: 3px;
-            width: 6px;
-            height: 10px;
-            border: solid white;
-            border-width: 0 2px 2px 0;
-            transform: rotate(45deg);
-        }
-
-        .custom-checkbox input:checked ~ .checkbox-mark:after {
-            display: block;
-        }
-
-        /* Login Link */
         .login-link {
             text-align: center;
-            margin-top: 30px;
+            margin-top: 20px;
             color: var(--text-secondary);
-            font-size: 1rem;
         }
 
         .login-link a {
             color: #667eea;
             text-decoration: none;
             font-weight: 600;
-            transition: color 0.3s ease;
         }
 
-        .login-link a:hover {
-            color: #764ba2;
-            text-decoration: underline;
-        }
-
-        /* Toast Notifications */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: var(--primary-gradient);
-            color: white;
-            padding: 20px 32px;
-            border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            font-size: 1.1rem;
-            font-weight: 600;
-            opacity: 0;
-            z-index: 9999;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(20px);
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .toast.success {
-            background: linear-gradient(135deg, #4ade80, #22c55e);
-        }
-
-        .toast.error {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-        }
-
-        .toast.info {
-            background: var(--primary-gradient);
-        }
-
-        /* --- Mejoras premium para el popup de país --- */
-        .country-popup {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(10,10,11,0.75);
-            backdrop-filter: blur(6px) saturate(120%);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: popupFadeIn 0.25s cubic-bezier(.4,0,.2,1);
-        }
-        @keyframes popupFadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .country-popup-content {
-            background: rgba(30, 39, 97, 0.98);
-            border: 2px solid #764ba2;
-            border-radius: 22px;
-            padding: 0 0 10px 0;
-            min-width: 340px;
-            max-width: 95vw;
-            box-shadow: 0 12px 48px 0 rgba(102,126,234,0.25), 0 1.5px 0 #fff1, 0 0 0 1.5px #764ba2;
-            position: relative;
-            animation: popupSlideIn 0.35s cubic-bezier(.4,0,.2,1);
-        }
-        @keyframes popupSlideIn {
-            from { transform: translateY(40px) scale(0.98); opacity: 0; }
-            to { transform: translateY(0) scale(1); opacity: 1; }
-        }
-        .country-popup-header {
-            position: sticky;
-            top: 0;
-            background: rgba(30, 39, 97, 0.98);
-            z-index: 2;
-            padding: 22px 28px 10px 28px;
-            border-radius: 22px 22px 0 0;
-            box-shadow: 0 2px 12px 0 rgba(102,126,234,0.08);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .country-popup-header input.form-input {
-            flex: 1;
-            padding-left: 38px;
-            margin-bottom: 0;
-            background: rgba(255,255,255,0.09);
-            border: 1.5px solid #764ba2;
-            color: #fff;
-        }
-        .country-popup-header .search-icon {
-            position: absolute;
-            left: 38px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #764ba2;
-            font-size: 1.1em;
-            pointer-events: none;
-        }
-        .country-popup-header .btn-close {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 1.7em;
-            cursor: pointer;
-            margin-left: 10px;
-            transition: color 0.2s;
-        }
-        .country-popup-header .btn-close:hover {
-            color: #f093fb;
-        }
-        .country-list {
-            padding: 10px 18px 0 18px;
-            max-height: 220px;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #764ba2 #222a;
-        }
-        .country-list::-webkit-scrollbar {
-            width: 8px;
-            background: transparent;
-        }
-        .country-list::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #764ba2 0%, #f093fb 100%);
-            border-radius: 8px;
-            min-height: 40px;
-            box-shadow: 0 2px 8px 0 rgba(102,126,234,0.18);
-            border: 2px solid rgba(255,255,255,0.12);
-        }
-        .country-list::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .country-list::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #f093fb 0%, #764ba2 100%);
-        }
-        .country-list button {
-            width: 100%;
-            background: none;
-            border: none;
-            text-align: left;
-            padding: 12px 10px;
-            font-size: 1.08rem;
-            color: #fff;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background 0.18s, color 0.18s, box-shadow 0.18s;
-            margin-bottom: 2px;
-            box-shadow: 0 0 0 0 transparent;
-        }
-        .country-list button:hover, .country-list button:focus {
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-            box-shadow: 0 2px 12px 0 rgba(102,126,234,0.13);
-        }
-        /* Responsive Design */
         @media (max-width: 1024px) {
             .content-wrapper {
                 grid-template-columns: 1fr;
+                max-width: 500px;
                 gap: 40px;
-                max-width: 600px;
-                margin: 0 auto;
             }
 
             .hero-section {
                 text-align: center;
                 order: 2;
-                padding: 40px 0;
             }
 
             .form-container {
                 order: 1;
-                padding: 40px 30px;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 20px;
             }
         }
 
         @media (max-width: 768px) {
             .hero-title {
-                font-size: 3rem;
-            }
-
-            .hero-subtitle {
-                font-size: 1.2rem;
-            }
-
-            .input-row {
-                grid-template-columns: 1fr;
-                gap: 15px;
+                font-size: 2.5rem;
             }
 
             .stats-grid {
                 grid-template-columns: 1fr;
-                gap: 15px;
             }
-
-            .stat-card {
-                padding: 20px 15px;
-            }
-
-            .form-container {
-                padding: 30px 20px;
-            }
-
-            .main-container {
-                padding: 15px;
-            }
-        }
-
-        /* Loading Animation */
-        .loading {
-            pointer-events: none;
-            position: relative;
-        }
-
-        .loading::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 20px;
-            height: 20px;
-            margin: -10px 0 0 -10px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <!-- Animated Background -->
     <div class="cosmic-background"></div>
-    
-    <!-- Floating Particles -->
-    <div class="particles-container" id="particles"></div>
 
     {% if cuenta_creada %}
-        <div id="signup-success-premium" style="display:flex;flex-direction:column;align-items:center;justify-content:center;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;background:rgba(10,10,11,0.82);backdrop-filter:blur(6px) saturate(120%);">
-            <div style="background:rgba(30,39,97,0.98);border:2.5px solid #764ba2;border-radius:22px;box-shadow:0 12px 48px 0 rgba(102,126,234,0.25),0 1.5px 0 #fff1,0 0 0 1.5px #764ba2;max-width:410px;width:90vw;padding:38px 32px 32px 32px;display:flex;flex-direction:column;align-items:center;">
-                <div style="font-size:2.6em;color:#4ade80;margin-bottom:12px;"><i class="fas fa-check-circle"></i></div>
-                <div style="font-size:1.45em;font-weight:800;background:linear-gradient(135deg,#fff 0%,#667eea 50%,#f093fb 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;">¡Cuenta creada con éxito!</div>
-                <div style="color:#A0A0A3;font-size:1.08em;margin:18px 0 0 0;text-align:center;">Bienvenido a la revolución del aprendizaje.<br>Serás redirigido al inicio en unos segundos...</div>
-                <div id="signup-success-bar" style="width:100%;height:7px;background:rgba(255,255,255,0.08);border-radius:6px;margin-top:32px;overflow:hidden;">
-                    <div id="signup-success-bar-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#667eea 0%,#764ba2 100%);box-shadow:0 0 20px #764ba2cc;border-radius:6px;"></div>
-                </div>
+        <div id="signup-success-premium" style="display:flex;flex-direction:column;align-items:center;justify-content:center;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;background:rgba(10,10,11,0.82);backdrop-filter:blur(6px);">
+            <div style="background:rgba(30,39,97,0.98);border:2px solid #764ba2;border-radius:20px;max-width:400px;width:90vw;padding:30px;text-align:center;">
+                <div style="font-size:2.4em;color:#4ade80;margin-bottom:10px;"><i class="fas fa-check-circle"></i></div>
+                <div style="font-size:1.4em;font-weight:800;background:linear-gradient(135deg,#fff,#667eea);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">¡Cuenta creada con éxito!</div>
+                <div style="color:#A0A0A3;font-size:1rem;margin:15px 0;">Serás redirigido al inicio en unos segundos...</div>
             </div>
         </div>
         <script>
-        (function(){
-            var fill = document.getElementById('signup-success-bar-fill');
-            var box = document.getElementById('signup-success-premium');
-            var duration = 2200; // ms
-            var start = null;
-            function animateBar(ts){
-                if(!start) start = ts;
-                var elapsed = ts - start;
-                var percent = Math.min(100, (elapsed/duration)*100);
-                fill.style.width = percent+'%';
-                if(elapsed < duration){
-                    requestAnimationFrame(animateBar);
-                }else{
-                    fill.style.width = '100%';
-                    box.style.opacity = 1;
-                    var fade = setInterval(function(){
-                        box.style.opacity -= 0.08;
-                        if(box.style.opacity <= 0){
-                            clearInterval(fade);
-                            box.style.display = 'none';
-                            window.location.href = "{% url 'security:home' %}";
-                        }
-                    }, 30);
-                }
-            }
-            requestAnimationFrame(animateBar);
-        })();
+            setTimeout(() => {
+                window.location.href = "{% url 'security:home' %}";
+            }, 2000);
         </script>
     {% endif %}
 
@@ -926,24 +251,24 @@
         <div class="content-wrapper">
             <!-- Hero Section -->
             <div class="hero-section">
-                <h1 class="hero-title">Transforma tu manera de estudiar</h1>
+                <h1 class="hero-title">Cuida tu salud visual mientras trabajas</h1>
                 <p class="hero-subtitle">
-                    Únete a miles de estudiantes que ya revolucionaron su aprendizaje con IA, 
-                    gamificación y técnicas de estudio personalizadas que se adaptan a tu ritmo único.
+                    Únete a VisionPulse y protege tus ojos del cansancio digital. Monitoreo inteligente, 
+                    ejercicios oculares personalizados y alertas preventivas para mantener tu bienestar visual.
                 </p>
                 
                 <div class="stats-grid">
                     <div class="stat-card">
+                        <span class="stat-number">80%</span>
+                        <span class="stat-label">Reducción de fatiga visual</span>
+                    </div>
+                    <div class="stat-card">
                         <span class="stat-number">50K+</span>
-                        <span class="stat-label">Estudiantes activos</span>
+                        <span class="stat-label">Usuarios activos</span>
                     </div>
                     <div class="stat-card">
-                        <span class="stat-number">95%</span>
-                        <span class="stat-label">Mejora en notas</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-number">4.9⭐</span>
-                        <span class="stat-label">Valoración</span>
+                        <span class="stat-number">20+</span>
+                        <span class="stat-label">Ejercicios oculares</span>
                     </div>
                 </div>
             </div>
@@ -951,8 +276,8 @@
             <!-- Form Container -->
             <div class="form-container">
                 <div class="form-header">
-                    <h2 class="form-title">Crea tu cuenta</h2>
-                    <p class="form-subtitle">Comienza tu viaje hacia el éxito académico</p>
+                    <h2 class="form-title">Comienza tu bienestar visual</h2>
+                    <p class="form-subtitle">Crea tu cuenta en VisionPulse</p>
                 </div>
 
                 <div class="form-step active" id="step1">
@@ -969,273 +294,52 @@
                             {% endfor %}
                         {% endif %}
 
+                        <!-- Campos esenciales -->
                         <div class="input-group">
-                            <label for="first_name" class="form-label">Nombres *</label>
-                            <input type="text" id="first_name" name="first_name" class="form-input" placeholder="Tus nombres" required maxlength="150" value="{{ form.first_name.value|default:'' }}">
-                            {% if form.first_name.errors %}
-                                {% for error in form.first_name.errors %}
-                                    <div class="field-error-premium">
-                                        <i class="fas fa-exclamation-circle"></i> {{ error }}
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label">Nombres *</label>
+                            {{ form.first_name }}
+                            {% for error in form.first_name.errors %}
+                                <div class="field-error-premium"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
                         </div>
 
                         <div class="input-group">
-                            <label for="last_name" class="form-label">Apellidos *</label>
-                            <input type="text" id="last_name" name="last_name" class="form-input" placeholder="Tus apellidos" required maxlength="150" value="{{ form.last_name.value|default:'' }}">
-                            {% if form.last_name.errors %}
-                                {% for error in form.last_name.errors %}
-                                    <div class="field-error-premium">
-                                        <i class="fas fa-exclamation-circle"></i> {{ error }}
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label">Apellidos *</label>
+                            {{ form.last_name }}
+                            {% for error in form.last_name.errors %}
+                                <div class="field-error-premium"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
                         </div>
 
                         <div class="input-group">
-                            <label for="email" class="form-label">Correo *</label>
-                            <input type="email" id="email" name="email" class="form-input" placeholder="tu@gmail.com" required pattern="^[a-zA-Z0-9._%+\-]+@gmail.com$" value="{{ form.email.value|default:'' }}">
-                            {% if form.email.errors %}
-                                {% for error in form.email.errors %}
-                                    <div class="field-error-premium">
-                                        <i class="fas fa-exclamation-circle"></i> {{ error }}
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
+                            <label for="{{ form.email.id_for_label }}" class="form-label">Correo *</label>
+                            {{ form.email }}
+                            {% for error in form.email.errors %}
+                                <div class="field-error-premium"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
                         </div>
 
                         <div class="input-group">
-                            <label for="password" class="form-label">Contraseña *</label>
-                            <input type="password" id="password" name="password" class="form-input" placeholder="Mínimo 8 caracteres" required autocomplete="new-password">
-                            {% if form.password.errors %}
-                                {% for error in form.password.errors %}
-                                    <div class="field-error-premium">
-                                        <i class="fas fa-exclamation-circle"></i> {{ error }}
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
+                            <label for="{{ form.username.id_for_label }}" class="form-label">Nombre de usuario *</label>
+                            {{ form.username }}
+                            {% for error in form.username.errors %}
+                                <div class="field-error-premium"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
                         </div>
 
                         <div class="input-group">
-                            <label for="username" class="form-label">Nombre de usuario *</label>
-                            <input type="text" id="username" name="username" class="form-input" placeholder="Elige tu nombre de usuario" required minlength="3" maxlength="150" pattern="^[a-zA-Z0-9._\-]+$" autocomplete="username" value="{{ form.username.value|default:'' }}">
-                            {% if form.username.errors %}
-                                {% for error in form.username.errors %}
-                                    <div class="field-error-premium">
-                                        <i class="fas fa-exclamation-circle"></i> {{ error }}
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
+                            <label for="{{ form.password.id_for_label }}" class="form-label">Contraseña *</label>
+                            {{ form.password }}
+                            {% for error in form.password.errors %}
+                                <div class="field-error-premium"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
                         </div>
 
-                        <div class="input-group">
-                            <label for="countryInput" class="form-label">País *</label>
-                            <div style="position:relative;">
-                                <input type="text" id="countryInput" name="country" class="form-input" placeholder="Selecciona tu país" readonly required style="cursor:pointer; background-color:rgba(255,255,255,0.08);" onclick="openCountryPopup()" value="{{ form.country.value|default:'' }}">
-                                <span style="position:absolute;right:18px;top:50%;transform:translateY(-50%);pointer-events:none;color:#A0A0A3;font-size:1.2em;">
-                                    <i class="fas fa-chevron-down"></i>
-                                </span>
-                            </div>
-                            {% if form.country.errors %}
-                                <div class="field-error-premium">
-                                    <i class="fas fa-exclamation-circle"></i> {{ form.country.errors.0 }}
-                                </div>
-                            {% endif %}
-                            <div id="countryPopup" class="country-popup" style="display:none;">
-                                <div class="country-popup-content" id="countryPopupContent">
-                                    <div class="country-popup-header">
-                                        <span class="search-icon"><i class="fas fa-search"></i></span>
-                                        <input type="text" id="countrySearch" class="form-input" placeholder="Buscar país..." autocomplete="off" style="margin-bottom:0;">
-                                        <button type="button" onclick="closeCountryPopup()" class="btn-close" title="Cerrar">&times;</button>
-                                    </div>
-                                    <div id="countryList" class="country-list" style="max-height:220px;overflow-y:auto;"></div>
-                                </div>
-                            </div>
-                            <style>
-                                .field-error-premium {
-                                    margin-top: 7px;
-                                    color: #ff5e7e;
-                                    background: rgba(255, 94, 126, 0.08);
-                                    border: 1.5px solid #ff5e7e33;
-                                    border-radius: 10px;
-                                    padding: 8px 14px;
-                                    font-size: 1.01rem;
-                                    font-weight: 500;
-                                    display: flex;
-                                    align-items: center;
-                                    gap: 8px;
-                                    box-shadow: 0 2px 8px 0 rgba(255,94,126,0.08);
-                                    animation: errorFadeIn 0.3s cubic-bezier(.4,0,.2,1);
-                                }
-                                .field-error-premium i {
-                                    color: #ff5e7e;
-                                    font-size: 1.1em;
-                                }
-                                @keyframes errorFadeIn {
-                                    from { opacity: 0; transform: translateY(-8px); }
-                                    to { opacity: 1; transform: translateY(0); }
-                                }
-                                .country-popup {
-                                    position: fixed;
-                                    top: 0; left: 0; right: 0; bottom: 0;
-                                    background: rgba(10,10,11,0.75);
-                                    backdrop-filter: blur(6px) saturate(120%);
-                                    z-index: 9999;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    animation: popupFadeIn 0.25s cubic-bezier(.4,0,.2,1);
-                                }
-                                @keyframes popupFadeIn {
-                                    from { opacity: 0; }
-                                    to { opacity: 1; }
-                                }
-                                .country-popup-content {
-                                    background: rgba(30, 39, 97, 0.98);
-                                    border: 2px solid #764ba2;
-                                    border-radius: 22px;
-                                    padding: 0 0 10px 0;
-                                    min-width: 340px;
-                                    max-width: 95vw;
-                                    box-shadow: 0 12px 48px 0 rgba(102,126,234,0.25), 0 1.5px 0 #fff1, 0 0 0 1.5px #764ba2;
-                                    position: relative;
-                                    animation: popupSlideIn 0.35s cubic-bezier(.4,0,.2,1);
-                                }
-                                @keyframes popupSlideIn {
-                                    from { transform: translateY(40px) scale(0.98); opacity: 0; }
-                                    to { transform: translateY(0) scale(1); opacity: 1; }
-                                }
-                                .country-popup-header {
-                                    position: sticky;
-                                    top: 0;
-                                    background: rgba(30, 39, 97, 0.98);
-                                    z-index: 2;
-                                    padding: 22px 28px 10px 28px;
-                                    border-radius: 22px 22px 0 0;
-                                    box-shadow: 0 2px 12px 0 rgba(102,126,234,0.08);
-                                    display: flex;
-                                    align-items: center;
-                                    gap: 10px;
-                                }
-                                .country-popup-header input.form-input {
-                                    flex: 1;
-                                    padding-left: 38px;
-                                    margin-bottom: 0;
-                                    background: rgba(255,255,255,0.09);
-                                    border: 1.5px solid #764ba2;
-                                    color: #fff;
-                                }
-                                .country-popup-header .search-icon {
-                                    position: absolute;
-                                    left: 38px;
-                                    top: 50%;
-                                    transform: translateY(-50%);
-                                    color: #764ba2;
-                                    font-size: 1.1em;
-                                    pointer-events: none;
-                                }
-                                .country-popup-header .btn-close {
-                                    background: none;
-                                    border: none;
-                                    color: #fff;
-                                    font-size: 1.7em;
-                                    cursor: pointer;
-                                    margin-left: 10px;
-                                    transition: color 0.2s;
-                                }
-                                .country-popup-header .btn-close:hover {
-                                    color: #f093fb;
-                                }
-                                .country-list {
-                                    padding: 10px 18px 0 18px;
-                                    max-height: 220px;
-                                    overflow-y: auto;
-                                    scrollbar-width: thin;
-                                    scrollbar-color: #764ba2 #222a;
-                                }
-                                .country-list::-webkit-scrollbar {
-                                    width: 8px;
-                                    background: transparent;
-                                }
-                                .country-list::-webkit-scrollbar-thumb {
-                                    background: linear-gradient(135deg, #764ba2 0%, #f093fb 100%);
-                                    border-radius: 8px;
-                                    min-height: 40px;
-                                    box-shadow: 0 2px 8px 0 rgba(102,126,234,0.18);
-                                    border: 2px solid rgba(255,255,255,0.12);
-                                }
-                                .country-list::-webkit-scrollbar-track {
-                                    background: transparent;
-                                }
-                                .country-list::-webkit-scrollbar-thumb:hover {
-                                    background: linear-gradient(135deg, #f093fb 0%, #764ba2 100%);
-                                }
-                            </style>
-                            <script>
-                                // Función para manejar el botón 'Continuar' (submit del formulario)
-                                function nextStep() {
-                                    document.getElementById('signupForm').submit();
-                                }
-
-                                (function(){
-                                    const countries = [
-                                        'Afganistán','Albania','Alemania','Andorra','Angola','Anguila','Antártida','Antigua y Barbuda','Arabia Saudí','Argelia','Argentina','Armenia','Aruba','Australia','Austria','Azerbaiyán','Bahamas','Bahrein','Bangladesh','Barbados','Bélgica','Belice','Benín','Bermudas','Bielorrusia','Bolivia','Bosnia y Herzegovina','Botsuana','Brasil','Brunéi','Bulgaria','Burkina Faso','Burundi','Bután','Cabo Verde','Camboya','Camerún','Canadá','Catar','Chad','Chile','China','Chipre','Colombia','Comoras','Congo','Corea del Norte','Corea del Sur','Costa de Marfil','Costa Rica','Croacia','Cuba','Curazao','Dinamarca','Dominica','Ecuador','Egipto','El Salvador','Emiratos Árabes Unidos','Eritrea','Eslovaquia','Eslovenia','España','Estados Unidos','Estonia','Etiopía','Filipinas','Finlandia','Fiyi','Francia','Gabón','Gambia','Georgia','Ghana','Gibraltar','Granada','Grecia','Groenlandia','Guadalupe','Guam','Guatemala','Guinea','Guinea Ecuatorial','Guinea-Bisáu','Guyana','Haití','Honduras','Hong Kong','Hungría','India','Indonesia','Irak','Irán','Irlanda','Islandia','Israel','Italia','Jamaica','Japón','Jordania','Kazajistán','Kenia','Kirguistán','Kiribati','Kuwait','Laos','Lesoto','Letonia','Líbano','Liberia','Libia','Liechtenstein','Lituania','Luxemburgo','Macao','Madagascar','Malasia','Malaui','Maldivas','Malí','Malta','Marruecos','Martinica','Mauricio','Mauritania','México','Micronesia','Moldavia','Mónaco','Mongolia','Montenegro','Mozambique','Myanmar','Namibia','Nauru','Nepal','Nicaragua','Níger','Nigeria','Noruega','Nueva Zelanda','Omán','Países Bajos','Pakistán','Palaos','Panamá','Papúa Nueva Guinea','Paraguay','Perú','Polonia','Portugal','Puerto Rico','Reino Unido','República Centroafricana','República Checa','República Democrática del Congo','República Dominicana','Ruanda','Rumania','Rusia','Samoa','San Cristóbal y Nieves','San Marino','San Vicente y las Granadinas','Santa Lucía','Santo Tomé y Príncipe','Senegal','Serbia','Seychelles','Sierra Leona','Singapur','Siria','Somalia','Sri Lanka','Suazilandia','Sudáfrica','Sudán','Sudán del Sur','Suecia','Suiza','Surinam','Tailandia','Tanzania','Tayikistán','Timor Oriental','Togo','Tonga','Trinidad y Tobago','Túnez','Turkmenistán','Turquía','Tuvalu','Ucrania','Uganda','Uruguay','Uzbekistán','Vanuatu','Venezuela','Vietnam','Yemen','Yibuti','Zambia','Zimbabue'
-                                    ];
-                                    let isOpen = false;
-                                    let searchTerm = '';
-                                    let filteredCountries = countries.slice();
-                                    const input = document.getElementById('countryInput');
-                                    const popup = document.getElementById('countryPopup');
-                                    const popupContent = document.getElementById('countryPopupContent');
-                                    const search = document.getElementById('countrySearch');
-                                    const list = document.getElementById('countryList');
-                                    function renderList() {
-                                        list.innerHTML = '';
-                                        const filtered = countries.filter(c => c.toLowerCase().includes(search.value.toLowerCase()));
-                                        if(filtered.length === 0) {
-                                            list.innerHTML = '<div style="padding:12px;color:#aaa;">No se encontraron países</div>';
-                                            return;
-                                        }
-                                        filtered.forEach(country => {
-                                            const btn = document.createElement('button');
-                                            btn.type = 'button';
-                                            btn.textContent = country;
-                                            btn.onclick = () => {
-                                                input.value = country;
-                                                closeCountryPopup();
-                                            };
-                                            list.appendChild(btn);
-                                        });
-                                    }
-                                    window.openCountryPopup = function() {
-                                        popup.style.display = 'flex';
-                                        isOpen = true;
-                                        search.value = '';
-                                        renderList();
-                                        setTimeout(()=>{search.focus();}, 100);
-                                    };
-                                    window.closeCountryPopup = function() {
-                                        popup.style.display = 'none';
-                                        isOpen = false;
-                                    };
-                                    search.addEventListener('input', renderList);
-                                    // Cerrar popup al hacer click fuera
-                                    document.addEventListener('mousedown', function(e) {
-                                        if(isOpen && !popupContent.contains(e.target) && e.target !== input) {
-                                            closeCountryPopup();
-                                        }
-                                    });
-                                })();
-                            </script>
-                        </div>
-
-                        <button type="button" class="btn btn-primary" onclick="nextStep()">
+                        <button type="submit" class="btn btn-primary">
                             Crear Cuenta 
                             <i class="fas fa-arrow-right"></i>
                         </button>
 
-                        
                         <div class="checkbox-group" style="justify-content: center; margin-top: 18px; margin-bottom: 0;">
                             <div style="background: rgba(102,126,234,0.08); border: 1.5px solid #667eea33; border-radius: 12px; padding: 14px 22px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 8px 0 rgba(102,126,234,0.08); max-width: 480px; margin: 0 auto;">
                                 <span style="color: #667eea; font-size: 1.5em; display: flex; align-items: center;"><i class="fas fa-shield-alt"></i></span>
@@ -1245,7 +349,13 @@
                             </div>
                         </div>
                     </form>
+
                     <div class="login-link" style="margin-top: 25px;">
                         ¿Tienes cuenta? <a href="{% url 'security:signin' %}">Iniciar sesión</a>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

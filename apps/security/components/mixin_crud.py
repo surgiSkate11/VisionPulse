@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 
-# Import custom components for permissions, sessions, and menu modules
+# Importación de permisos, sesiones y módulos de menú
 from apps.security.components.group_permission import GroupPermission
 from apps.security.components.group_session import UserGroupSession
 from apps.security.components.menu_module import MenuModule
@@ -91,10 +91,10 @@ class PermissionMixin(object):
         try:
             user = request.user
             user_session = UserGroupSession(request)
-            user_session.set_group_session()
 
-            # Si no hay grupo activo en sesión, redirige a home
-            if 'group_id' not in request.session:
+            # Obtener el grupo activo directamente
+            group = user_session.get_group_session()
+            if not group:
                 return redirect('security:home')
 
             # Permite acceso total a superusuarios

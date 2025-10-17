@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'apps.monitoring',
     'apps.exercises',
     'apps.reports',
+    'apps.frontend',  # Nueva ubicación de frontend
 
     # Terceros
     'tailwind',
@@ -141,8 +142,12 @@ USE_TZ = True
 
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # Donde se recolectarán los estáticos en producción
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',  # Le dice a Django que busque en VisionPulse/static/
+    BASE_DIR / 'apps/frontend/static',  # Si tienes assets directamente en la app Django 'frontend'
+]
 
 # Media files
 MEDIA_URL = '/media/'
@@ -182,7 +187,7 @@ TEMPLATES[0]['OPTIONS']['context_processors'] += [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Tailwind CSS
-TAILWIND_APP_NAME = 'theme'
+TAILWIND_APP_NAME = 'apps.frontend'  # Actualizado a la nueva ubicación
 
 INTERNAL_IPS = [
     "127.0.0.1",

@@ -1,183 +1,127 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Dashboard de Salud Visual | VisionPulse{% endblock %}
+
+{% block title %}Dashboard | VisionPulse{% endblock %}
+
 {% block content %}
-<!-- Tarjeta de Bienvenida VisionPulse -->
-<style>
-@keyframes pulseGlow {
-  0%, 100% { filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.4)); }
-  50% { filter: drop-shadow(0 0 16px rgba(99, 102, 241, 0.6)); }
-}
-
-@keyframes floatIcon {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-</style>
-
-<div class="relative rounded-3xl bg-gradient-to-br from-primary-health/90 via-secondary-vision/80 to-accent-eye/90 p-8 mb-8 border-2 border-primary-health/30 shadow-2xl overflow-hidden backdrop-blur-xl">
-  <!-- Patrón de fondo biomédico -->
-  <div class="absolute inset-0 opacity-10">
-    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--primary-health)_1px,_transparent_1px)] bg-[size:20px_20px]"></div>
-  </div>
-
-  <div class="relative z-10">
-    <!-- Encabezado con ícono de ojo -->
-    <div class="flex items-center justify-center gap-4 mb-6">
-      <div class="relative">
-        <div class="absolute inset-0 bg-primary-health/20 rounded-full blur-xl animate-pulse"></div>
-        <i class="fas fa-eye-slash text-5xl text-white animate-[floatIcon_3s_ease-in-out_infinite]"></i>
-      </div>
-      <h1 class="text-4xl font-bold text-white tracking-tight">
-        VisionPulse
-      </h1>
+<div class="max-w-7xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-text-primary mb-1">
+            Bienvenido, {{ user.first_name|default:user.username }}
+        </h1>
+        <p class="text-text-secondary">
+            Monitoreo y cuidado inteligente para tu salud visual.
+        </p>
     </div>
 
-    <!-- Mensaje de Bienvenida -->
-    <div class="text-center mb-8">
-      <p class="text-2xl text-white font-medium mb-2">
-        ¡Bienvenido, <span class="font-bold text-primary-health bg-white/90 px-3 py-1 rounded-lg shadow-lg">{{ user.first_name|default:user.username|default:"Usuario" }}</span>!
-      </p>
-      <p class="text-white/90 text-lg">Monitoreo y cuidado inteligente para tu salud visual</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <!-- Metric Cards -->
+        <div class="metric-card">
+            <div class="metric-header">
+                <div class="metric-icon bg-accent-peach"><i class="fas fa-chart-line"></i></div>
+                <p class="text-sm text-text-secondary">Total de Sesiones</p>
+            </div>
+            <p class="text-3xl font-bold text-text-primary">48</p>
+            <p class="text-xs text-accent-green flex items-center gap-1 mt-1">
+                <i class="fas fa-arrow-up"></i> 12% vs semana pasada
+            </p>
+        </div>
+
+        <!-- Add more metric cards as needed -->
     </div>
 
-    <!-- Estadísticas Rápidas -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-white">
-      <!-- Tiempo de Pantalla -->
-      <div class="bg-white/10 rounded-2xl p-6 backdrop-blur-md border border-white/20">
-        <div class="flex items-center gap-4 mb-3">
-          <i class="fas fa-desktop text-2xl text-primary-health"></i>
-          <h3 class="font-semibold">Tiempo de Pantalla</h3>
+    <!-- Existing content (e.g., charts, tables) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Visual Status Cards (Ej. Salud Visual, Estrés Ocular) -->
+        <div class="bg-white/90 backdrop-blur-xl rounded-2xl p-6 border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Estado Visual</h3>
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-eye text-primary-health"></i>
+                    <span class="text-gray-700 font-medium">Agudeza Visual</span>
+                </div>
+                <span class="text-2xl font-bold text-gray-800">20/20</span>
+            </div>
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-tint text-secondary-vision"></i>
+                    <span class="text-gray-700 font-medium">Presión Ocular</span>
+                </div>
+                <span class="text-2xl font-bold text-gray-800">15 mmHg</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-smile-beam text-accent-eye"></i>
+                    <span class="text-gray-700 font-medium">Estrés Ocular</span>
+                </div>
+                <span class="text-2xl font-bold text-gray-800">Bajo</span>
+            </div>
         </div>
-        <p class="text-3xl font-bold">6.5h</p>
-        <p class="text-sm text-white/70">Promedio diario</p>
-      </div>
 
-      <!-- Parpadeos -->
-      <div class="bg-white/10 rounded-2xl p-6 backdrop-blur-md border border-white/20">
-        <div class="flex items-center gap-4 mb-3">
-          <i class="fas fa-eye text-2xl text-secondary-vision"></i>
-          <h3 class="font-semibold">Parpadeos/min</h3>
+        <!-- Activity Chart -->
+        <div class="lg:col-span-2 bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-primary-health/10">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+                <i class="fas fa-chart-line text-primary-health"></i>
+                Monitor de Actividad Visual
+            </h2>
+            <canvas id="activityChart" class="w-full" height="200"></canvas>
         </div>
-        <p class="text-3xl font-bold">12</p>
-        <p class="text-sm text-white/70">Último registro</p>
-      </div>
-
-      <!-- Descansos -->
-      <div class="bg-white/10 rounded-2xl p-6 backdrop-blur-md border border-white/20">
-        <div class="flex items-center gap-4 mb-3">
-          <i class="fas fa-coffee text-2xl text-accent-eye"></i>
-          <h3 class="font-semibold">Descansos</h3>
-        </div>
-        <p class="text-3xl font-bold">4/6</p>
-        <p class="text-sm text-white/70">Completados hoy</p>
-      </div>
     </div>
-  </div>
 
-  {% if user.is_superuser %}
-  <div class="absolute top-4 right-4 bg-white/90 text-primary-health px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 shadow-lg">
-    <i class="fas fa-shield-alt"></i> Administrador
-  </div>
-  {% endif %}
+    <!-- Action Buttons -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <a href="{% url 'exercises:exercise_list' %}" class="bg-secondary-vision/90 hover:bg-secondary-vision/80 text-white font-semibold rounded-2xl p-4 shadow-md flex items-center justify-center gap-3 transition-all">
+            <i class="fas fa-dumbbell text-xl"></i>
+            Ejercicios Oculares
+        </a>
+        <a href="{% url 'reports:report_list' %}" class="bg-primary-health/90 hover:bg-primary-health/80 text-white font-semibold rounded-2xl p-4 shadow-md flex items-center justify-center gap-3 transition-all">
+            <i class="fas fa-file-alt text-xl"></i>
+            Ver Reportes
+        </a>
+    </div>
 </div>
+{% endblock %}
 
-<!-- Panel Principal -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-  <!-- Monitor de Actividad Visual -->
-  <div class="lg:col-span-2 bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-primary-health/10">
-    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-      <i class="fas fa-chart-line text-primary-health"></i>
-      Monitor de Actividad Visual
-    </h2>
-    <canvas id="activityChart" class="w-full" height="200"></canvas>
-  </div>
-
-  <!-- Panel de Ejercicios Oculares -->
-  <div class="bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-secondary-vision/10">
-    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-      <i class="fas fa-dumbbell text-secondary-vision"></i>
-      Ejercicios Oculares
-    </h2>
-    <div class="space-y-4">
-      {% for ejercicio in ejercicios_sugeridos %}
-      <div class="p-4 bg-secondary-vision/5 rounded-xl hover:bg-secondary-vision/10 transition-colors cursor-pointer">
-        <h3 class="font-semibold text-gray-700">{{ ejercicio.nombre }}</h3>
-        <p class="text-sm text-gray-600">{{ ejercicio.descripcion }}</p>
-        <div class="mt-2 flex justify-between items-center">
-          <span class="text-xs text-gray-500">{{ ejercicio.duracion }} min</span>
-          <button class="text-secondary-vision hover:text-secondary-vision/80">
-            <i class="fas fa-play-circle text-xl"></i>
-          </button>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-</div>
-
-<!-- Widgets Informativos -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-  {% for widget in widgets %}
-  <div class="bg-white/90 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-accent-eye/10 hover:shadow-xl transition-shadow">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="font-semibold text-gray-700">{{ widget.title }}</h3>
-      <i class="fas fa-{{ widget.icon }} text-accent-eye/80"></i>
-    </div>
-    <div class="text-3xl font-bold text-gray-800 mb-2">{{ widget.value }}</div>
-    <div class="flex items-center gap-2 text-sm">
-      <span class="{% if widget.trend > 0 %}text-primary-health{% else %}text-red-500{% endif %}">
-        <i class="fas fa-{% if widget.trend > 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
-        {{ widget.trend }}%
-      </span>
-      <span class="text-gray-500">vs. semana anterior</span>
-    </div>
-  </div>
-  {% endfor %}
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Gráfico de Actividad Visual
-  const activityCtx = document.getElementById('activityChart').getContext('2d');
-  new Chart(activityCtx, {
-    type: 'line',
-    data: {
-      labels: ['9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'],
-      datasets: [
-        {
-          label: 'Parpadeos/min',
-          data: [15, 12, 14, 8, 16, 13, 11, 14, 12],
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          tension: 0.4,
-          fill: true
+    // Chart configuration
+    const ctx = document.getElementById('activityChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'],
+            datasets: [
+                {
+                    label: 'Parpadeos/min',
+                    data: [15, 12, 14, 8, 16, 13, 11, 14, 12],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Descansos',
+                    data: [1, 0, 1, 1, 0, 1, 0, 1, 1],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
         },
-        {
-          label: 'Descansos',
-          data: [1, 0, 1, 1, 0, 1, 0, 1, 1],
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
-          tension: 0.4,
-          fill: true
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
         }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: 'top',
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
-    }
-  });
-});
+    });
 </script>
 {% endblock %}
