@@ -16,7 +16,7 @@ urlpatterns = [
     path('api/stop/', views.stop_session, name='api_stop'),
     
     
-    path('webcam-test/', views.WebcamTestView.as_view(), name='webcam_test'),
+    #path('webcam-test/', views.WebcamTestView.as_view(), name='webcam_test'), # quitar
     path('video_feed/', views.video_feed, name='video_feed'),
     path('start-webcam-test/', views.start_webcam_test, name='start_webcam_test'),
     path('stop-webcam-test/', views.stop_webcam_test, name='stop_webcam_test'),

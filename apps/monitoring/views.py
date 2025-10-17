@@ -657,7 +657,7 @@ class ModuloTemplateView(TemplateView):
         context['total_monitoring_time'] = f"{hours}h {minutes}m {seconds}s"
         
         return context
-
+'''
 @method_decorator(login_required, name='dispatch')
 class WebcamTestView(TemplateView):
     template_name = 'monitoring/webcam_test.html'
@@ -671,6 +671,7 @@ class WebcamTestView(TemplateView):
         MenuModule(self.request).fill(context)
         
         return context
+'''
 
 @method_decorator(login_required, name='dispatch')
 class SessionListView(TemplateView):
@@ -752,6 +753,7 @@ class SessionDetailView(TemplateView):
         })
         return context
 
+
 @login_required
 def video_feed(request):
     """Vista que streaming de video con detecciones en tiempo real"""
@@ -762,6 +764,7 @@ def video_feed(request):
         generate_frames(),
         content_type='multipart/x-mixed-replace; boundary=frame'
     )
+
 
 @login_required
 def session_metrics(request):
