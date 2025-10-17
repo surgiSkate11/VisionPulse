@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">{{ title }}</h1>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Vista en Tiempo Real</h5>
+                </div>
+                <div class="card-body text-center">
+                    <!-- Usa el namespace correcto -->
+                    <img src="{% url 'monitoring:video_feed' %}" width="640" height="480" class="img-fluid border rounded">
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Controles</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <button id="startBtn" class="btn btn-success btn-sm">
+                            <i class="fas fa-play"></i> Iniciar Webcam
+                        </button>
+                        <button id="stopBtn" class="btn btn-danger btn-sm">
+                            <i class="fas fa-stop"></i> Detener Webcam
+                        </button>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6>Leyenda:</h6>
+                        <ul class="list-unstyled small">
+                            <li><span style="color: blue;">■</span> Rectángulo Azul: Rostro detectado</li>
+                            <li><span style="color: green;">■</span> Rectángulo Verde: Ojos detectados</li>
+                            <li><strong>EAR</strong>: Eye Aspect Ratio (métrica de apertura ocular)</li>
+                            <li><strong>Parpadeo</strong>: Detecta cuando los ojos están cerrados</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Información de Prueba</h5>
+                </div>
+                <div class="card-body">
+                    <p>Esta vista muestra el funcionamiento del sistema de monitoreo en tiempo real.</p>
+                    <p>El sistema detecta:</p>
+                    <ul>
+                        <li>Rostros usando Haar Cascades</li>
+                        <li>Ojos dentro de los rostros detectados</li>
+                        <li>Parpadeos basados en la relación de aspecto de los ojos</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+$(document).ready(function() {
+    console.log('JavaScript cargado'); // Debug
+    
+    $('#startBtn').click(function() {
+        console.log('Botón Start clickeado'); // Debug
+        
+        $.ajax({
+            url: '{% url "monitoring:start_webcam_test" %}',
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(response) {
+                console.log('Respuesta Start:', response); // Debug
+                alert(response.message);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error Start:', error); // Debug
+                alert('Error al iniciar webcam: ' + error);
+            }
+        });
+    });
+    
+    $('#stopBtn').click(function() {
+        console.log('Botón Stop clickeado'); // Debug
+        
+        $.ajax({
+            url: '{% url "monitoring:stop_webcam_test" %}',
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(response) {
+                console.log('Respuesta Stop:', response); // Debug
+                alert(response.message);
+                // Esperar un momento antes de recargar
+                setTimeout(function() {
+                    location.reload();
+                }, 500);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error Stop:', error); // Debug
+                alert('Error al detener webcam: ' + error);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
