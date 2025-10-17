@@ -73,49 +73,49 @@ def calculate_ear(eye_points):
 
 def detect_blink(current_ear, threshold=None):
     """
-    Detecta parpadeos basándose en el EAR (Eye Aspect Ratio) dinámico.
-    Usa un umbral adaptativo y control de tiempo entre parpadeos (debouncing).
+    Detecta parpadeos usando un umbral dinámico y análisis de la señal EAR.
     """
     global ear_history, closed_counter, open_counter, last_blink_time, blink_counter
     
-    if current_ear is None:
+    current_time = time.time()
+    
+    # Si no hay suficientes datos para el umbral, recolectar datos
+    if len(ear_history) < EAR_CALIBRATION_FRAMES:
+        if current_ear is not None:
+            ear_history.append(current_ear)
         return False
     
-    current_time = time.time()
-
-    # Recolectar datos iniciales para calibración
-    if len(ear_history) < EAR_CALIBRATION_FRAMES:
-        ear_history.append(current_ear)
-        return False
-
-    # Calcular umbral dinámico si no se proporcionó
+    # Calcular umbral dinámico si no se proporciona
     if threshold is None:
         mean_ear = np.mean(ear_history)
         std_ear = np.std(ear_history)
-        threshold = max(mean_ear - (EAR_STD_THRESHOLD * std_ear), 0.05)
-
-    # Actualizar historial móvil (ventana deslizante)
-    ear_history.append(current_ear)
-    if len(ear_history) > EAR_CALIBRATION_FRAMES:
-        ear_history.pop(0)
-
-    # Evaluar si los ojos están cerrados o abiertos
-    if current_ear < threshold:
-        closed_counter += 1
-        open_counter = 0
-    else:
-        # Si se detectó un cierre válido seguido de apertura → parpadeo
-        if MIN_BLINK_FRAMES <= closed_counter <= MAX_BLINK_FRAMES:
-            if current_time - last_blink_time > (DEBOUNCE_FRAMES / 30.0):
-                blink_counter += 1
-                last_blink_time = current_time
-                closed_counter = 0
-                return True
-        closed_counter = 0
-        open_counter += 1
-
+        threshold = mean_ear - (EAR_STD_THRESHOLD * std_ear)
+    
+    # Detectar estado de los ojos
+    if current_ear is not None:
+        # Actualizar historial móvil
+        ear_history.append(current_ear)
+        if len(ear_history) > EAR_CALIBRATION_FRAMES:
+            ear_history.pop(0)
+        
+        # Verificar si los ojos están cerrados
+        if current_ear < threshold:
+            closed_counter += 1
+            open_counter = 0
+        else:
+            # Si los ojos están abiertos después de estar cerrados
+            if closed_counter >= MIN_BLINK_FRAMES and closed_counter <= MAX_BLINK_FRAMES:
+                # Verificar tiempo desde último parpadeo (debouncing)
+                if current_time - last_blink_time > (DEBOUNCE_FRAMES / 30.0):
+                    blink_counter += 1
+                    last_blink_time = current_time
+                    closed_counter = 0
+                    return True
+            
+            closed_counter = 0
+            open_counter += 1
+    
     return False
-
 
 def draw_eye_landmarks(frame, left_eye_points, right_eye_points, ear_value, blink_detected, blink_counter, ear_history_len):
     output = frame.copy()
@@ -243,18 +243,6 @@ def generate_frames():
                     last_avg_ear = float(current_ear) if current_ear is not None else last_avg_ear
                 except Exception:
                     pass
-
-                # Actualizar métricas de la sesión en la base de datos para el endpoint en vivo
-                if current_session_id is not None:
-                    try:
-                        session = MonitorSession.objects.get(id=current_session_id)
-                        # Actualizar avg_ear solo si hay un valor válido
-                        if current_ear is not None:
-                            session.avg_ear = float(current_ear)
-                        session.total_blinks = blink_counter
-                        session.save(update_fields=["avg_ear", "total_blinks"])
-                    except Exception as e:
-                        print(f"[WARN] No se pudo actualizar métricas de sesión: {e}")
 
                 # dibujar información y landmarks (usar función única para panel + ojos)
                 frame_out = draw_eye_landmarks(frame, left_eye_points, right_eye_points,

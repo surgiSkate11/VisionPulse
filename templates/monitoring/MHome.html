@@ -87,10 +87,12 @@
             <div class="bg-white rounded-lg p-4 shadow">
                 <div class="text-sm text-gray-500 mb-1">Apertura de Ojos (EAR)</div>
                 <div id="ear-metric" class="text-2xl font-bold text-blue-600">--</div>
+                <div id="ear-debug" class="text-xs text-gray-400 mt-1">faces: - | eyes: -</div>
             </div>
             <div class="bg-white rounded-lg p-4 shadow">
                 <div class="text-sm text-gray-500 mb-1">Parpadeos Totales</div>
                 <div id="blinks-metric" class="text-2xl font-bold text-blue-600">0</div>
+                <div id="blinks-debug" class="text-xs text-gray-400 mt-1">debug_avg_ear: -</div>
             </div>
         </div>
 
@@ -266,6 +268,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Cargar stream de video
                 const videoUrl = '{% url "monitoring:video_feed" %}?t=' + new Date().getTime();
                 videoStream.src = videoUrl;
+                // Iniciar polling de métricas
+                startMetricsPolling();
                 
                 console.log('✅ Monitoreo iniciado correctamente');
                 alert(`✅ ${data.message}\nSesión ID: ${sessionId}`);
@@ -320,9 +324,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert(`✅ ${data.message}\nDuración: ${minutes}m ${seconds}s`);
                 
                 // Recargar página después de 1.5 segundos
-                setTimeout(() => {
-                    location.reload();
-                }, 1500);
+                // Parar polling antes de recargar
+                stopMetricsPolling();
+                setTimeout(() => { location.reload(); }, 1500);
             } else {
                 showError(data.message);
                 // Recargar de todas formas
@@ -334,9 +338,8 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error al detener:', error);
             showError('Error al detener: ' + error.message);
             // Recargar de todas formas
-            setTimeout(() => {
-                location.reload();
-            }, 2000);
+            stopMetricsPolling();
+            setTimeout(() => { location.reload(); }, 2000);
         }
     });
 
@@ -357,6 +360,39 @@ document.addEventListener('DOMContentLoaded', function() {
     updateUI(false);
     console.log('=== SISTEMA LISTO ===');
 });
+</script>
+
+<script>
+// Polling for session metrics
+let metricsInterval = null;
+function startMetricsPolling() {
+    if (metricsInterval) return;
+    metricsInterval = setInterval(async () => {
+        try {
+            const resp = await fetch('{% url "monitoring:api_session_metrics" %}');
+            if (!resp.ok) return;
+            const data = await resp.json();
+            const earEl = document.getElementById('ear-metric');
+            const blinksEl = document.getElementById('blinks-metric');
+            if (earEl) earEl.textContent = (data.avg_ear !== undefined) ? data.avg_ear.toFixed(2) : '--';
+            if (blinksEl) blinksEl.textContent = (data.total_blinks !== undefined) ? data.total_blinks : '0';
+            // debug fields
+            const earDebug = document.getElementById('ear-debug');
+            const blinksDebug = document.getElementById('blinks-debug');
+            if (earDebug) earDebug.textContent = `faces: ${data.faces ?? '-'} | eyes: ${data.eyes ?? '-'}`;
+            if (blinksDebug) blinksDebug.textContent = `debug_avg_ear: ${data.debug_avg_ear !== undefined ? data.debug_avg_ear.toFixed(3) : '-'}`;
+        } catch (e) {
+            console.error('Error polling metrics:', e);
+        }
+    }, 1000);
+}
+
+function stopMetricsPolling() {
+    if (metricsInterval) {
+        clearInterval(metricsInterval);
+        metricsInterval = null;
+    }
+}
 </script>
 
 <!-- Tarjetas de métricas -->
