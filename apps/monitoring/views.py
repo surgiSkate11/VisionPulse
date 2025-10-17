@@ -8,16 +8,19 @@ from django.db.models import Avg, Count, Q, Sum
 from django.http import JsonResponse, HttpResponseBadRequest, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.utils import timezone
 from django.core.cache import cache
+from .models import MonitorSession, BlinkEvent, AlertEvent
+
 import cv2
 import numpy as np
+from .models import MonitorSession, BlinkEvent, AlertEvent
+from math import hypot
 import mediapipe as mp
-import base64
+#import base64 AL FINAL NO LO USE
 import threading
 import time
 from math import hypot
-from .models import MonitorSession, BlinkEvent, AlertEvent
+from django.utils import timezone
 
 # Inicializar MediaPipe Face Mesh con alta precisión
 mp_face_mesh = mp.solutions.face_mesh
@@ -41,137 +44,300 @@ streaming_active = False
 current_session_id = None
 last_faces_count = 0
 last_eyes_count = 0
+last_avg_distance = 0.0
 last_avg_ear = 0.0
 
-# Configuración de detección de parpadeos
-EAR_CALIBRATION_FRAMES = 60  # Frames para calibración inicial (2 segundos a 30 FPS)
-EAR_WINDOW_SIZE = 5         # Tamaño de la ventana para suavizado
-EAR_STD_THRESHOLD = 1.5     # Desviaciones estándar para detección de parpadeos
-MIN_BLINK_FRAMES = 2        # Mínimo de frames para considerar un parpadeo
-MAX_BLINK_FRAMES = 7        # Máximo de frames para un parpadeo normal
-DEBOUNCE_FRAMES = 5         # Frames de espera entre parpadeos
+# ============================================================================
+# CONFIGURACIÓN MEJORADA PARA DETECCIÓN DE PARPADEOS
+# ============================================================================
 
-# Buffers y contadores
-ear_history = []            # Historial de valores EAR para calibración
-blink_counter = 0          # Contador total de parpadeos
-closed_counter = 0         # Contador de frames con ojos cerrados
-open_counter = 0           # Contador de frames con ojos abiertos
-last_blink_time = 0       # Timestamp del último parpadeo detectado
+# Configuración de detección por distancia de párpados
+VERTICAL_DISTANCE_THRESHOLD = 5  # Pixeles - cuando es menor, ojos cerrados
+EAR_THRESHOLD = 0.20  # Umbral EAR como respaldo
+MIN_BLINK_DURATION = 0.01  # 50ms mínimo
+MAX_BLINK_DURATION = 0.35  # 350ms máximo
+DEBOUNCE_TIME = 0.15  # 150ms entre parpadeos
+
+# Estados del parpadeo
+class BlinkState:
+    OPEN = "ABIERTO"
+    CLOSING = "CERRANDO"
+    CLOSED = "CERRADO"
+    OPENING = "ABRIENDO"
+
+# Variables globales para tracking de parpadeos
+blink_state = BlinkState.OPEN
+blink_start_time = None
+last_blink_time = 0
+blink_counter = 0
 
 def calculate_ear(eye_points):
+    """
+    Calcula Eye Aspect Ratio (EAR) - método tradicional como respaldo
+    """
     try:
         points = np.array(eye_points, dtype=np.float32)
+        
+        # Distancias verticales
         A = hypot(points[1][0] - points[5][0], points[1][1] - points[5][1])
         B = hypot(points[2][0] - points[4][0], points[2][1] - points[4][1])
+        
+        # Distancia horizontal
         C = hypot(points[0][0] - points[3][0], points[0][1] - points[3][1])
+        
         if C < 1e-3:
             return None
-        ear = (0.4 * A + 0.6 * B) / (2.0 * C)
+            
+        ear = (A + B) / (2.0 * C)
         return ear if 0.05 <= ear <= 0.6 else None
     except Exception:
         return None
 
-def detect_blink(current_ear, threshold=None):
+def calculate_vertical_distance(eye_points):
     """
-    Detecta parpadeos basándose en el EAR (Eye Aspect Ratio) dinámico.
-    Usa un umbral adaptativo y control de tiempo entre parpadeos (debouncing).
-    """
-    global ear_history, closed_counter, open_counter, last_blink_time, blink_counter
+    Calcula la distancia vertical promedio entre párpado superior e inferior.
+    Más preciso que EAR para detectar el contacto real de los párpados.
     
-    if current_ear is None:
-        return False
+    eye_points: [outer_corner, top1, top2, inner_corner, bottom2, bottom1]
+    """
+    try:
+        points = np.array(eye_points, dtype=np.float32)
+        
+        # Calcular distancias verticales en múltiples puntos
+        # top1 <-> bottom1 (punto medio-exterior)
+        d1 = abs(points[1][1] - points[5][1])
+        
+        # top2 <-> bottom2 (punto medio-interior)
+        d2 = abs(points[2][1] - points[4][1])
+        
+        # Promedio de las distancias verticales
+        avg_vertical_distance = (d1 + d2) / 2.0
+        
+        return avg_vertical_distance
+    except Exception:
+        return None
+
+def are_eyes_closed(left_eye_points, right_eye_points):
+    """
+    Determina si los ojos están cerrados basándose en:
+    1. Distancia vertical de los párpados (principal)
+    2. EAR como validación secundaria
+    """
+    # Calcular distancias verticales
+    left_dist = calculate_vertical_distance(left_eye_points)
+    right_dist = calculate_vertical_distance(right_eye_points)
+    
+    if left_dist is None or right_dist is None:
+        return False, None, None
+    
+    # Promedio de ambos ojos
+    avg_distance = (left_dist + right_dist) / 2.0
+    
+    # Criterio principal: distancia vertical muy pequeña = ojos cerrados
+    if avg_distance < VERTICAL_DISTANCE_THRESHOLD:
+        return True, avg_distance, None
+    
+    # Validación secundaria con EAR
+    left_ear = calculate_ear(left_eye_points)
+    right_ear = calculate_ear(right_eye_points)
+    
+    if left_ear is not None and right_ear is not None:
+        avg_ear = (left_ear + right_ear) / 2.0
+        if avg_ear < EAR_THRESHOLD:
+            return True, avg_distance, avg_ear
+    
+    return False, avg_distance, None
+
+def detect_blink_improved(left_eye_points, right_eye_points):
+    """
+    Detecta parpadeos usando máquina de estados y detección de contacto de párpados.
+    Retorna: (blink_detected, current_state, debug_info)
+    """
+    global blink_state, blink_start_time, last_blink_time, blink_counter
     
     current_time = time.time()
-
-    # Recolectar datos iniciales para calibración
-    if len(ear_history) < EAR_CALIBRATION_FRAMES:
-        ear_history.append(current_ear)
-        return False
-
-    # Calcular umbral dinámico si no se proporcionó
-    if threshold is None:
-        mean_ear = np.mean(ear_history)
-        std_ear = np.std(ear_history)
-        threshold = max(mean_ear - (EAR_STD_THRESHOLD * std_ear), 0.05)
-
-    # Actualizar historial móvil (ventana deslizante)
-    ear_history.append(current_ear)
-    if len(ear_history) > EAR_CALIBRATION_FRAMES:
-        ear_history.pop(0)
-
-    # Evaluar si los ojos están cerrados o abiertos
-    if current_ear < threshold:
-        closed_counter += 1
-        open_counter = 0
-    else:
-        # Si se detectó un cierre válido seguido de apertura → parpadeo
-        if MIN_BLINK_FRAMES <= closed_counter <= MAX_BLINK_FRAMES:
-            if current_time - last_blink_time > (DEBOUNCE_FRAMES / 30.0):
+    eyes_closed, avg_distance, avg_ear = are_eyes_closed(left_eye_points, right_eye_points)
+    blink_detected = False
+    
+    # Calcular métricas para debug
+    left_dist = calculate_vertical_distance(left_eye_points)
+    right_dist = calculate_vertical_distance(right_eye_points)
+    left_ear = calculate_ear(left_eye_points)
+    right_ear = calculate_ear(right_eye_points)
+    
+    debug_info = {
+        'left_distance': left_dist,
+        'right_distance': right_dist,
+        'avg_distance': avg_distance if avg_distance else 0,
+        'left_ear': left_ear,
+        'right_ear': right_ear,
+        'avg_ear': (left_ear + right_ear) / 2.0 if left_ear and right_ear else 0,
+        'eyes_closed': eyes_closed,
+        'state': blink_state
+    }
+    
+    # Máquina de estados para parpadeo
+    if blink_state == BlinkState.OPEN:
+        if eyes_closed:
+            # Iniciar posible parpadeo
+            blink_state = BlinkState.CLOSING
+            blink_start_time = current_time
+            
+    elif blink_state == BlinkState.CLOSING:
+        if eyes_closed:
+            # Continuar cerrado
+            blink_state = BlinkState.CLOSED
+        else:
+            # Se abrió muy rápido, fue ruido
+            blink_state = BlinkState.OPEN
+            blink_start_time = None
+            
+    elif blink_state == BlinkState.CLOSED:
+        if not eyes_closed:
+            # Comenzar apertura
+            blink_state = BlinkState.OPENING
+            
+    elif blink_state == BlinkState.OPENING:
+        if not eyes_closed:
+            # Parpadeo completado
+            blink_duration = current_time - blink_start_time if blink_start_time else 0
+            time_since_last = current_time - last_blink_time
+            
+            # Validar duración y debounce
+            if (MIN_BLINK_DURATION <= blink_duration <= MAX_BLINK_DURATION and 
+                time_since_last >= DEBOUNCE_TIME):
+                blink_detected = True
                 blink_counter += 1
                 last_blink_time = current_time
-                closed_counter = 0
-                return True
-        closed_counter = 0
-        open_counter += 1
+                debug_info['blink_duration'] = blink_duration
+            
+            # Resetear estado
+            blink_state = BlinkState.OPEN
+            blink_start_time = None
+        else:
+            # Volvió a cerrar, mantener en CLOSED
+            blink_state = BlinkState.CLOSED
+    
+    return blink_detected, blink_state, debug_info
 
-    return False
+def reset_blink_counter():
+    """Resetear el contador de parpadeos"""
+    global blink_counter, blink_state, blink_start_time, last_blink_time
+    blink_counter = 0
+    blink_state = BlinkState.OPEN
+    blink_start_time = None
+    last_blink_time = 0
 
-
-def draw_eye_landmarks(frame, left_eye_points, right_eye_points, ear_value, blink_detected, blink_counter, ear_history_len):
+def draw_eye_landmarks(frame, left_eye_points, right_eye_points, debug_info, blink_detected, blink_counter):
+    """
+    Dibuja landmarks de los ojos y panel de información mejorado
+    """
     output = frame.copy()
     height, width = frame.shape[:2]
 
-    # overlay semitransparente para panel
-    info_panel_height = 160
+    # Panel de información inferior
+    info_panel_height = 200
     info_panel_y = height - info_panel_height
     overlay = output.copy()
     cv2.rectangle(overlay, (0, info_panel_y), (width, height), (0, 0, 0), -1)
-    cv2.addWeighted(overlay, 0.35, output, 0.65, 0, output)
+    cv2.addWeighted(overlay, 0.4, output, 0.6, 0, output)
 
     def draw_eye(points, is_left):
+        """Dibuja landmarks del ojo con colores según estado"""
         if len(points) == 6:
             pts = np.array(points, dtype=np.int32)
-            color = (0, 0, 255) if blink_detected else (0, 255, 0)
+            
+            # Color según si está parpadeando
+            if blink_detected:
+                color = (0, 0, 255)  # Rojo = parpadeo
+            elif debug_info.get('eyes_closed', False):
+                color = (0, 165, 255)  # Naranja = cerrando
+            else:
+                color = (0, 255, 0)  # Verde = abierto
+            
+            # Dibujar contorno del ojo
             cv2.polylines(output, [pts], True, color, 2)
             cv2.polylines(output, [pts], True, (255, 255, 255), 1)
+            
+            # Dibujar puntos clave
             for i, p in enumerate(pts):
                 cv2.circle(output, tuple(p), 3, (0, 165, 255), -1)
                 cv2.circle(output, tuple(p), 1, (255, 255, 255), -1)
 
+    # Dibujar ambos ojos
     draw_eye(left_eye_points, True)
     draw_eye(right_eye_points, False)
 
-    # texto y métricas (formateos seguros)
+    # Panel de métricas
     info_x = 18
     info_y = info_panel_y + 28
-    title_bg_color = (0, 0, 255) if blink_detected else (0, 128, 0)
-    cv2.rectangle(output, (10, info_y - 20), (220, info_y), title_bg_color, -1)
-    cv2.putText(output, "MEDICIONES", (15, info_y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)
+    
+    # Título del panel con color según estado
+    if blink_detected:
+        title_bg_color = (0, 0, 255)  # Rojo
+        title_text = "¡PARPADEO DETECTADO!"
+    elif debug_info.get('state') == BlinkState.CLOSED:
+        title_bg_color = (0, 165, 255)  # Naranja
+        title_text = "OJOS CERRADOS"
+    else:
+        title_bg_color = (0, 128, 0)  # Verde
+        title_text = "MONITOREANDO"
+    
+    cv2.rectangle(output, (10, info_y - 20), (280, info_y), title_bg_color, -1)
+    cv2.putText(output, title_text, (15, info_y - 5), 
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)
 
-    ear_text = f"{ear_value:.3f}" if (ear_value is not None) else "--"
-    cv2.putText(output, f"EAR: {ear_text}", (info_x, info_y + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), 2)
-    status = "PARPADEO" if blink_detected else "ABIERTO"
-    status_color = (0,0,255) if blink_detected else (0,255,0)
-    cv2.putText(output, f"Estado: {status}", (info_x, info_y + 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, status_color, 2)
-    cv2.putText(output, f"Parpadeos: {blink_counter}", (info_x, info_y + 92), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 2)
-
-    if ear_history_len < EAR_CALIBRATION_FRAMES:
-        progress = int(ear_history_len / EAR_CALIBRATION_FRAMES * 100)
-        cv2.putText(output, f"Calibrando: {progress}%", (info_x, info_y + 122), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,255), 2)
+    # Métricas principales
+    y_offset = info_y + 30
+    
+    # Distancia vertical (métrica principal)
+    avg_dist = debug_info.get('avg_distance', 0)
+    dist_text = f"{avg_dist:.2f}px" if avg_dist else "--"
+    dist_color = (0, 0, 255) if avg_dist < VERTICAL_DISTANCE_THRESHOLD else (0, 255, 0)
+    cv2.putText(output, f"Dist. Vertical: {dist_text}", 
+                (info_x, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.6, dist_color, 2)
+    
+    # EAR (métrica secundaria)
+    y_offset += 30
+    avg_ear = debug_info.get('avg_ear', 0)
+    ear_text = f"{avg_ear:.3f}" if avg_ear else "--"
+    cv2.putText(output, f"EAR: {ear_text}", 
+                (info_x, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 2)
+    
+    # Estado actual
+    y_offset += 30
+    state = debug_info.get('state', 'N/A')
+    state_color = (0, 0, 255) if blink_detected else (255, 255, 255)
+    cv2.putText(output, f"Estado: {state}", 
+                (info_x, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.6, state_color, 2)
+    
+    # Contador de parpadeos
+    y_offset += 30
+    cv2.putText(output, f"Parpadeos: {blink_counter}", 
+                (info_x, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+    
+    # Umbral de detección (referencia)
+    y_offset += 28
+    cv2.putText(output, f"Umbral: {VERTICAL_DISTANCE_THRESHOLD:.1f}px", 
+                (info_x, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (150, 150, 150), 1)
 
     return output
 
 def generate_frames():
+    """
+    Genera frames del video con detección mejorada de parpadeos
+    """
     global webcam_global, streaming_active, current_session_id
-    global last_faces_count, last_eyes_count, last_avg_ear
-    global blink_counter, ear_history
+    global last_faces_count, last_eyes_count, last_avg_distance, last_avg_ear
+    global blink_counter
 
-    print("=== GENERATE_FRAMES INICIADO (DETECCIÓN MEJORADA) ===")
-    blink_counter = 0
-    ear_history = []
+    print("=== GENERATE_FRAMES INICIADO (DETECCIÓN MEJORADA V2) ===")
+    
+    # Resetear contador al inicio
+    reset_blink_counter()
     frame_count = 0
 
-    # inicializar webcam si no está abierta
+    # Inicializar webcam si no está abierta
     with webcam_lock:
         if webcam_global is None:
             webcam_global = cv2.VideoCapture(0)
@@ -180,7 +346,7 @@ def generate_frames():
             webcam_global.set(cv2.CAP_PROP_FPS, 30)
         cap = webcam_global
 
-    # crear FaceMesh en contexto local (evita condiciones de carrera)
+    # Crear FaceMesh en contexto local
     mp_face_mesh_local = mp.solutions.face_mesh
     try:
         with mp_face_mesh_local.FaceMesh(
@@ -189,95 +355,233 @@ def generate_frames():
             min_detection_confidence=0.5,
             min_tracking_confidence=0.5
         ) as face_mesh_local:
+            
             while streaming_active:
                 frame_count += 1
+                
+                # Leer frame
                 with webcam_lock:
                     if cap is None or not cap.isOpened():
                         print("Webcam no disponible")
                         break
                     ret, frame = cap.read()
+                
                 if not ret:
                     print("No se pudo leer frame")
                     break
 
+                # Procesar frame
                 frame = cv2.flip(frame, 1)
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                
+                # Detección de rostro
                 results = None
                 try:
                     results = face_mesh_local.process(frame_rgb)
                 except Exception as e:
-                    # si MediaPipe falla en un frame, no interrumpir todo el stream
-                    print("MediaPipe error en este frame:", e)
+                    print(f"MediaPipe error: {e}")
                     results = None
 
-                current_ear = None
+                # Variables para este frame
                 blink_detected = False
                 faces_count = 0
                 left_eye_points = []
                 right_eye_points = []
+                debug_info = {}
 
                 if results and results.multi_face_landmarks:
                     faces_count = len(results.multi_face_landmarks)
                     face_landmarks = results.multi_face_landmarks[0]
                     h, w = frame.shape[:2]
+                    
+                    # Extraer puntos de los ojos
                     for idx in LEFT_EYE:
                         lm = face_landmarks.landmark[idx]
                         left_eye_points.append([int(lm.x * w), int(lm.y * h)])
+                    
                     for idx in RIGHT_EYE:
                         lm = face_landmarks.landmark[idx]
                         right_eye_points.append([int(lm.x * w), int(lm.y * h)])
+                    
+                    # Detectar parpadeo con el método mejorado
                     if len(left_eye_points) == 6 and len(right_eye_points) == 6:
-                        l_ear = calculate_ear(left_eye_points)
-                        r_ear = calculate_ear(right_eye_points)
-                        if l_ear is not None and r_ear is not None:
-                            current_ear = min(l_ear, r_ear)
-                            # detectar parpadeo
-                            if detect_blink(current_ear):
-                                blink_detected = True
-                                blink_counter += 0  # detect_blink ya incrementa; dejar por claridad
+                        blink_detected, state, debug_info = detect_blink_improved(
+                            left_eye_points, 
+                            right_eye_points
+                        )
+                        
+                        # Si se detectó un parpadeo, guardarlo en BD
+                        if blink_detected:
+                            print(f"✓ PARPADEO #{blink_counter} detectado!")
+                            print(f"  Distancia: {debug_info.get('avg_distance', 0):.2f}px")
+                            print(f"  Duración: {debug_info.get('blink_duration', 0):.3f}s")
+                            
+                            if current_session_id is not None:
+                                try:
+                                    session = MonitorSession.objects.get(id=current_session_id)
+                                    BlinkEvent.objects.create(
+                                        session=session,
+                                        timestamp=timezone.now(),
+                                        duration_ms=int(debug_info.get('blink_duration', 0) * 1000)
+                                    )
+                                except Exception as e:
+                                    print(f"[WARN] No se pudo guardar BlinkEvent: {e}")
+                            
+                            # Alerta de fatiga cada 30 parpadeos (ajustar según necesidad)
+                            if blink_counter > 0 and blink_counter % 30 == 0:
+                                if current_session_id is not None:
+                                    try:
+                                        session = MonitorSession.objects.get(id=current_session_id)
+                                        # Sanitizar metadata para evitar tipos no serializables (numpy.float32)
+                                        try:
+                                            metadata = {
+                                                'blink_counter': int(blink_counter),
+                                                'avg_distance': float(debug_info.get('avg_distance', 0) or 0.0)
+                                            }
+                                        except Exception:
+                                            metadata = {'blink_counter': int(blink_counter), 'avg_distance': float(0.0)}
 
-                # actualizar métricas de debug
-                try:
-                    last_faces_count = faces_count
-                    last_eyes_count = 2 if faces_count > 0 else 0
-                    last_avg_ear = float(current_ear) if current_ear is not None else last_avg_ear
-                except Exception:
-                    pass
+                                        AlertEvent.objects.create(
+                                            session=session,
+                                            alert_type=AlertEvent.ALERT_FATIGUE,
+                                            triggered_at=timezone.now(),
+                                            metadata=metadata
+                                        )
+                                        print(f"[ALERT] ⚠ Alerta de fatiga #{blink_counter // 30}")
+                                    except Exception as e:
+                                        print(f"[WARN] No se pudo guardar AlertEvent: {e}")
 
-                # Actualizar métricas de la sesión en la base de datos para el endpoint en vivo
+                # Actualizar métricas globales para API (asegurar tipos nativos)
+                last_faces_count = int(faces_count)
+                last_eyes_count = 2 if faces_count > 0 else 0
+                if debug_info:
+                    try:
+                        last_avg_distance = float(debug_info.get('avg_distance', last_avg_distance) or last_avg_distance)
+                    except Exception:
+                        # mantener valor previo si falla la conversión
+                        pass
+                    try:
+                        last_avg_ear = float(debug_info.get('avg_ear', last_avg_ear) or last_avg_ear)
+                    except Exception:
+                        pass
+
+                # Actualizar sesión en BD
                 if current_session_id is not None:
                     try:
                         session = MonitorSession.objects.get(id=current_session_id)
-                        # Actualizar avg_ear solo si hay un valor válido
-                        if current_ear is not None:
-                            session.avg_ear = float(current_ear)
+                        if debug_info.get('avg_distance'):
+                            # Guardar distancia vertical como métrica principal
+                            session.avg_ear = float(debug_info['avg_distance'])
                         session.total_blinks = blink_counter
                         session.save(update_fields=["avg_ear", "total_blinks"])
                     except Exception as e:
-                        print(f"[WARN] No se pudo actualizar métricas de sesión: {e}")
+                        print(f"[WARN] No actualizar sesión: {e}")
+                
+                current_time = time.time()
+                        
+                # === 1. ALERTA DE ILUMINACIÓN BAJA ===
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                brightness = np.mean(gray)
+                if brightness < 40:
+                    if not hasattr(generate_frames, "low_light_start") or generate_frames.low_light_start is None:
+                        generate_frames.low_light_start = current_time
+                    elif current_time - generate_frames.low_light_start >= 3.0:
+                        if current_session_id is not None:
+                            try:
+                                session = MonitorSession.objects.get(id=current_session_id)
+                                AlertEvent.objects.create(
+                                    session=session,
+                                    alert_type=AlertEvent.ALERT_LOW_LIGHT,
+                                    triggered_at=timezone.now(),
+                                    metadata={"brightness": float(brightness)}
+                                )
+                                print("[ALERT] ⚠ Iluminación baja detectada")
+                            except Exception as e:
+                                print(f"[WARN] No se pudo guardar alerta LOW_LIGHT: {e}")
+                        generate_frames.low_light_start = None
+                else:
+                    generate_frames.low_light_start = None
 
-                # dibujar información y landmarks (usar función única para panel + ojos)
-                frame_out = draw_eye_landmarks(frame, left_eye_points, right_eye_points,
-                                               current_ear, blink_detected, blink_counter, len(ear_history))
 
-                # codificar frame (JPEG calidad 80 para menor carga)
+                # === 2. ALERTA DE DISTRACCIÓN PROLONGADA ===
+                if faces_count == 0:
+                    if not hasattr(generate_frames, "no_face_start") or generate_frames.no_face_start is None:
+                        generate_frames.no_face_start = current_time
+                    elif current_time - generate_frames.no_face_start >= 5.0:
+                        if current_session_id is not None:
+                            try:
+                                session = MonitorSession.objects.get(id=current_session_id)
+                                AlertEvent.objects.create(
+                                    session=session,
+                                    alert_type=AlertEvent.ALERT_DISTRACT,
+                                    triggered_at=timezone.now(),
+                                    metadata={"no_face_duration_s": round(current_time - generate_frames.no_face_start, 2)}
+                                )
+                                print("[ALERT] ⚠ Distracción prolongada detectada")
+                            except Exception as e:
+                                print(f"[WARN] No se pudo guardar alerta DISTRACT: {e}")
+                        generate_frames.no_face_start = None
+                else:
+                    generate_frames.no_face_start = None
+
+
+                # === 3. ALERTA DE CÁMARA PERDIDA ===
+                if not ret:
+                    print("No se pudo leer frame")
+
+                    if not hasattr(generate_frames, "no_frame_start") or generate_frames.no_frame_start is None:
+                        generate_frames.no_frame_start = current_time
+                    elif current_time - generate_frames.no_frame_start >= 3.0:
+                        if current_session_id is not None:
+                            try:
+                                session = MonitorSession.objects.get(id=current_session_id)
+                                AlertEvent.objects.create(
+                                    session=session,
+                                    alert_type=AlertEvent.ALERT_CAMERA_LOST,
+                                    triggered_at=timezone.now(),
+                                    metadata={"duration_sin_frame": round(current_time - generate_frames.no_frame_start, 2)}
+                                )
+                                print("[ALERT] ⚠ Cámara perdida")
+                            except Exception as e:
+                                print(f"[WARN] No se pudo guardar alerta CAMERA_LOST: {e}")
+                        generate_frames.no_frame_start = None
+
+                    time.sleep(0.1)
+                    continue
+                else:
+                    generate_frames.no_frame_start = None
+
+
+
+                # Dibujar visualización
+                frame_out = draw_eye_landmarks(
+                    frame, 
+                    left_eye_points, 
+                    right_eye_points,
+                    debug_info,
+                    blink_detected, 
+                    blink_counter
+                )
+
+                # Codificar y enviar frame
                 encode_params = [int(cv2.IMWRITE_JPEG_QUALITY), 80]
                 success, buffer = cv2.imencode('.jpg', frame_out, encode_params)
+                
                 if not success:
-                    # saltar frame si no se pudo codificar
                     continue
+                
                 frame_bytes = buffer.tobytes()
+                
                 try:
                     yield (b'--frame\r\n'
                            b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
                 except GeneratorExit:
-                    # cliente desconectado
                     break
 
     except Exception as e:
-        print("Error crítico en generate_frames:", e)
+        print(f"Error crítico en generate_frames: {e}")
     finally:
-        # cleanup garantizado
+        # Cleanup
         with webcam_lock:
             if webcam_global is not None:
                 try:
@@ -285,9 +589,11 @@ def generate_frames():
                 except Exception:
                     pass
                 webcam_global = None
-        print("=== GENERATE_FRAMES TERMINADO ===")
+        print(f"=== GENERATE_FRAMES TERMINADO (Total parpadeos: {blink_counter}) ===")
+
+
 # ============================================================================
-# VISTAS DE TEMPLATE
+# VISTAS DE TEMPLATE Y END POINTS DE API
 # ============================================================================
 
 @method_decorator(login_required, name='dispatch')
@@ -459,50 +765,50 @@ def video_feed(request):
 
 @login_required
 def session_metrics(request):
-    """Return current session metrics (avg_ear, total_blinks) as JSON.
-    This is polled by the front-end to show live metrics while streaming.
-    """
+    """Return current session metrics as JSON for live updates"""
     global current_session_id
 
     if current_session_id is None:
+        # Convertir a tipos primitivos para Json
         return JsonResponse({
             'status': 'no_session',
             'message': 'No active monitoring session',
-            'avg_ear': 0.0,
-            'total_blinks': 0,
-            'faces': last_faces_count,
-            'eyes': last_eyes_count,
-            'debug_avg_ear': last_avg_ear
+            'avg_distance': float(0.0),
+            'avg_ear': float(0.0),
+            'total_blinks': int(0),
+            'faces': int(last_faces_count),
+            'eyes': int(last_eyes_count),
+            'debug_distance': float(last_avg_distance or 0.0),
+            'debug_ear': float(last_avg_ear or 0.0)
         })
 
     try:
         session = MonitorSession.objects.get(id=current_session_id)
+        # Asegurar tipos serializables
         return JsonResponse({
             'status': 'success',
-            'avg_ear': session.avg_ear or 0.0,
-            'total_blinks': session.total_blinks or 0,
-            'faces': last_faces_count,
-            'eyes': last_eyes_count,
-            'debug_avg_ear': last_avg_ear
+            'avg_distance': float(last_avg_distance or 0.0),
+            'avg_ear': float(last_avg_ear or 0.0),
+            'total_blinks': int(session.total_blinks or 0),
+            'faces': int(last_faces_count),
+            'eyes': int(last_eyes_count),
+            'blink_state': str(blink_state)
         })
     except MonitorSession.DoesNotExist:
         return JsonResponse({
             'status': 'error',
             'message': 'Session not found',
-            'avg_ear': 0.0,
-            'total_blinks': 0,
-            'faces': last_faces_count,
-            'eyes': last_eyes_count,
-            'debug_avg_ear': last_avg_ear
+            'avg_distance': float(0.0),
+            'avg_ear': float(0.0),
+            'total_blinks': int(0),
+            'faces': int(last_faces_count),
+            'eyes': int(last_eyes_count)
         })
 
 @login_required
 @require_http_methods(["POST"])
 def start_webcam_test(request):
-    """
-    Iniciar webcam y crear una nueva sesión de monitoreo.
-    Retorna el session_id para tracking.
-    """
+    """Iniciar webcam y crear una nueva sesión de monitoreo"""
     global webcam_global, streaming_active, current_session_id
     
     print("=== START_WEBCAM_TEST LLAMADO ===")
@@ -522,21 +828,28 @@ def start_webcam_test(request):
         session = MonitorSession.objects.create(
             user=request.user,
             start_time=timezone.now(),
-            metadata={}
+            metadata={'detection_method': 'vertical_distance'}
         )
         current_session_id = session.id
         
-        # Inicializar cache para detección de parpadeos
+        # Inicializar cache
         cache.set(f'monitor:{session.id}:blink_count', 0, timeout=3600)
+        
+        # Resetear contador
+        reset_blink_counter()
         
         streaming_active = True
         
-        print(f"Sesión creada: {session.id}")
+        print(f"✓ Sesión creada: {session.id}")
+        print(f"✓ Método de detección: Distancia vertical de párpados")
+        print(f"✓ Umbral: {VERTICAL_DISTANCE_THRESHOLD}px")
         
         return JsonResponse({
             'status': 'success',
             'message': 'Webcam iniciada y sesión creada',
-            'session_id': session.id
+            'session_id': session.id,
+            'detection_method': 'vertical_distance',
+            'threshold': VERTICAL_DISTANCE_THRESHOLD
         })
     except Exception as e:
         print(f"Error creando sesión: {e}")
@@ -548,9 +861,7 @@ def start_webcam_test(request):
 @login_required
 @require_http_methods(["POST"])
 def stop_webcam_test(request):
-    """
-    Detener webcam y finalizar sesión de monitoreo.
-    """
+    """Detener webcam y finalizar sesión de monitoreo"""
     global webcam_global, streaming_active, current_session_id
     
     print("=== STOP_WEBCAM_TEST LLAMADO ===")
@@ -572,15 +883,21 @@ def stop_webcam_test(request):
             # Limpiar cache
             cache.delete(f'monitor:{session.id}:blink_count')
             
-            print(f"Sesión finalizada: {session.id}")
+            print(f"✓ Sesión finalizada: {session.id}")
+            print(f"✓ Total de parpadeos detectados: {blink_counter}")
+            print(f"✓ Duración: {session.duration_seconds}s")
+            
             session_id = session.id
             duration = session.duration_seconds
+            total_blinks = blink_counter
         except MonitorSession.DoesNotExist:
             session_id = None
             duration = 0
+            total_blinks = 0
     else:
         session_id = None
         duration = 0
+        total_blinks = 0
     
     current_session_id = None
     
@@ -595,7 +912,8 @@ def stop_webcam_test(request):
         'status': 'success',
         'message': 'Webcam detenida y sesión finalizada',
         'session_id': session_id,
-        'duration_seconds': duration
+        'duration_seconds': duration,
+        'total_blinks': total_blinks
     })
 
 @login_required
@@ -608,7 +926,7 @@ def start_session(request):
     session = MonitorSession.objects.create(
         user=request.user,
         start_time=timezone.now(),
-        metadata={}
+        metadata={'detection_method': 'vertical_distance'}
     )
     
     cache.set(f'monitor:{session.id}:blink_count', 0, timeout=3600)
