@@ -472,7 +472,7 @@ function stopMetricsPolling() {
                             {{ session.total_blinks|default:0 }}
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-700">
-                            {{ session.alerts_count|default:0 }}
+                            {{ session.alert_count|default:0 }}
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-700">
                             <a href="{% url 'monitoring:session_detail' session.id %}" 

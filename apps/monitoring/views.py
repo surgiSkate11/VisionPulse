@@ -629,6 +629,7 @@ class ModuloTemplateView(TemplateView):
         
         recent_sessions = []
         for s in sessions:
+            
             total = s.duration_seconds or 0
             hours, remainder = divmod(total, 3600)
             minutes, seconds = divmod(remainder, 60)
@@ -641,7 +642,10 @@ class ModuloTemplateView(TemplateView):
                 formatted = f"{seconds}s"
             
             s.duration_hms = formatted
+            s.alert_count = s.alerts.count()
             recent_sessions.append(s)
+            
+        
         
         context['recent_sessions'] = recent_sessions
         
