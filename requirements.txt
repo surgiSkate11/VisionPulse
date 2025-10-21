@@ -1,3 +1,4 @@
+# Django y extensiones principales
 Django==5.2.1
 djangorestframework==3.15.1
 django-tailwind==4.2.0
@@ -5,9 +6,15 @@ django-browser-reload==1.18.0
 django-cors-headers==4.7.0
 django-simple-history==3.5.0
 django-environ==0.11.2
+
+# Base de datos y ORM
 psycopg2==2.9.10
+
+# Procesamiento de imágenes y multimedia
 pillow==11.2.1
 opencv-python==4.10.0.84
+
+# Autenticación y seguridad
 channels==4.0.0
 social-auth-app-django==5.4.1
 social-auth-core==4.5.0
@@ -16,6 +23,12 @@ oauthlib==3.2.2
 requests-oauthlib==2.0.0
 PyJWT==2.8.0
 defusedxml==0.7.1
+
+# Generación de reportes y PDFs
 weasyprint==62.3
 reportlab==4.2.0
 requests==2.32.3
+
+# Frontend y herramientas de desarrollo
+whitenoise==6.6.0     # Para servir archivos estáticos
+python-dotenv==1.0.0  # Para manejar variables de entorno

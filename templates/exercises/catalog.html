@@ -1,275 +1,236 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block title %}Ejercicios Oculares | VisionPulse{% endblock %}
+
 {% block content %}
-<div class="page-header">
-    <h1><i class="fas fa-dumbbell"></i> Ejercicios Oculares</h1>
-    <p>Fortalece tus ojos con ejercicios personalizados</p>
-</div>
-
-<div class="exercises-dashboard">
-    <div class="progress-section">
-        <div class="progress-card">
-            <h3>Tu Progreso</h3>
-            <div class="progress-stats">
-                <div class="stat">
-                    <span class="stat-number">{{ user.exercises_completed|default:0 }}</span>
-                    <span class="stat-label">Ejercicios Completados</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-number">{{ user.current_streak|default:0 }}</span>
-                    <span class="stat-label">Días Consecutivos</span>
-                </div>
-            </div>
-        </div>
+<div class="max-w-7xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-text-primary dark:text-dark-text-primary mb-1">Ejercicios Oculares</h1>
+        <p class="text-text-secondary dark:text-dark-text-secondary">Rutinas guiadas para el cuidado de tu visión.</p>
     </div>
 
-    <div class="exercises-grid">
-        <div class="exercise-card">
-            <div class="exercise-icon">
-                <i class="fas fa-eye"></i>
-            </div>
-            <h3>Ejercicio de Parpadeo</h3>
-            <p>Fortalece los músculos palpebrales y mantén tus ojos hidratados</p>
-            <div class="exercise-details">
-                <span><i class="fas fa-clock"></i> 2 min</span>
-                <span><i class="fas fa-signal"></i> Básico</span>
-            </div>
-            <button class="btn-exercise">Iniciar Ejercicio</button>
+    {% if exercises %}
+    <div class="bg-gradient-to-tr from-accent-peach to-amber-200 dark:from-dark-accent-peach dark:to-amber-800 rounded-2xl p-8 mb-10 shadow-lg dark:shadow-xl dark:shadow-black/20">
+        <div class="inline-flex items-center gap-2 bg-white/50 dark:bg-dark-surface/50 text-text-primary dark:text-dark-text-primary font-medium px-3 py-1 rounded-full text-sm mb-4">
+            ✨ Recomendado para ti
         </div>
-
-        <div class="exercise-card">
-            <div class="exercise-icon">
-                <i class="fas fa-expand-arrows-alt"></i>
-            </div>
-            <h3>Enfoque Lejano-Cercano</h3>
-            <p>Mejora la flexibilidad del cristalino y reduce la fatiga visual</p>
-            <div class="exercise-details">
-                <span><i class="fas fa-clock"></i> 3 min</span>
-                <span><i class="fas fa-signal"></i> Intermedio</span>
-            </div>
-            <button class="btn-exercise">Iniciar Ejercicio</button>
-        </div>
-
-        <div class="exercise-card">
-            <div class="exercise-icon">
-                <i class="fas fa-sync-alt"></i>
-            </div>
-            <h3>Movimientos Oculares</h3>
-            <p>Ejercita todos los músculos extraoculares con movimientos direccionales</p>
-            <div class="exercise-details">
-                <span><i class="fas fa-clock"></i> 4 min</span>
-                <span><i class="fas fa-signal"></i> Intermedio</span>
-            </div>
-            <button class="btn-exercise">Iniciar Ejercicio</button>
-        </div>
-
-        <div class="exercise-card">
-            <div class="exercise-icon">
-                <i class="fas fa-compress"></i>
-            </div>
-            <h3>Relajación Visual</h3>
-            <p>Técnica de palmeo para descansar completamente los ojos</p>
-            <div class="exercise-details">
-                <span><i class="fas fa-clock"></i> 5 min</span>
-                <span><i class="fas fa-signal"></i> Relajación</span>
-            </div>
-            <button class="btn-exercise">Iniciar Ejercicio</button>
-        </div>
+        <h2 class="text-2xl font-bold text-text-primary dark:text-dark-text-primary mb-2">{{ exercises.0.title }}</h2>
+        <p class="text-text-secondary dark:text-dark-text-secondary opacity-90 mb-5 max-w-lg">{{ exercises.0.description }}</p>
+        <button class="start-exercise-btn bg-accent-green hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-transform hover:scale-105 shadow-md"
+                data-exercise-id="{{ exercises.0.id }}"
+                data-url="{% url 'exercises:exercise_data' exercises.0.id %}">
+            <i class="fas fa-play mr-2"></i>
+            Comenzar Ahora
+        </button>
     </div>
+    {% endif %}
 
-    <div class="tips-section">
-        <h2>Consejos para Ejercicios Oculares</h2>
-        <div class="tips-grid">
-            <div class="tip-card">
-                <i class="fas fa-lightbulb"></i>
-                <p>Realiza los ejercicios en un ambiente bien iluminado</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for exercise in exercises %}
+        <div class="card p-6 flex flex-col text-left dark:bg-dark-surface dark:border-dark-border-color transition hover:-translate-y-1 hover:shadow-xl">
+            <div class="w-14 h-14 rounded-xl bg-accent-peach dark:bg-dark-accent-peach flex items-center justify-center mb-4">
+                <i class="{{ exercise.icon_class }} text-2xl text-text-primary dark:text-dark-text-primary"></i>
             </div>
-            <div class="tip-card">
-                <i class="fas fa-clock"></i>
-                <p>Practica 2-3 veces al día para mejores resultados</p>
+            <h3 class="text-lg font-semibold text-text-primary dark:text-dark-text-primary mb-2 flex-grow">{{ exercise.title }}</h3>
+            <p class="text-text-secondary dark:text-dark-text-secondary text-sm mb-4">{{ exercise.description }}</p>
+            <div class="text-sm text-text-secondary dark:text-dark-text-secondary mb-4 border-t border-border-color dark:border-dark-border-color pt-4 flex items-center justify-between">
+                <span>
+                    <i class="fas fa-clock mr-1.5"></i>
+                    Aprox. {{ exercise.total_duration_minutes }} min
+                </span>
+                <span class="font-medium text-accent-green dark:text-dark-accent-green">
+                    {{ exercise.steps.count }} Pasos
+                </span>
             </div>
-            <div class="tip-card">
-                <i class="fas fa-hand-paper"></i>
-                <p>Mantén las manos limpias antes de tocar los ojos</p>
-            </div>
+            <button class="start-exercise-btn w-full bg-accent-green/10 text-accent-green dark:bg-dark-accent-green/20 dark:text-dark-accent-green font-semibold py-3 rounded-lg hover:bg-accent-green hover:text-white dark:hover:bg-dark-accent-green dark:hover:text-white transition"
+                    data-exercise-id="{{ exercise.id }}"
+                    data-url="{% url 'exercises:exercise_data' exercise.id %}">
+                Iniciar
+            </button>
         </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12 card dark:bg-dark-surface dark:border-dark-border-color">
+            <i class="fas fa-ghost text-4xl text-gray-400 mb-4"></i>
+            <p class="text-text-secondary dark:text-dark-text-secondary">No hay ejercicios disponibles en este momento.</p>
+            <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">Ejecuta 'python manage.py populate_exercises' para crearlos.</p>
+        </div>
+        {% endfor %}
     </div>
 </div>
+{% endblock %}
 
-<style>
-.page-header {
-    margin-bottom: 2rem;
-    text-align: center;
-}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Selección de Elementos del DOM ---
+    const modalOverlay = document.getElementById('exercise-modal-overlay');
+    const modal = document.getElementById('exercise-modal');
+    const startButtons = document.querySelectorAll('.start-exercise-btn');
 
-.page-header h1 {
-    color: var(--accent-eye);
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-}
+    // --- Variables de Estado del Ejercicio ---
+    let currentExercise = null;
+    let currentStepIndex = 0;
+    let stepTimeLeft = 0;
+    let totalTimeLeft = 0;
+    let timerInterval = null;
+    let isPaused = false;
 
-.exercises-dashboard {
-    max-width: 1200px;
-    margin: 0 auto;
-}
+    // --- Funciones para controlar el Modal ---
+    function openModal() {
+        modalOverlay.classList.remove('hidden');
+        setTimeout(() => modal.classList.remove('scale-95', 'opacity-0'), 50);
+    }
 
-.progress-section {
-    margin-bottom: 2rem;
-}
+    function closeModal() {
+        clearInterval(timerInterval);
+        modal.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modalOverlay.classList.add('hidden');
+            modal.innerHTML = ''; // Limpia el contenido al cerrar
+        }, 300);
+    }
 
-.progress-card {
-    background: white;
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    text-align: center;
-}
+    // --- Lógica Principal del Ejercicio ---
+    async function startExercise(exerciseId, url) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('No se pudo cargar el ejercicio.');
+            currentExercise = await response.json();
+            
+            if (!currentExercise.steps || currentExercise.steps.length === 0) {
+                alert('Este ejercicio no tiene pasos definidos.');
+                return;
+            }
 
-.progress-card h3 {
-    margin-bottom: 1.5rem;
-    color: #374151;
-    font-size: 1.25rem;
-}
+            currentStepIndex = 0;
+            isPaused = false;
+            totalTimeLeft = currentExercise.total_duration;
+            
+            renderModalContent(); // Construye el HTML del modal
+            startStep(); // Inicia el primer paso
+            openModal();
 
-.progress-stats {
-    display: flex;
-    justify-content: center;
-    gap: 3rem;
-}
+        } catch (error) {
+            console.error("Error al iniciar el ejercicio:", error);
+            alert(error.message);
+        }
+    }
 
-.stat {
-    text-align: center;
-}
+    function startStep() {
+        const step = currentExercise.steps[currentStepIndex];
+        stepTimeLeft = step.duration_seconds;
+        updateStepUI();
+        
+        clearInterval(timerInterval);
+        timerInterval = setInterval(tick, 1000);
+    }
+    
+    function tick() {
+        if (isPaused) return;
 
-.stat-number {
-    display: block;
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: var(--accent-eye);
-    line-height: 1;
-}
+        stepTimeLeft--;
+        totalTimeLeft--;
+        updateTimerUI();
 
-.stat-label {
-    font-size: 0.9rem;
-    color: #6b7280;
-    margin-top: 0.5rem;
-}
+        if (stepTimeLeft <= 0) {
+            moveToNextStep();
+        }
+    }
 
-.exercises-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
+    function moveToNextStep() {
+        if (currentStepIndex < currentExercise.steps.length - 1) {
+            currentStepIndex++;
+            startStep();
+        } else {
+            completeExercise();
+        }
+    }
 
-.exercise-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    text-align: center;
-    transition: transform 0.2s;
-}
+    function togglePause() {
+        isPaused = !isPaused;
+        const pauseBtn = document.getElementById('pause-btn');
+        if (pauseBtn) {
+            pauseBtn.innerHTML = isPaused 
+                ? '<i class="fas fa-play mr-2"></i>Reanudar'
+                : '<i class="fas fa-pause mr-2"></i>Pausar';
+        }
+    }
 
-.exercise-card:hover {
-    transform: translateY(-2px);
-}
+    function completeExercise() {
+        clearInterval(timerInterval);
+        modal.innerHTML = `
+            <h2 class="text-3xl font-bold text-text-primary dark:text-dark-text-primary mb-4">¡Ejercicio Completado!</h2>
+            <i class="fas fa-check-circle text-6xl text-accent-green dark:text-dark-accent-green mb-4 animate-pulse"></i>
+            <p class="text-text-secondary dark:text-dark-text-secondary mb-6">¡Gran trabajo! Has fortalecido tu salud visual.</p>
+            <button id="close-completion-btn" class="w-full bg-accent-green text-white font-semibold py-3 rounded-lg hover:bg-opacity-90 transition">Cerrar</button>
+        `;
+        document.getElementById('close-completion-btn').addEventListener('click', closeModal);
+    }
 
-.exercise-icon {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: var(--gradient-vision);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1rem;
-    font-size: 2rem;
-    color: white;
-}
+    // --- Funciones para Actualizar la Interfaz (UI) ---
+    function renderModalContent() {
+        modal.innerHTML = `
+            <button id="modal-close-btn" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 flex items-center justify-center text-xl transition-transform hover:rotate-90">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="mb-6">
+                <h2 id="exercise-title" class="text-3xl font-bold text-text-primary dark:text-dark-text-primary"></h2>
+                <p id="total-timer" class="text-sm text-text-secondary dark:text-dark-text-secondary"></p>
+            </div>
+            <div class="w-40 h-40 mx-auto bg-accent-peach/50 dark:bg-dark-accent-peach/50 rounded-full flex items-center justify-center mb-6">
+                <i id="step-icon" class="text-6xl text-text-primary dark:text-dark-text-primary"></i>
+            </div>
+            <div class="bg-white/50 dark:bg-dark-surface/50 rounded-2xl p-6 shadow-inner">
+                <div class="flex justify-between items-center text-sm text-text-secondary dark:text-dark-text-secondary mb-3">
+                    <span>PASO ACTUAL</span>
+                    <span id="step-badge"></span>
+                </div>
+                <p id="step-instruction" class="text-xl font-semibold mb-4 text-text-primary dark:text-dark-text-primary"></p>
+                <div class="w-full bg-border-color dark:bg-dark-border-color rounded-full h-2.5">
+                    <div id="progress-bar" class="bg-accent-green dark:bg-dark-accent-green h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="flex gap-4 mt-6">
+                <button id="pause-btn" class="flex-1 bg-gray-200 dark:bg-gray-700 text-text-primary dark:text-dark-text-primary font-semibold py-3 rounded-lg transition hover:bg-gray-300"><i class="fas fa-pause mr-2"></i>Pausar</button>
+                <button id="finish-btn" class="flex-1 bg-alert-coral/20 text-alert-coral dark:bg-alert-coral/30 font-semibold py-3 rounded-lg transition hover:bg-alert-coral hover:text-white">Terminar</button>
+            </div>
+        `;
+        // Añadir listeners a los nuevos botones
+        document.getElementById('pause-btn').addEventListener('click', togglePause);
+        document.getElementById('finish-btn').addEventListener('click', closeModal);
+        document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+    }
 
-.exercise-card h3 {
-    margin-bottom: 0.5rem;
-    color: #374151;
-    font-size: 1.1rem;
-}
+    function updateStepUI() {
+        const step = currentExercise.steps[currentStepIndex];
+        document.getElementById('exercise-title').textContent = currentExercise.title;
+        document.getElementById('step-icon').className = `${step.icon_class} text-6xl text-text-primary dark:text-dark-text-primary transition-transform duration-300 transform group-hover:scale-110`;
+        document.getElementById('step-instruction').textContent = step.instruction;
+        document.getElementById('step-badge').textContent = `${currentStepIndex + 1} / ${currentExercise.steps.length}`;
+    }
 
-.exercise-card p {
-    color: #6b7280;
-    font-size: 0.9rem;
-    margin-bottom: 1rem;
-    line-height: 1.5;
-}
+    function updateTimerUI() {
+        const minutes = Math.floor(totalTimeLeft / 60);
+        const seconds = totalTimeLeft % 60;
+        document.getElementById('total-timer').textContent = `Tiempo restante: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        const progressPercentage = ((currentStepIndex + 1) / currentExercise.steps.length) * 100;
+        document.getElementById('progress-bar').style.width = `${progressPercentage}%`;
+    }
 
-.exercise-details {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    font-size: 0.85rem;
-    color: #6b7280;
-}
+    // --- Listeners Iniciales ---
+    startButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const exerciseId = button.dataset.exerciseId;
+            const url = button.dataset.url;
+            startExercise(exerciseId, url);
+        });
+    });
 
-.exercise-details span {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.btn-exercise {
-    background: var(--gradient-vision);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s;
-    width: 100%;
-}
-
-.btn-exercise:hover {
-    transform: scale(1.05);
-}
-
-.tips-section {
-    background: white;
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.tips-section h2 {
-    margin-bottom: 1.5rem;
-    color: #374151;
-    text-align: center;
-}
-
-.tips-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-}
-
-.tip-card {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: #f9fafb;
-    border-radius: 8px;
-}
-
-.tip-card i {
-    color: var(--warning-fatigue);
-    font-size: 1.5rem;
-}
-
-.tip-card p {
-    margin: 0;
-    color: #374151;
-    font-size: 0.9rem;
-}
-</style>
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+    });
+});
+</script>
 {% endblock %}

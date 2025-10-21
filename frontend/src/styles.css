@@ -2,48 +2,174 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom components that are too complex for inline Tailwind classes */
-
 @layer components {
-  /* Medical Loading Component - Only essential custom styles that can't be achieved with Tailwind */
-  .medical-loading {
-    @apply fixed inset-0 w-screen h-screen z-[20000] flex items-center justify-center;
-    @apply bg-gradient-to-br from-indigo-500 via-indigo-900 to-cyan-500;
-    @apply backdrop-blur-3xl saturate-[130%] overflow-hidden;
-    @apply opacity-100 visible pointer-events-auto transition-opacity duration-500 min-h-screen;
-    font-family: 'Orbitron', 'Rajdhani', 'Inter', sans-serif;
-  }
+  /* Estilos generales */
+  .card { @apply bg-surface border border-border-color rounded-2xl shadow-sm; }
 
-  .medical-loading-hidden {
-    @apply opacity-0 invisible pointer-events-none;
-  }
+  /* Header */
+  .logo-icon { @apply w-10 h-10 rounded-xl bg-gradient-to-br from-accent-green to-green-400 flex items-center justify-center text-white; }
+  .notification-btn { @apply relative text-xl text-text-primary hover:bg-background-primary p-2 rounded-full transition-colors; }
+  .notification-badge { @apply absolute top-1 right-1 block h-2.5 w-2.5 rounded-full bg-alert-coral ring-2 ring-surface; }
+  .user-avatar { @apply w-10 h-10 rounded-full bg-accent-green text-white flex items-center justify-center font-bold; }
+  .theme-toggle { @apply text-xl text-text-primary hover:bg-background-primary p-2 rounded-full transition-colors; }
 
-  .medical-loading-container {
-    @apply relative flex flex-col items-center justify-center p-8 rounded-3xl text-center;
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(12px);
-  }
+  /* Sidebar */
+  .nav-item { @apply flex items-center gap-4 px-4 py-3 rounded-lg text-text-secondary font-medium transition-colors duration-200 hover:bg-background-primary hover:text-text-primary relative; }
+  .nav-item.active { @apply bg-accent-peach text-text-primary font-semibold; }
+  .nav-item.active::before { content: ''; @apply absolute left-0 h-6 w-1 bg-accent-green rounded-r-full; }
+  .nav-icon { @apply w-6 text-center text-lg; }
+  .nav-section-title { @apply text-xs uppercase text-text-secondary font-semibold tracking-wider px-4; }
+  .collapse-btn { @apply border-t border-border-color h-14 flex items-center justify-center text-text-secondary hover:bg-background-primary; }
+  .nav-text { @apply font-medium whitespace-nowrap transition-opacity duration-150; }
 
-  .medical-loading-title {
-    @apply text-4xl font-bold text-white mb-4 tracking-wider;
-    text-shadow: 0 0 20px rgba(34, 211, 238, 0.8);
-  }
-
-  .medical-loading-subtitle {
-    @apply text-lg text-cyan-100 mb-6;
-  }
-
-  .medical-loading-progress {
-    @apply w-80 h-2 bg-indigo-900/50 rounded-full overflow-hidden;
-  }
-
-  .medical-loading-progress-bar {
-    @apply h-full bg-gradient-to-r from-cyan-400 to-indigo-500 rounded-full;
-    animation: shimmer 1.5s infinite;
-  }
+  /* Dashboard */
+  .metric-card { @apply bg-surface border border-border-color rounded-2xl p-4 shadow-sm transition hover:shadow-md flex flex-col justify-start; }
+  .metric-header { @apply flex items-center gap-3 mb-1; }
+  .metric-icon { @apply w-10 h-10 rounded-lg flex items-center justify-center text-white text-xl; }
+  .metric-title { @apply text-sm text-text-secondary; }
+  .metric-value { @apply text-3xl font-bold text-text-primary; }
+  .metric-trend { @apply text-xs flex items-center gap-1 mt-1; }
+  .alert-item { @apply flex items-center gap-3 p-2 rounded-lg; }
+  .alert-icon { @apply w-10 h-10 rounded-full flex items-center justify-center text-white; }
 }
 
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+@layer components {
+  /* Layout */
+  .card {
+    @apply bg-surface border border-border-color rounded-2xl shadow-sm;
+  }
+
+  /* Header */
+  .logo-icon {
+    @apply w-10 h-10 rounded-xl bg-gradient-to-br from-accent-green to-green-400 flex items-center justify-center;
+  }
+  .notification-btn {
+    @apply relative text-xl text-text-primary hover:bg-background-primary p-2 rounded-full transition-colors;
+  }
+  .notification-badge {
+    @apply absolute top-1 right-1 block h-2 w-2 rounded-full bg-alert-coral ring-2 ring-surface;
+  }
+  .user-menu {
+    @apply flex items-center gap-3;
+  }
+  .user-avatar {
+    @apply w-10 h-10 rounded-full bg-accent-green text-white flex items-center justify-center font-bold;
+  }
+
+  /* Sidebar */
+  .nav-item {
+    @apply flex items-center gap-4 px-4 py-3 rounded-lg text-text-secondary font-medium transition-colors duration-200 hover:bg-background-primary hover:text-text-primary relative;
+  }
+  .nav-item.active {
+    @apply bg-accent-peach text-text-primary font-semibold;
+  }
+  .nav-item.active::before {
+    content: '';
+    @apply absolute left-0 h-6 w-1 bg-accent-green rounded-r-full;
+  }
+  .nav-icon {
+    @apply w-6 text-center text-lg transition-all;
+  }
+  .nav-section-title {
+    @apply text-xs uppercase text-text-secondary font-semibold tracking-wider px-4 transition-opacity duration-300;
+  }
+  .nav-text {
+    @apply font-medium whitespace-nowrap transition-opacity duration-150;
+  }
+  .collapse-btn {
+      @apply border-t border-border-color h-14 flex items-center justify-center text-text-secondary hover:bg-background-primary;
+  }
+
+  /* Dashboard */
+  .metric-card {
+    @apply bg-surface border border-border-color rounded-2xl p-4 shadow-sm transition hover:shadow-md flex flex-col justify-between;
+  }
+  .metric-header {
+    @apply flex items-center gap-3 mb-1;
+  }
+  .metric-icon {
+    @apply w-10 h-10 rounded-lg flex items-center justify-center text-white text-xl;
+  }
+  .metric-title {
+      @apply text-sm text-text-secondary;
+  }
+  .metric-value {
+      @apply text-3xl font-bold text-text-primary;
+  }
+  .metric-trend {
+      @apply text-xs flex items-center gap-1 mt-1;
+  }
+  .alert-item {
+      @apply flex items-center gap-3 p-2 rounded-lg;
+  }
+  .alert-icon {
+      @apply w-10 h-10 rounded-full flex items-center justify-center text-white;
+  }
+
+  /* Header */
+  .logo-icon {
+    @apply w-10 h-10 rounded-xl bg-gradient-to-br from-accent-green to-green-400 flex items-center justify-center;
+  }
+  .notification-btn {
+    @apply relative text-xl text-text-primary hover:bg-background-primary p-2 rounded-full transition-colors;
+  }
+  .notification-badge {
+    @apply absolute top-1 right-1 block h-2 w-2 rounded-full bg-alert-coral ring-2 ring-surface;
+  }
+  .user-menu {
+    @apply flex items-center gap-3;
+  }
+  .user-avatar {
+    @apply w-10 h-10 rounded-full bg-accent-green text-white flex items-center justify-center font-bold;
+  }
+
+  /* Sidebar */
+  .nav-item {
+    @apply flex items-center gap-4 px-4 py-3 rounded-lg text-text-secondary font-medium transition-colors duration-200 hover:bg-background-primary hover:text-text-primary relative;
+  }
+  .nav-item.active {
+    @apply bg-accent-peach text-text-primary font-semibold;
+  }
+  .nav-item.active::before {
+    content: '';
+    @apply absolute left-0 h-6 w-1 bg-accent-green rounded-r-full;
+  }
+  .nav-icon {
+    @apply w-6 text-center text-lg;
+  }
+  .nav-section-title {
+    @apply text-xs uppercase text-text-secondary font-semibold tracking-wider px-4 transition-opacity duration-300;
+  }
+  .nav-text {
+    @apply font-medium whitespace-nowrap transition-opacity duration-300;
+  }
+  .collapse-btn {
+    @apply border-t border-border-color h-14 flex items-center justify-center text-text-secondary hover:bg-background-primary;
+  }
+
+  /* Dashboard */
+  .metric-card {
+    @apply bg-surface border border-border-color rounded-2xl p-4 shadow-sm transition hover:shadow-md flex flex-col justify-between;
+  }
+  .metric-header {
+    @apply flex items-center gap-3 mb-1;
+  }
+  .metric-icon {
+    @apply w-10 h-10 rounded-lg flex items-center justify-center text-white text-xl;
+  }
+  .metric-title {
+    @apply text-sm text-text-secondary;
+  }
+  .metric-value {
+    @apply text-3xl font-bold text-text-primary;
+  }
+  .metric-trend {
+    @apply text-xs flex items-center gap-1 mt-1;
+  }
+  .alert-item {
+    @apply flex items-center gap-3 p-2 rounded-lg;
+  }
+  .alert-icon {
+    @apply w-10 h-10 rounded-full flex items-center justify-center text-white;
+  }
 }

@@ -73,4 +73,3 @@ class ModuleAdmin(admin.ModelAdmin):
 class GroupModulePermissionAdmin(admin.ModelAdmin):
     list_display = ('group', 'module')
     list_filter = ('group', 'module')
-    filter_horizontal = ('permissions',)

@@ -1,64 +1,42 @@
-from django.shortcuts import render, redirect, get_object_or_404
+# apps/exercises/views.py
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from .models import Exercise, ExerciseSession
-from .forms.exercises import ExerciseForm, ExerciseSessionForm
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import ListView
+from django.http import JsonResponse
+from apps.security.components.sidebar_menu_mixin import SidebarMenuMixin
+from .models import Exercise
 
-@login_required
-def exercise_list(request):
-    exercises = Exercise.objects.all()
-    context = {
-        'exercises': exercises,
-        'section': 'exercises'
-    }
-    return render(request, 'exercises/exercise_list.html', context)
-
-@login_required
-def exercise_detail(request, pk):
-    exercise = get_object_or_404(Exercise, pk=pk)
-    if request.method == 'POST':
-        form = ExerciseSessionForm(request.POST)
-        if form.is_valid():
-            session = form.save(commit=False)
-            session.user = request.user
-            session.exercise = exercise
-            session.save()
-            messages.success(request, '¡Ejercicio completado exitosamente!')
-            return redirect('exercises:exercise_list')
-    else:
-        form = ExerciseSessionForm(initial={'exercise': exercise})
+class ExerciseCatalogView(LoginRequiredMixin, SidebarMenuMixin, ListView):
+    """
+    Muestra la página con la lista de todos los ejercicios activos.
+    """
+    model = Exercise
+    template_name = 'exercises/catalog.html'
+    context_object_name = 'exercises'
     
-    context = {
-        'exercise': exercise,
-        'form': form,
-        'section': 'exercises'
-    }
-    return render(request, 'exercises/exercise_detail.html', context)
+    def get_queryset(self):
+        return Exercise.objects.filter(is_active=True)
+
 
 @login_required
-def start_exercise(request, pk):
-    exercise = get_object_or_404(Exercise, pk=pk)
-    context = {
-        'exercise': exercise,
-        'section': 'exercises'
-    }
-    return render(request, 'exercises/start_exercise.html', context)
+def exercise_data(request, pk):
+    """
+    Devuelve los datos de un ejercicio y sus pasos en formato JSON.
+    """
+    exercise = get_object_or_404(Exercise, pk=pk, is_active=True)
+    
+    steps_data = list(exercise.steps.values(
+        'step_order', 
+        'instruction', 
+        'icon_class', 
+        'duration_seconds'
+    ).order_by('step_order'))
 
-@login_required
-def exercise_history(request):
-    sessions = ExerciseSession.objects.filter(user=request.user).order_by('-created_at')
-    context = {
-        'sessions': sessions,
-        'section': 'exercises'
+    data = {
+        'id': exercise.id,
+        'title': exercise.title,
+        'total_duration': exercise.total_duration_seconds,
+        'steps': steps_data,
     }
-    return render(request, 'exercises/exercise_history.html', context)
-
-@login_required
-def recommended_exercises(request):
-    # Lógica para recomendar ejercicios basados en el monitoreo y fatiga visual
-    exercises = Exercise.objects.all()[:5]  # Placeholder: mostrar 5 ejercicios
-    context = {
-        'exercises': exercises,
-        'section': 'exercises'
-    }
-    return render(request, 'exercises/recommended_exercises.html', context)
+    return JsonResponse(data)

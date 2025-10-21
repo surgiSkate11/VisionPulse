@@ -1,44 +1,83 @@
-from django.conf import settings
+# apps/exercises/models.py
 from django.db import models
-from django.utils.text import slugify
-from django.utils import timezone
 from django.core.validators import MinValueValidator
-
-
-def exercise_video_upload_to(instance, filename):
-    return f"exercises/videos/{instance.slug}/{filename}"
-
+from django.conf import settings
+from django.utils import timezone
 
 class Exercise(models.Model):
     """
-    Catálogo de ejercicios oculares.
+    Representa un ejercicio ocular completo, que es una colección de pasos.
     """
-    EXERCISE_TYPES = [
-        ('parpadeo', 'Ejercicio de Parpadeo'),
-        ('enfoque', 'Ejercicio de Enfoque'),
-        ('movimiento', 'Ejercicio de Movimiento'),
-        ('relajacion', 'Ejercicio de Relajación'),
-    ]
-    DIFFICULTY = [
-        ('easy', 'Fácil'),
-        ('med', 'Media'),
-        ('hard', 'Difícil')
-    ]
-
     title = models.CharField('Título', max_length=200)
-    slug = models.SlugField(max_length=220, unique=True, blank=True)
-    description = models.TextField('Descripción', blank=True, default='')
-    type = models.CharField('Tipo', max_length=50, choices=EXERCISE_TYPES, default='movimiento')
-    duration_minutes = models.PositiveIntegerField('Duración (minutos)', default=1, 
-        help_text='Duración estimada del ejercicio en minutos')
-    difficulty = models.CharField('Dificultad', max_length=10, choices=DIFFICULTY, default='easy')
-    video = models.FileField('Video', upload_to=exercise_video_upload_to, null=True, blank=True)
-    video_link = models.URLField('Video URL', blank=True, null=True)
-    instruction_steps = models.TextField('Instrucciones', default='', 
-        help_text='Instrucciones paso a paso del ejercicio')
-    icon = models.ImageField('Icono', upload_to='exercises/icons/', null=True, blank=True)
-    active = models.BooleanField('Activo', default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    description = models.TextField('Descripción', help_text='Una descripción corta para la tarjeta del catálogo.')
+    icon_class = models.CharField('Clase del Icono (FontAwesome)', max_length=50, help_text='Ej: "fas fa-eye". El ícono para el catálogo.')
+    is_active = models.BooleanField('Está Activo', default=True, help_text='Desmarca esto para ocultar el ejercicio del catálogo.')
+
+    class Meta:
+        verbose_name = 'Ejercicio'
+        verbose_name_plural = 'Ejercicios'
+        ordering = ['title']
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def total_duration_seconds(self):
+        """Calcula la duración total del ejercicio sumando la duración de todos sus pasos."""
+        total = self.steps.aggregate(total=models.Sum('duration_seconds'))['total']
+        return total or 0
+
+    @property
+    def total_duration_minutes(self):
+        """Devuelve la duración total en minutos redondeados para mostrar en el catálogo."""
+        if self.total_duration_seconds == 0:
+            return 0
+        return max(1, round(self.total_duration_seconds / 60)) # Muestra al menos 1 minuto si hay pasos
+
+class ExerciseStep(models.Model):
+    """
+    Representa un paso individual dentro de un ejercicio, con su propia animación y duración.
+    """
+    exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE, related_name='steps', verbose_name='Ejercicio')
+    step_order = models.PositiveIntegerField('Orden del Paso', help_text='El orden en que este paso aparecerá (1, 2, 3...).')
+    instruction = models.CharField('Instrucción', max_length=255, help_text='La instrucción que el usuario debe seguir.')
+    icon_class = models.CharField('Clase del Icono de Animación (FontAwesome)', max_length=50, help_text='Ej: "fas fa-sync-alt fa-spin". El ícono que se mostrará durante este paso.')
+    duration_seconds = models.PositiveIntegerField('Duración del paso (segundos)', validators=[MinValueValidator(1)])
+
+    class Meta:
+        verbose_name = 'Paso del Ejercicio'
+        verbose_name_plural = 'Pasos del Ejercicio'
+        ordering = ['exercise', 'step_order']
+        unique_together = ('exercise', 'step_order') # Evita pasos duplicados para un mismo ejercicio
+
+    def __str__(self):
+        return f"{self.exercise.title} - Paso {self.step_order}"
+
+class ExerciseSession(models.Model):
+    """
+    Registra que un usuario ha completado (o iniciado) una sesión de ejercicio.
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='exercise_sessions')
+    exercise = models.ForeignKey(Exercise, on_delete=models.SET_NULL, null=True, related_name='sessions')
+    started_at = models.DateTimeField(default=timezone.now)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Sesión de Ejercicio'
+        verbose_name_plural = 'Sesiones de Ejercicio'
+        ordering = ['-started_at']
+
+    @property
+    def is_completed(self):
+        """Indica si la sesión se ha completado."""
+        return self.completed_at is not None
+
+    def __str__(self):
+        exercise_name = self.exercise.title if self.exercise else "Ejercicio eliminado"
+        return f"{self.user.username} - {exercise_name} @ {self.started_at:%Y-%m-%d %H:%M}"
+
+
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

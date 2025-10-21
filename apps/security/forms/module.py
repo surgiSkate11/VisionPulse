@@ -14,7 +14,6 @@ class ModuleForm(ModelForm):
             "icon",
             "order",
             "is_active",
-            "permissions",
         ]
         # Mensajes de error personalizados para campos únicos
         error_messages = {

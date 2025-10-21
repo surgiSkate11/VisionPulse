@@ -1,6 +1,6 @@
-{% load static tailwind_tags %}
+{% load static %}
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,60 +9,64 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
     {% block extra_css %}{% endblock %}
+
+    <script>
+        // Check for saved user preference, system preference, or default to light
+        const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
 </head>
-<body class="bg-background-primary text-text-primary font-sans">
+<body class="bg-background-primary text-text-primary font-sans dark:bg-dark-background-primary dark:text-dark-text-primary">
     <div class="flex min-h-screen">
         {% if user.is_authenticated %}
-        <header class="fixed top-0 left-0 right-0 h-[72px] bg-surface border-b border-border-color flex items-center justify-between px-6 z-40 shadow-sm">
+        <header class="fixed top-0 left-0 right-0 h-[72px] bg-surface dark:bg-dark-surface border-b border-border-color dark:border-dark-border-color flex items-center justify-between px-6 z-40 shadow-sm">
             <div class="flex items-center gap-4">
+                <button class="menu-toggle text-text-primary dark:text-dark-text-primary text-2xl lg:hidden" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <a href="{% url 'security:home' %}" class="flex items-center gap-3">
-                    <div class="logo-icon">
-                        <i class="fas fa-eye text-white"></i>
+                    <div class="logo-icon"><i class="fas fa-eye"></i>
                     </div>
                     <div>
-                        <div class="font-bold text-lg text-text-primary">VisionPulse</div>
-                        <div class="text-xs text-text-secondary">Cuidado visual inteligente</div>
+                        <div class="font-bold text-lg text-text-primary dark:text-dark-text-primary">VisionPulse</div>
+                        <div class="text-xs text-text-secondary dark:text-dark-text-secondary">Cuidado visual inteligente</div>
                     </div>
                 </a>
             </div>
             
             <div class="flex items-center gap-5">
-                <button class="notification-btn">
+                <button class="notification-btn dark:text-dark-text-primary dark:hover:bg-dark-background-primary">
                     <i class="fas fa-bell"></i>
-                    <span class="notification-badge"></span>
+                    <span class="notification-badge">3</span>
+                </button>
+                <button class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i>
                 </button>
                 <div class="user-menu">
                     <div class="hidden sm:block text-right">
-                        <div class="font-semibold text-sm text-text-primary">{{ user.get_full_name|default:user.username }}</div>
-                        <div class="text-xs text-text-secondary">{{ user.email }}</div>
+                        <div class="font-semibold text-sm text-text-primary dark:text-dark-text-primary">{{ user.get_full_name|default:user.username }}</div>
+                        <div class="text-xs text-text-secondary dark:text-dark-text-secondary">{{ user.email }}</div>
                     </div>
-                    <div class="user-avatar">
-                        {{ user.username|first|upper }}
-                    </div>
+                    <div class="user-avatar">{{ user.username|first|upper }}</div>
                 </div>
             </div>
         </header>
 
-        <aside id="sidebar" class="fixed top-[72px] left-0 h-[calc(100vh-72px)] bg-surface border-r border-border-color z-30 transition-all duration-300 w-72">
+        <aside id="sidebar" class="fixed top-[72px] left-0 h-[calc(100vh-72px)] bg-surface border-r border-border-color z-30 transition-all duration-300 w-72 dark:bg-dark-surface dark:border-dark-border-color">
             <nav class="flex flex-col h-full">
-                <div class="flex-1 p-4 space-y-2">
-                    <div class="nav-section-title">PRINCIPAL</div>
-                    <a href="{% url 'security:home' %}" class="nav-item {% if request.resolver_match.view_name == 'security:home' %}active{% endif %}">
-                        <i class="fas fa-tachometer-alt fa-fw"></i>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="#" class="nav-item {% if 'monitoring' in request.resolver_match.app_name %}active{% endif %}">
-                        <i class="fas fa-video fa-fw"></i>
-                        <span>Monitoreo</span>
-                    </a>
-                    <a href="{% url 'exercises:exercise_list' %}" class="nav-item {% if 'exercises' in request.resolver_match.app_name %}active{% endif %}">
-                        <i class="fas fa-dumbbell fa-fw"></i>
-                        <span>Ejercicios</span>
-                    </a>
-                    <a href="#" class="nav-item {% if 'reports' in request.resolver_match.app_name %}active{% endif %}">
-                        <i class="fas fa-chart-pie fa-fw"></i>
-                        <span>Reportes</span>
-                    </a>
+                <div class="flex-1 p-4 space-y-2 overflow-y-auto">
+                    {% for menu_item in sidebar_menu %}
+                        <div class="nav-section-title mt-4">{{ menu_item.name }}</div>
+                        
+                        {% for module in menu_item.modules %}
+                            <a href="{% url module.url %}" class="nav-item {% if request.resolver_match.view_name == module.url %}active{% endif %}">
+                                <i class="{{ module.icon }} fa-fw nav-icon"></i>
+                                <span class="nav-text">{{ module.name }}</span>
+                            </a>
+                        {% endfor %}
+                    {% endfor %}
                 </div>
                 <button id="collapseBtn" class="collapse-btn">
                     <i id="collapseIcon" class="fas fa-chevron-left transition-transform duration-300"></i>
@@ -80,40 +84,65 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Lógica para el Sidebar en móvil
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebar-overlay');
-        const openBtn = document.getElementById('sidebar-open-btn');
-        
-        if (openBtn) {
-            openBtn.addEventListener('click', () => {
-                sidebar.classList.remove('-translate-x-full');
-                sidebarOverlay.classList.remove('hidden');
-            });
+    document.addEventListener('DOMContentLoaded', function() {
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const htmlEl = document.documentElement;
+        const icon = themeToggle.querySelector('i');
 
-            sidebarOverlay.addEventListener('click', () => {
-                sidebar.classList.add('-translate-x-full');
-                sidebarOverlay.classList.add('hidden');
-            });
-        }
+        // Function to update the icon based on current theme
+        const updateThemeIcon = () => {
+            const isDark = htmlEl.classList.contains('dark');
+            icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+        };
 
-        // Lógica para el menú desplegable del usuario
-        const userMenuBtn = document.getElementById('user-menu-btn');
-        const userMenuDropdown = document.getElementById('user-menu-dropdown');
+        themeToggle.addEventListener('click', () => {
+            htmlEl.classList.toggle('dark');
+            const isDark = htmlEl.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeIcon();
+        });
 
-        if (userMenuBtn) {
-            userMenuBtn.addEventListener('click', () => {
-                userMenuDropdown.classList.toggle('hidden');
-            });
+        // Initial icon update
+        updateThemeIcon();
 
-            // Cerrar el menú si se hace clic fuera
-            document.addEventListener('click', (event) => {
-                if (!userMenuBtn.contains(event.target) && !userMenuDropdown.contains(event.target)) {
-                    userMenuDropdown.classList.add('hidden');
+    // Sidebar Collapse
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    const collapseBtn = document.getElementById('collapseBtn');
+    const collapseIcon = document.getElementById('collapseIcon');
+
+    if (collapseBtn) {
+        collapseBtn.addEventListener('click', () => {
+            const isCollapsed = sidebar.classList.contains('w-20');
+            if (isCollapsed) {
+                // Expandir
+                sidebar.classList.replace('w-20', 'w-72');
+                mainContent.classList.replace('ml-20', 'ml-72');
+                collapseIcon.classList.remove('rotate-180');
+                sidebar.querySelectorAll('.nav-text, .nav-section-title').forEach(el => {
+                    el.classList.remove('opacity-0', 'hidden');
+                    });
+                } else {
+                    // Colapsar
+                    sidebar.classList.replace('w-72', 'w-20');
+                    mainContent.classList.replace('ml-72', 'ml-20');
+                    collapseIcon.classList.add('rotate-180');
+                    sidebar.querySelectorAll('.nav-text, .nav-section-title').forEach(el => {
+                        el.classList.add('opacity-0', 'hidden');
+                    });
                 }
             });
         }
-    </script>
+    });
+</script>
+    <!-- Modal del Ejercicio -->
+    <div id="exercise-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div id="exercise-modal" class="bg-surface dark:bg-dark-surface max-w-xl w-full rounded-2xl p-8 shadow-2xl relative transform transition-all duration-300 scale-95 opacity-0">
+            <!-- El contenido del modal se generará dinámicamente con JavaScript -->
+        </div>
+    </div>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

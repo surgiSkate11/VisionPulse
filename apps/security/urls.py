@@ -7,7 +7,7 @@ from apps.security.views.usuarios import UserCreateView, UserDeleteView, UserLis
 from apps.security.views.grupo import GroupListView, GroupUpdateView, GroupCreateView, GroupDeleteView
 from apps.security.views.grupo_modulo_permisos import GroupModulePermissionListView, GroupModulePermissionCreateView, GroupModulePermissionUpdateView, GroupModulePermissionDeleteView, GroupModulePermissionAjaxView
 from apps.security.views.seguridad import SeguridadView
-from apps.security.views.home import ModuloTemplateView
+from apps.security.views.home import HomeView
 from apps.security.views.seguridad import landing_view, terms, privacy
 from apps.security.views.settings import settings_view
 from apps.security.views.set_group_session import SetGroupSessionView
@@ -17,8 +17,8 @@ app_name='security' # define un espacio de nombre para la aplicacion
 urlpatterns = [
 
     # Rutas principales de security
-    path('', landing_view, name='landing'),
-    path('home/', ModuloTemplateView.as_view(), name='home'),
+    path('', HomeView.as_view(), name='home'),
+    path('landing/', landing_view, name='landing'),
     path('security/', SeguridadView.as_view(), name='controller'),
     path('terminos/', terms, name='terms'),
     path('privacy/', privacy, name='privacy'),

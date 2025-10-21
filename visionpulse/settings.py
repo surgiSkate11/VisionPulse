@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     'apps.monitoring',
     'apps.exercises',
     'apps.reports',
-    'apps.frontend',  # Nueva ubicación de frontend
 
     # Terceros
     'tailwind',
@@ -73,6 +72,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -140,18 +140,20 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # Donde se recolectarán los estáticos en producción
-
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # Para collectstatic
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',  # Le dice a Django que busque en VisionPulse/static/
-    BASE_DIR / 'apps/frontend/static',  # Si tienes assets directamente en la app Django 'frontend'
+    BASE_DIR / 'static',  # Archivos estáticos del proyecto
 ]
 
-# Media files
+# Media files (User uploaded files)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Whitenoise: Para servir archivos estáticos en producción
+if not DEBUG:
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # Custom User Model
@@ -186,8 +188,7 @@ TEMPLATES[0]['OPTIONS']['context_processors'] += [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Tailwind CSS
-TAILWIND_APP_NAME = 'apps.frontend'  # Actualizado a la nueva ubicación
+# Tailwind CSS config moved to frontend/tailwind.config.js
 
 INTERNAL_IPS = [
     "127.0.0.1",
