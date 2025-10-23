@@ -4,7 +4,23 @@ from . import views
 app_name = 'monitoring'
 
 urlpatterns = [
-    # URLs para monitoreo - a implementar más tarde
-    # path('sessions/', views.session_list, name='session_list'),
-    # path('alerts/', views.alert_list, name='alert_list'),
+    # --- Vistas HTML ---
+    # La página principal de monitoreo en vivo
+    path('', views.LiveMonitoringView.as_view(), name='live_session'),
+    
+    # El historial de sesiones
+    path('history/', views.SessionListView.as_view(), name='session_list'),
+    
+    # El detalle de una sesión
+    path('history/<int:session_id>/', views.SessionDetailView.as_view(), name='session_detail'),
+    
+    # --- API Endpoints ---
+    path('api/start/', views.start_session, name='api_start'),
+    path('api/stop/', views.stop_session, name='api_stop'),
+    path('api/metrics/', views.session_metrics, name='api_session_metrics'),
+    path('api/pause/', views.pause_monitoring, name='api_pause'),
+    path('api/resume/', views.resume_monitoring, name='api_resume'),
+
+    # --- Stream de Video ---
+    path('video_feed/', views.video_feed, name='video_feed'),
 ]

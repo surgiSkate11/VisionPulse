@@ -68,11 +68,20 @@ class Module(models.Model):
 # MANAGER Y MODELO DE PERMISOS (CONSOLIDADOS)
 # =========================
 class GroupModulePermissionManager(models.Manager):
-    def get_active_for_group(self, group_id):
-        """ Obtiene los módulos activos para un grupo específico. """
-        return self.select_related('module', 'module__menu').filter(
+    def get_permissions_for_group(self, group_id):
+        """
+        Obtiene todos los permisos de módulos activos para un grupo,
+        incluyendo toda la información necesaria de módulos y menús.
+        """
+        return self.filter(
             group_id=group_id,
             module__is_active=True
+        ).select_related(
+            'module',
+            'module__menu'
+        ).order_by(
+            'module__menu__order',
+            'module__order'
         )
 
 class GroupModulePermission(models.Model):

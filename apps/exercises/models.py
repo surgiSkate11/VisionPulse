@@ -53,45 +53,7 @@ class ExerciseStep(models.Model):
     def __str__(self):
         return f"{self.exercise.title} - Paso {self.step_order}"
 
-class ExerciseSession(models.Model):
-    """
-    Registra que un usuario ha completado (o iniciado) una sesión de ejercicio.
-    """
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='exercise_sessions')
-    exercise = models.ForeignKey(Exercise, on_delete=models.SET_NULL, null=True, related_name='sessions')
-    started_at = models.DateTimeField(default=timezone.now)
-    completed_at = models.DateTimeField(null=True, blank=True)
 
-    class Meta:
-        verbose_name = 'Sesión de Ejercicio'
-        verbose_name_plural = 'Sesiones de Ejercicio'
-        ordering = ['-started_at']
-
-    @property
-    def is_completed(self):
-        """Indica si la sesión se ha completado."""
-        return self.completed_at is not None
-
-    def __str__(self):
-        exercise_name = self.exercise.title if self.exercise else "Ejercicio eliminado"
-        return f"{self.user.username} - {exercise_name} @ {self.started_at:%Y-%m-%d %H:%M}"
-
-
-
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['title']
-        verbose_name = 'Ejercicio'
-        verbose_name_plural = 'Ejercicios'
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.title)[:220]
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.title
 
 
 class ExerciseSession(models.Model):

@@ -9,6 +9,7 @@ class MenuModule:
         # Guarda el request y la ruta actual
         self._request = request
         self._path = self._request.path
+        self._current_time = datetime.now()
 
     def fill(self, data):
         """
@@ -19,46 +20,96 @@ class MenuModule:
         - Grupo seleccionado y menús asociados
         """
         data['user'] = self._request.user
-        data['date_time'] = datetime.now()
-        data['date_date'] = datetime.now().date()
+        data['date_time'] = self._current_time
+        data['date_date'] = self._current_time.date()
 
-        if self._request.user.is_authenticated:
-            # Siempre añade group_list, sin importar el método
-            data['group_list'] = self._request.user.groups.all().order_by('id')
+        if not self._request.user.is_authenticated:
+            return
 
-            # Si se recibe un cambio de grupo por POST (AJAX), actualizar la sesión
-            if self._request.method == 'POST' and self._request.POST.get('group_id'):
-                group_id = self._request.POST.get('group_id')
-                if data['group_list'].filter(id=group_id).exists():
-                    self._request.session['group_id'] = int(group_id)
+        # Obtener grupos del usuario una sola vez
+        user_groups = self._request.user.groups.all().order_by('id')
+        data['group_list'] = user_groups
 
-            # Si no hay grupo seleccionado en la sesión, selecciona el primero
-            if 'group_id' not in self._request.session:
-                if data['group_list'].exists():
-                    self._request.session['group_id'] = data['group_list'].first().id
+        # Si no hay grupos, no hay nada más que hacer
+        if not user_groups.exists():
+            return
 
-            # Si hay grupo seleccionado en la sesión
-            if self._request.session.get('group_id'):
-                # Permite cambiar de grupo si se recibe el parámetro 'gpid'
-                group_id = self._request.GET.get('gpid', None)
-                if group_id is not None:
-                    self._request.session['group_id'] = data['group_list'].get(id=group_id).id
+        # Determinar el grupo activo
+        active_group_id = self._get_active_group_id(user_groups)
+        if not active_group_id:
+            return
 
-                # Obtiene el grupo actual y la lista de menús asociados
-                group = Group.objects.get(id=self._request.session['group_id'])
-                data['group'] = group
-                data['menu_list'] = self.__get_menu_list(data["user"], group)
+        # Obtener el grupo y sus menús
+        try:
+            group = user_groups.get(id=active_group_id)
+            data['group'] = group
+            data['menu_list'] = self.__get_menu_list(data["user"], group)
+        except Group.DoesNotExist:
+            # Si el grupo no existe, limpiar la sesión
+            if 'group_id' in self._request.session:
+                del self._request.session['group_id']
+
+    def _get_active_group_id(self, user_groups):
+        """Determina el ID del grupo activo basado en varios factores."""
+        # 1. Intenta obtener del POST (cambio de grupo via AJAX)
+        if self._request.method == 'POST':
+            posted_group_id = self._request.POST.get('group_id')
+            if posted_group_id and user_groups.filter(id=posted_group_id).exists():
+                self._request.session['group_id'] = int(posted_group_id)
+                return int(posted_group_id)
+
+        # 2. Intenta obtener del GET (cambio de grupo via URL)
+        get_group_id = self._request.GET.get('gpid')
+        if get_group_id and user_groups.filter(id=get_group_id).exists():
+            self._request.session['group_id'] = int(get_group_id)
+            return int(get_group_id)
+
+        # 3. Intenta obtener de la sesión
+        session_group_id = self._request.session.get('group_id')
+        if session_group_id and user_groups.filter(id=session_group_id).exists():
+            return session_group_id
+
+        # 4. Si no hay grupo seleccionado, usa el primero
+        first_group = user_groups.first()
+        if first_group:
+            self._request.session['group_id'] = first_group.id
+            return first_group.id
+
+        return None
 
     def __get_menu_list(self, user: User, group: Group):
         """
         Obtiene la lista de menús únicos para el grupo dado,
         junto con los módulos (submenús) asociados a cada menú.
         """
-        # Lista de permisos activos de módulos para el grupo
-        group_module_permission_list = GroupModulePermission.objects.get_group_module_permission_active_list(group.id).order_by('module__order')
+        try:
+            # Obtenemos los permisos con toda la información necesaria
+            permissions = GroupModulePermission.objects.get_permissions_for_group(group.id)
+            
+            # Diccionario temporal para agrupar por menú
+            menu_dict = {}
+            
+            # Agrupamos los módulos por menú
+            for perm in permissions:
+                menu = perm.module.menu
+                if menu.id not in menu_dict:
+                    menu_dict[menu.id] = {
+                        'menu': menu,
+                        'group_module_permission_list': []
+                    }
+                menu_dict[menu.id]['group_module_permission_list'].append(perm)
 
-        # Obtiene menús únicos (evita repetidos)
-        menu_unicos = group_module_permission_list.order_by('module__menu_id').distinct('module__menu_id')
+            # Convertimos el diccionario a una lista ordenada por el orden del menú
+            menu_list = list(menu_dict.values())
+            menu_list.sort(key=lambda x: x['menu'].order)
+
+            return menu_list
+
+        except Exception as e:
+            import traceback
+            print(f"Error en __get_menu_list: {str(e)}")
+            print(traceback.format_exc())
+            return []
 
         # Construye la lista de menús con sus módulos
         menu_list = [

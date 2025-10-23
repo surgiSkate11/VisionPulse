@@ -29,14 +29,47 @@ class MonitorSession(models.Model):
         verbose_name = 'Sesión de Monitoreo'
         verbose_name_plural = 'Sesiones de Monitoreo'
 
+    def calculate_active_duration(self):
+        """Calcula la duración activa excluyendo las pausas"""
+        if not self.end_time:
+            return 0
+            
+        total_duration = (self.end_time - self.start_time).total_seconds()
+        paused_duration = sum(
+            (pause.resume_time - pause.pause_time).total_seconds()
+            for pause in self.pauses.all()
+            if pause.resume_time  # Solo contar pausas que fueron reanudadas
+        )
+        return int(total_duration - paused_duration)
+
     def save(self, *args, **kwargs):
         if self.start_time and self.end_time:
-            self.duration_seconds = int((self.end_time - self.start_time).total_seconds())
+            self.duration_seconds = self.calculate_active_duration()
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Session {self.user.username} [{self.start_time:%Y-%m-%d %H:%M}]"
 
+
+class SessionPause(models.Model):
+    """
+    Registra los intervalos de pausa durante una sesión de monitoreo.
+    """
+    session = models.ForeignKey(MonitorSession, on_delete=models.CASCADE, related_name='pauses')
+    pause_time = models.DateTimeField(default=timezone.now)
+    resume_time = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['session', 'pause_time']),
+        ]
+        ordering = ['pause_time']
+        verbose_name = 'Pausa de Sesión'
+        verbose_name_plural = 'Pausas de Sesión'
+
+    def __str__(self):
+        duration = "En curso" if not self.resume_time else f"{int((self.resume_time - self.pause_time).total_seconds())}s"
+        return f"Pausa en {self.pause_time:%H:%M:%S} [{duration}]"
 
 class BlinkEvent(models.Model):
     """
