@@ -1,0 +1,613 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Monitoreo en Vivo | VisionPulse{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center w-full p-4">
+    <div class="w-full max-w-xl">
+        <h1 class="text-3xl font-semibold text-primary dark:text-dark-primary mb-2 text-center md:text-left">Monitoreo en vivo</h1>
+        <p class="text-secondary dark:text-dark-secondary mb-6 text-center md:text-left">Rutinas guiadas para el cuidado de tu visión</p>
+
+        <div class="bg-surface dark:bg-dark-surface rounded-2xl shadow-lg dark:shadow-xl dark:shadow-black/20 p-6 md:p-8">
+            <h2 class="text-base font-medium text-primary dark:text-dark-primary mb-5">Captura en tiempo real</h2>
+
+            <div class="flex justify-between flex-wrap gap-2 mb-6">
+                <span class="bg-gray-700 text-white text-xs px-4 py-1.5 rounded-full">
+                    EAR: <span id="metric-ear" class="text-white font-medium">--</span>
+                </span>
+                <span class="bg-gray-700 text-white text-xs px-4 py-1.5 rounded-full">
+                    Enfoque: <span id="metric-focus" class="text-white font-medium">--</span>
+                </span>
+                <span class="bg-gray-700 text-white text-xs px-4 py-1.5 rounded-full">
+                    Parpadeos: <span id="metric-blinks" class="text-white font-medium">0</span>
+                </span>
+            </div>
+
+            <div id="video-container" class="bg-gray-100 dark:bg-dark-background-primary rounded-2xl flex flex-col items-center justify-center text-center py-12 border border-border-color dark:border-dark-border relative min-h-[300px] md:min-h-[350px] overflow-hidden">
+                <img id="video-feed" src="" class="absolute top-0 left-0 w-full h-full rounded-2xl object-cover hidden transition-opacity duration-300">
+                <div id="placeholder" class="flex flex-col items-center px-4">
+                    <div class="w-20 h-20 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center mb-5 relative border-4 border-gray-400 dark:border-gray-500">
+                        <i class="fas fa-video-slash text-3xl text-gray-500 dark:text-gray-400"></i>
+                    </div>
+                    <p class="text-primary dark:text-dark-primary font-medium text-sm mb-1">Cámara Desactivada</p>
+                    <p class="text-secondary dark:text-dark-secondary text-xs max-w-xs leading-relaxed">Activa la cámara para comenzar a monitorear.</p>
+                </div>
+            </div>
+
+            <div class="flex justify-center gap-4 mt-6">
+                 <div id="metric-face-status" class="bg-gray-700 text-white text-sm px-5 py-1.5 rounded-full transition-colors duration-300">Rostro: --</div>
+                 <div id="metric-eyes-status" class="bg-gray-700 text-white text-sm px-5 py-1.5 rounded-full transition-colors duration-300">Ojos: --</div>
+            </div>
+        </div>
+
+        <div class="flex gap-4 mt-5">
+            <button id="show-privacy-modal-button" class="flex-1 flex items-center justify-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-3 px-5 rounded-full shadow-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-play w-4 h-4"></i>
+                Iniciar
+            </button>
+            <button id="pause-button" disabled class="flex-1 flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-medium py-3 px-5 rounded-full transition-all duration-300 cursor-not-allowed">
+                <i class="fas fa-pause w-4 h-4"></i>
+                Pausar
+            </button>
+            <button id="stop-button" disabled class="flex-1 flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-medium py-3 px-5 rounded-full transition-all duration-300 cursor-not-allowed">
+                <i class="fas fa-stop w-4 h-4"></i>
+                Detener
+            </button>
+        </div>
+    </div>
+
+    <div id="privacy-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300 opacity-0">
+        <div id="privacy-modal" class="bg-surface dark:bg-dark-surface max-w-lg w-full rounded-2xl p-6 md:p-8 shadow-2xl relative transform transition-all duration-300 scale-95 opacity-0">
+            <button id="close-modal-button" class="absolute top-4 right-4 text-secondary dark:text-dark-secondary hover:text-primary dark:hover:text-dark-primary text-2xl leading-none">&times;</button>
+            <h1 class="text-xl font-semibold text-primary dark:text-dark-primary mb-1">Aviso de Privacidad</h1>
+            <p class="text-sm text-secondary dark:text-dark-secondary mb-4">Antes de comenzar, revisa estos puntos:</p>
+            <div class="bg-accent-peach/10 dark:bg-dark-accent-peach/5 border border-accent-peach/30 dark:border-dark-accent-peach/20 rounded-lg p-4 mb-5">
+                 <h2 class="text-base font-semibold text-primary dark:text-dark-primary mb-2">Tu Privacidad</h2>
+                 <ul class="list-disc list-inside space-y-1 text-xs text-secondary dark:text-dark-secondary">
+                     <li>La cámara solo se activa con tu consentimiento explícito al iniciar.</li>
+                     <li>No guardamos ni transmitimos video, solo métricas anónimas.</li>
+                     <li>El procesamiento ocurre localmente en tu dispositivo.</li>
+                     <li>Puedes detener el monitoreo en cualquier momento.</li>
+                 </ul>
+                 <div class="flex items-center gap-2 mt-3">
+                     <input type="checkbox" id="consent-checkbox" checked class="h-4 w-4 rounded border-gray-300 text-accent-green focus:ring-accent-green cursor-pointer">
+                     <label for="consent-checkbox" class="text-xs text-secondary dark:text-dark-secondary cursor-pointer select-none">Entiendo y acepto activar la cámara.</label>
+                 </div>
+            </div>
+            <div>
+                <h2 class="text-base font-semibold text-primary dark:text-dark-primary mb-3">Checklist</h2>
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 text-sm text-secondary dark:text-dark-secondary"><div class="w-5 h-5 bg-accent-green rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-check text-xs text-white"></i></div><span>Buena iluminación.</span></div>
+                    <div class="flex items-center gap-2 text-sm text-secondary dark:text-dark-secondary"><div class="w-5 h-5 bg-accent-green rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-check text-xs text-white"></i></div><span>Cámara funcionando.</span></div>
+                    <div class="flex items-center gap-2 text-sm text-secondary dark:text-dark-secondary"><div class="w-5 h-5 bg-accent-green rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-check text-xs text-white"></i></div><span>Posición cómoda.</span></div>
+                </div>
+            </div>
+            <button id="start-monitoring-button" disabled class="mt-6 w-full flex items-center justify-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-3 px-5 rounded-full shadow-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-check w-4 h-4"></i>
+                Confirmar e Iniciar
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Elementos del DOM ---
+        const showModalBtn = document.getElementById('show-privacy-modal-button');
+        const startBtn = document.getElementById('start-monitoring-button');
+        const pauseBtn = document.getElementById('pause-button');
+        const stopBtn = document.getElementById('stop-button');
+        const videoFeedEl = document.getElementById('video-feed');
+        const placeholderEl = document.getElementById('placeholder');
+        const modalOverlay = document.getElementById('privacy-modal-overlay');
+        const modal = document.getElementById('privacy-modal');
+        const closeModalBtn = document.getElementById('close-modal-button');
+        const consentCheckbox = document.getElementById('consent-checkbox');
+        
+        // Métricas UI
+        const metricEarEl = document.getElementById('metric-ear');
+        const metricFocusEl = document.getElementById('metric-focus');
+        const metricFaceEl = document.getElementById('metric-face-status');
+        const metricEyesEl = document.getElementById('metric-eyes-status');
+        const metricBlinksEl = document.getElementById('metric-blinks');
+
+        const csrfToken = '{{ csrf_token }}';
+        let metricsInterval = null;
+        let isMonitoringActive = false;
+        let isPaused = false;
+        let consecutiveErrors = 0;
+        const MAX_ERRORS = 5;
+        let sessionStarting = false;
+
+        // --- Función para verificar permisos de cámara ---
+        async function checkCameraPermissions() {
+            try {
+                console.log('[PERMISSIONS] Verificando permisos de cámara...');
+                
+                // Verificar si hay otras instancias usando la cámara
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                
+                if (videoDevices.length === 0) {
+                    throw new Error('No se encontró ninguna cámara conectada');
+                }
+                
+                console.log(`[PERMISSIONS] ${videoDevices.length} cámara(s) detectada(s)`);
+                
+                // Intentar obtener acceso a la cámara
+                let stream = null;
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: {
+                            width: { ideal: 640 },
+                            height: { ideal: 480 }
+                        }
+                    });
+                    
+                    console.log('[PERMISSIONS] Permisos de cámara concedidos');
+                    
+                    // Detener el stream inmediatamente
+                    stream.getTracks().forEach(track => {
+                        track.stop();
+                        console.log('[PERMISSIONS] Track detenido:', track.label);
+                    });
+                    
+                    // Esperar un momento para asegurar que el stream se liberó
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    return true;
+                    
+                } catch (streamError) {
+                    // Asegurar que cualquier stream parcial se detenga
+                    if (stream) {
+                        stream.getTracks().forEach(track => track.stop());
+                    }
+                    throw streamError;
+                }
+                
+            } catch (error) {
+                console.error('[PERMISSIONS] Error al verificar permisos:', error);
+                
+                let errorMessage = 'Error al acceder a la cámara:\n\n';
+                
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    errorMessage += '• Permisos denegados\n';
+                    errorMessage += '• Habilita los permisos de cámara en tu navegador\n';
+                    errorMessage += '• Recarga la página e intenta de nuevo';
+                } else if (error.name === 'NotFoundError' || error.message.includes('ninguna cámara')) {
+                    errorMessage += '• No se encontró ninguna cámara\n';
+                    errorMessage += '• Conecta una cámara y vuelve a intentar';
+                } else if (error.name === 'NotReadableError') {
+                    errorMessage += '• La cámara está en uso por otra aplicación\n';
+                    errorMessage += '• Cierra otras aplicaciones que puedan usar la cámara\n';
+                    errorMessage += '• Ejemplos: Zoom, Teams, Skype, Discord\n';
+                    errorMessage += '• También verifica otras pestañas del navegador';
+                } else if (error.name === 'OverconstrainedError') {
+                    errorMessage += '• La cámara no soporta la configuración solicitada\n';
+                    errorMessage += '• Intenta con una cámara diferente';
+                } else {
+                    errorMessage += '• ' + error.message;
+                }
+                
+                alert(errorMessage);
+                return false;
+            }
+        }
+
+        // --- Lógica del Modal ---
+        const showModal = () => { 
+            modalOverlay.classList.remove('hidden'); 
+            setTimeout(() => { 
+                modalOverlay.classList.remove('opacity-0'); 
+                modal.classList.remove('scale-95', 'opacity-0'); 
+                modal.classList.add('scale-100', 'opacity-100'); 
+            }, 10); 
+            updateModalStartButtonState(); 
+        };
+        
+        const hideModal = () => { 
+            modal.classList.remove('scale-100', 'opacity-100'); 
+            modal.classList.add('scale-95', 'opacity-0'); 
+            modalOverlay.classList.add('opacity-0'); 
+            setTimeout(() => modalOverlay.classList.add('hidden'), 300); 
+        };
+        
+        const updateModalStartButtonState = () => { 
+            startBtn.disabled = !consentCheckbox.checked; 
+        };
+
+        showModalBtn.addEventListener('click', showModal);
+        closeModalBtn.addEventListener('click', hideModal);
+        modalOverlay.addEventListener('click', (e) => { 
+            if (e.target === modalOverlay) hideModal(); 
+        });
+        consentCheckbox.addEventListener('change', updateModalStartButtonState);
+
+        // --- Estado Visual y Lógica Principal ---
+        function setMonitoringState(isActive, paused = false) {
+            const previousIsPaused = isPaused;
+            const wasPaused = previousIsPaused;
+            isMonitoringActive = isActive;
+            isPaused = paused;
+
+            // --- Actualizar Apariencia de Botones ---
+            showModalBtn.disabled = isActive;
+            showModalBtn.classList.toggle('bg-accent-green', !isActive);
+            showModalBtn.classList.toggle('hover:bg-green-700', !isActive);
+            showModalBtn.classList.toggle('text-white', !isActive);
+            showModalBtn.classList.toggle('bg-gray-300', isActive);
+            showModalBtn.classList.toggle('dark:bg-gray-700', isActive);
+            showModalBtn.classList.toggle('text-gray-500', isActive);
+            showModalBtn.classList.toggle('dark:text-gray-400', isActive);
+            showModalBtn.classList.toggle('cursor-not-allowed', isActive);
+
+            // --- BOTÓN PAUSAR/REANUDAR ---
+            pauseBtn.disabled = !isActive;
+            pauseBtn.classList.toggle('cursor-not-allowed', !isActive);
+            pauseBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-500', 'dark:text-gray-400', 'bg-yellow-500', 'hover:bg-yellow-600', 'bg-gray-300', 'hover:bg-gray-400', 'text-white', 'text-gray-600');
+            
+            if (!isActive) {
+                pauseBtn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-500', 'dark:text-gray-400');
+            } else if (isPaused) {
+                pauseBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600', 'text-white');
+            } else {
+                pauseBtn.classList.add('bg-gray-300', 'hover:bg-gray-400', 'text-gray-600');
+            }
+
+            // Actualizar icono y texto del botón
+            const currentPauseIconClass = isPaused ? 'fas fa-play w-4 h-4' : 'fas fa-pause w-4 h-4';
+            const currentPauseTextColor = isActive ? (isPaused ? 'text-white' : 'text-gray-600') : 'text-gray-500 dark:text-gray-400';
+            const pauseText = isPaused ? 'Reanudar' : 'Pausar';
+            pauseBtn.innerHTML = `<i class="${currentPauseIconClass} ${currentPauseTextColor}"></i> ${pauseText}`;
+
+            // --- BOTÓN DETENER ---
+            stopBtn.disabled = !isActive;
+            stopBtn.classList.toggle('cursor-not-allowed', !isActive);
+            stopBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-500', 'dark:text-gray-400', 'bg-alert-coral', 'hover:bg-red-700', 'text-white');
+            if (!isActive) {
+                stopBtn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-500', 'dark:text-gray-400');
+            } else {
+                stopBtn.classList.add('bg-alert-coral', 'hover:bg-red-700', 'text-white');
+            }
+
+            // --- FEED DE VIDEO Y PLACEHOLDER ---
+            videoFeedEl.classList.toggle('hidden', !isActive);
+            placeholderEl.classList.toggle('hidden', isActive);
+            videoFeedEl.style.opacity = (isActive && !isPaused) ? '1' : '0.5';
+
+            if (isActive) {
+                if (!isPaused) {
+                    if (!videoFeedEl.getAttribute('src') || wasPaused) {
+                        videoFeedEl.src = "{% url 'monitoring:video_feed' %}?t=" + Date.now();
+                    }
+                } else {
+                    if (videoFeedEl.getAttribute('src')) {
+                        videoFeedEl.removeAttribute('src');
+                    }
+                }
+            } else {
+                if (videoFeedEl.getAttribute('src')) {
+                    videoFeedEl.removeAttribute('src');
+                }
+            }
+
+            // --- POLLING DE MÉTRICAS ---
+            if (isActive) {
+                if (!isPaused) {
+                    startMetricsPoller();
+                } else {
+                    stopMetricsPoller();
+                }
+            } else {
+                stopMetricsPoller();
+                resetMetrics();
+            }
+            
+            pauseBtn.setAttribute('aria-label', isPaused ? 'Reanudar monitoreo' : 'Pausar monitoreo');
+            stopBtn.setAttribute('aria-label', 'Detener monitoreo');
+            
+            window.previousState = { isActive: isMonitoringActive, isPaused: isPaused };
+        }
+        
+        window.previousState = { isActive: false, isPaused: false };
+
+        // --- Event Listeners ---
+        startBtn.addEventListener('click', async () => {
+            if (sessionStarting) {
+                console.log('[START] Ya hay una sesión iniciándose...');
+                return;
+            }
+            
+            if (!consentCheckbox.checked) {
+                alert('Debes aceptar los términos para continuar');
+                return;
+            }
+            
+            sessionStarting = true;
+            const originalBtnContent = startBtn.innerHTML;
+            
+            try {
+                startBtn.disabled = true;
+                startBtn.innerHTML = '<i class="fas fa-spinner fa-spin w-4 h-4"></i> Verificando cámara...';
+                
+                console.log('[START] Verificando permisos de cámara...');
+                
+                // *** CAMBIO CRÍTICO: Verificar la cámara PRIMERO ***
+                const hasPermissions = await checkCameraPermissions();
+                
+                if (!hasPermissions) {
+                    // No continuar si la verificación falló
+                    console.log('[START] Verificación de cámara falló, abortando inicio');
+                    return;  // Salir inmediatamente sin iniciar sesión
+                }
+                
+                // Solo después de verificar la cámara, iniciar la sesión en el servidor
+                startBtn.innerHTML = '<i class="fas fa-spinner fa-spin w-4 h-4"></i> Iniciando sesión...';
+                
+                console.log('[START] Iniciando sesión en el servidor...');
+                const response = await fetch("{% url 'monitoring:api_start' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                console.log('[START] Respuesta del servidor:', data);
+                
+                if (!response.ok || data.status === 'error') {
+                    throw new Error(data.message || 'Error al iniciar sesión');
+                }
+                
+                if (!data.session_id) {
+                    throw new Error('No se recibió ID de sesión válido');
+                }
+                
+                console.log('[START] Sesión iniciada exitosamente, ID:', data.session_id);
+                
+                hideModal();
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                videoFeedEl.onerror = () => {
+                    console.error('[VIDEO] Error al cargar el stream');
+                    alert('Error al conectar con el stream de video. La cámara puede no estar disponible.');
+                    // Detener la sesión en el servidor también
+                    fetch("{% url 'monitoring:api_stop' %}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'Content-Type': 'application/json'
+                        }
+                    }).catch(err => console.error('[VIDEO] Error al detener sesión:', err));
+                    setMonitoringState(false, false);
+                    sessionStarting = false;
+                };
+                
+                videoFeedEl.onloadstart = () => {
+                    console.log('[VIDEO] Iniciando carga del stream...');
+                };
+                
+                videoFeedEl.onloadeddata = () => {
+                    console.log('[VIDEO] Stream cargado correctamente');
+                };
+                
+                setMonitoringState(true, false);
+                console.log('[START] Monitoreo iniciado correctamente');
+                
+            } catch (error) {
+                console.error('[START] Error durante el inicio:', error);
+                
+                let errorMessage = 'Error al iniciar el monitoreo:\n\n';
+                
+                if (error.message.includes('No hay acceso')) {
+                    errorMessage += '• No se pudo acceder a la cámara\n';
+                    errorMessage += '• Verifica los permisos en tu navegador\n';
+                } else if (error.message.includes('no está disponible') || error.message.includes('cámara está en uso')) {
+                    errorMessage += '• La cámara no está disponible\n';
+                    errorMessage += '• Asegúrate de que esté conectada\n';
+                    errorMessage += '• Verifica que no esté en uso por otro programa\n';
+                    errorMessage += '• Cierra otras pestañas que puedan usar la cámara\n';
+                } else if (error.message.includes('sesión activa')) {
+                    errorMessage += '• Ya hay una sesión activa\n';
+                    errorMessage += '• Recarga la página e intenta de nuevo\n';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                alert(errorMessage);
+                setMonitoringState(false, false);
+                
+                // *** NUEVO: Si hay error, intentar detener cualquier sesión que se haya creado ***
+                try {
+                    await fetch("{% url 'monitoring:api_stop' %}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                } catch (stopError) {
+                    console.error('[START] Error al limpiar sesión fallida:', stopError);
+                }
+                
+            } finally {
+                sessionStarting = false;
+                startBtn.disabled = false;
+                startBtn.innerHTML = '<i class="fas fa-check w-4 h-4"></i> Confirmar e Iniciar';
+            }
+        });
+
+        pauseBtn.addEventListener('click', async () => {
+            if (!isMonitoringActive || pauseBtn.disabled) return;
+            
+            pauseBtn.disabled = true;
+            stopBtn.disabled = true;
+            
+            const nextPauseState = !isPaused;
+            const apiUrl = nextPauseState ? "{% url 'monitoring:api_pause' %}" : "{% url 'monitoring:api_resume' %}";
+            const actionText = nextPauseState ? "Pausando" : "Reanudando";
+            
+            try {
+                console.log(`[PAUSE] ${actionText} monitoreo...`);
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok || data.status === 'error') {
+                    throw new Error(data.message || `Error al ${actionText.toLowerCase()}`);
+                }
+                
+                console.log(`[PAUSE] ${actionText} exitoso`);
+                setMonitoringState(true, nextPauseState);
+                
+                if (data.blink_count !== undefined) {
+                    metricBlinksEl.textContent = data.blink_count;
+                }
+                
+            } catch (error) {
+                console.error(`[PAUSE] Error al ${actionText.toLowerCase()}:`, error);
+                alert(`Error al ${actionText.toLowerCase()}: ${error.message}`);
+                setMonitoringState(true, isPaused);
+            } finally {
+                pauseBtn.disabled = false;
+                stopBtn.disabled = false;
+            }
+        });
+
+        stopBtn.addEventListener('click', async () => {
+            if (!isMonitoringActive) return;
+            
+            try {
+                console.log('[STOP] Deteniendo monitoreo...');
+                setMonitoringState(false, false);
+                
+                const response = await fetch("{% url 'monitoring:api_stop' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                console.log('[STOP] Sesión detenida:', data);
+                
+            } catch (error) {
+                console.error('[STOP] Error al detener:', error);
+                alert(`Error al detener: ${error.message}`);
+            }
+        });
+
+        // --- Métricas Polling ---
+        function startMetricsPoller() {
+            if (metricsInterval) return;
+            consecutiveErrors = 0;
+            
+            metricsInterval = setInterval(async function() {
+                if (!isMonitoringActive || isPaused) { 
+                    stopMetricsPoller(); 
+                    return; 
+                }
+                
+                try {
+                    const response = await fetch("{% url 'monitoring:api_session_metrics' %}");
+                    
+                    if (response.ok) {
+                        consecutiveErrors = 0;
+                        const data = await response.json();
+                        
+                        if (isMonitoringActive && !isPaused) {
+                            updateMetricsUI(data);
+                        }
+                    } else {
+                        consecutiveErrors++;
+                        if (consecutiveErrors >= MAX_ERRORS) {
+                            throw new Error(`Polling falló ${MAX_ERRORS} veces.`);
+                        }
+                    }
+                } catch (error) {
+                    console.error('[METRICS] Error fatal en polling:', error);
+                    alert('Se perdió la conexión con el servidor. Deteniendo monitoreo.');
+                    setMonitoringState(false, false);
+                }
+            }, 1000);
+        }
+
+        function stopMetricsPoller() {
+            if (metricsInterval) { 
+                clearInterval(metricsInterval); 
+                metricsInterval = null; 
+            }
+        }
+
+        function updateMetricsUI(data) {
+            if (!data || !data.metrics) return;
+            
+            try {
+                const metrics = data.metrics;
+                const earValue = metrics.avg_ear !== undefined ? parseFloat(metrics.avg_ear).toFixed(2) : '--';
+                const faceDetected = metrics.faces !== undefined && metrics.faces > 0;
+                const focusText = metrics.focus || (faceDetected ? 'Atento' : 'No Detectado');
+                const eyesDetected = metrics.eyes_detected || false;
+                const blinkCount = metrics.total_blinks !== undefined ? metrics.total_blinks : 
+                                 (metrics.blink_count !== undefined ? metrics.blink_count : 0);
+
+                if (metricEarEl) metricEarEl.textContent = earValue;
+                if (metricFocusEl) metricFocusEl.textContent = focusText;
+                if (metricBlinksEl) metricBlinksEl.textContent = blinkCount;
+                
+                if (metricFaceEl) {
+                    metricFaceEl.textContent = `Rostro: ${faceDetected ? 'Detectado' : 'No detectado'}`;
+                    metricFaceEl.classList.toggle('bg-gray-700', !faceDetected);
+                    metricFaceEl.classList.toggle('bg-accent-green', faceDetected);
+                }
+                
+                if (metricEyesEl) {
+                    metricEyesEl.textContent = `Ojos: ${eyesDetected ? 'Detectados' : 'No detectados'}`;
+                    metricEyesEl.classList.toggle('bg-gray-700', !eyesDetected);
+                    metricEyesEl.classList.toggle('bg-accent-green', eyesDetected);
+                }
+            } catch (e) {
+                console.error("[METRICS] Error en updateMetricsUI:", e);
+            }
+        }
+
+        function resetMetrics() {
+            try {
+                if (metricEarEl) metricEarEl.textContent = '--';
+                if (metricFocusEl) metricFocusEl.textContent = '--';
+                if (metricBlinksEl) metricBlinksEl.textContent = '0';
+                
+                if (metricFaceEl) {
+                    metricFaceEl.textContent = 'Rostro: --';
+                    metricFaceEl.classList.add('bg-gray-700');
+                    metricFaceEl.classList.remove('bg-accent-green');
+                }
+                
+                if (metricEyesEl) {
+                    metricEyesEl.textContent = 'Ojos: --';
+                    metricEyesEl.classList.add('bg-gray-700');
+                    metricEyesEl.classList.remove('bg-accent-green');
+                }
+            } catch (e) {
+                console.error("[METRICS] Error al resetear métricas:", e);
+            }
+        }
+
+        // --- Inicialización ---
+        setMonitoringState(false, false);
+        console.log('[INIT] Sistema de monitoreo inicializado');
+    });
+</script>
+{% endblock %}
