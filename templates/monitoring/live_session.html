@@ -14,13 +14,13 @@
 
             <div class="flex justify-between flex-wrap gap-2 mb-6">
                 <span class="bg-gray-700 text-white text-xs px-4 py-1.5 rounded-full">
-                    EAR: <span id="metric-ear" class="text-white font-medium">--</span>
+                    Parpadeos: <span id="metric-blinks" class="text-white font-medium">0</span>
                 </span>
                 <span class="bg-gray-700 text-white text-xs px-4 py-1.5 rounded-full">
                     Enfoque: <span id="metric-focus" class="text-white font-medium">--</span>
                 </span>
                 <span class="bg-gray-700 text-white text-xs px-4 py-1.5 rounded-full">
-                    Parpadeos: <span id="metric-blinks" class="text-white font-medium">0</span>
+                    Bostezos: <span id="metric-yawns" class="text-white font-medium">0</span>
                 </span>
             </div>
 
@@ -33,6 +33,12 @@
                     <p class="text-primary dark:text-dark-primary font-medium text-sm mb-1">Cámara Desactivada</p>
                     <p class="text-secondary dark:text-dark-secondary text-xs max-w-xs leading-relaxed">Activa la cámara para comenzar a monitorear.</p>
                 </div>
+            </div>
+
+            <!-- Pomodoro timer (solo visible en estados BREAK_REMINDER y ON_BREAK) -->
+            <div id="pomodoro-timer" class="hidden mt-4 items-center justify-center gap-3">
+                <img id="pomodoro-icon" src="" alt="Pomodoro icon" class="w-8 h-8">
+                <span id="pomodoro-time" class="text-lg font-semibold text-primary dark:text-dark-primary">--:--</span>
             </div>
 
             <div class="flex justify-center gap-4 mt-6">
@@ -102,13 +108,16 @@
         const stopBtn = document.getElementById('stop-button');
         const videoFeedEl = document.getElementById('video-feed');
         const placeholderEl = document.getElementById('placeholder');
+        const pomodoroDiv = document.getElementById('pomodoro-timer');
+        const pomodoroIcon = document.getElementById('pomodoro-icon');
+        const pomodoroTime = document.getElementById('pomodoro-time');
         const modalOverlay = document.getElementById('privacy-modal-overlay');
         const modal = document.getElementById('privacy-modal');
         const closeModalBtn = document.getElementById('close-modal-button');
         const consentCheckbox = document.getElementById('consent-checkbox');
         
         // Métricas UI
-        const metricEarEl = document.getElementById('metric-ear');
+        const metricYawnsEl = document.getElementById('metric-yawns');
         const metricFocusEl = document.getElementById('metric-focus');
         const metricFaceEl = document.getElementById('metric-face-status');
         const metricEyesEl = document.getElementById('metric-eyes-status');
@@ -121,6 +130,18 @@
         let consecutiveErrors = 0;
         const MAX_ERRORS = 5;
         let sessionStarting = false;
+
+        // --- Configuración Pomodoro ---
+        const config = {
+            workIntervalMinutes: Number('{{ request.user.work_interval_minutes|default:"25" }}'),
+            breakDurationMinutes: Number('{{ request.user.break_duration_minutes|default:"5" }}')
+        };
+
+        // --- State Machine ---
+        // STOPPED, RUNNING, PAUSED, BREAK_REMINDER, ON_BREAK
+        let currentAppState = 'STOPPED';
+        let pomodoroWorkTimer = null;           // setTimeout para trabajo
+        let pomodoroBreakTimerInterval = null;  // setInterval para descanso
 
         // --- Función para verificar permisos de cámara ---
         async function checkCameraPermissions() {
@@ -219,7 +240,14 @@
             startBtn.disabled = !consentCheckbox.checked; 
         };
 
-        showModalBtn.addEventListener('click', showModal);
+        showModalBtn.addEventListener('click', (e) => {
+            if (currentAppState === 'BREAK_REMINDER') {
+                e.preventDefault();
+                startBreak();
+                return;
+            }
+            showModal();
+        });
         closeModalBtn.addEventListener('click', hideModal);
         modalOverlay.addEventListener('click', (e) => { 
             if (e.target === modalOverlay) hideModal(); 
@@ -276,20 +304,21 @@
             // --- FEED DE VIDEO Y PLACEHOLDER ---
             videoFeedEl.classList.toggle('hidden', !isActive);
             placeholderEl.classList.toggle('hidden', isActive);
-            videoFeedEl.style.opacity = (isActive && !isPaused) ? '1' : '0.5';
+            
+            // 🔥 CORREGIDO: No cambiar opacidad cuando está pausado - el backend envía la imagen de pausa
+            videoFeedEl.style.opacity = isActive ? '1' : '0';
 
             if (isActive) {
-                if (!isPaused) {
-                    if (!videoFeedEl.getAttribute('src') || wasPaused) {
-                        videoFeedEl.src = "{% url 'monitoring:video_feed' %}?t=" + Date.now();
-                    }
-                } else {
-                    if (videoFeedEl.getAttribute('src')) {
-                        videoFeedEl.removeAttribute('src');
-                    }
+                // Mantener el stream activo SIEMPRE que la sesión esté activa (pausada o no)
+                // El backend se encarga de enviar la imagen de pausa cuando is_paused=True
+                if (!videoFeedEl.getAttribute('src') || wasPaused) {
+                    console.log('[VIDEO] Iniciando/reiniciando stream de video');
+                    videoFeedEl.src = "{% url 'monitoring:video_feed' %}?t=" + Date.now();
                 }
             } else {
+                // Solo remover src cuando la sesión se detiene completamente
                 if (videoFeedEl.getAttribute('src')) {
+                    console.log('[VIDEO] Deteniendo stream de video');
                     videoFeedEl.removeAttribute('src');
                 }
             }
@@ -311,11 +340,156 @@
             
             window.previousState = { isActive: isMonitoringActive, isPaused: isPaused };
         }
+        // --- Gestor de Estados (UI) ---
+        function updateUI(newState) {
+            currentAppState = newState;
+            // Visibilidad base del timer oculto por defecto
+            pomodoroDiv.classList.add('hidden');
+            pomodoroDiv.classList.remove('flex');
+
+            switch (newState) {
+                case 'STOPPED':
+                    // Mostrar solo botón Iniciar (a través del modal existente)
+                    setMonitoringState(false, false);
+                    // Reset timers
+                    clearTimeout(pomodoroWorkTimer);
+                    clearInterval(pomodoroBreakTimerInterval);
+                    pomodoroTime.textContent = '--:--';
+                    break;
+
+                case 'RUNNING':
+                    setMonitoringState(true, false);
+                    // Botón Pausar ya configurado por setMonitoringState
+                    // Iniciar/reiniciar temporizador de trabajo
+                    startPomodoroWorkTimer();
+                    break;
+
+                case 'PAUSED':
+                    setMonitoringState(true, true);
+                    clearTimeout(pomodoroWorkTimer); // pausar timer de trabajo
+                    break;
+
+                case 'BREAK_REMINDER':
+                    // La sesión sigue activa y no pausada
+                    setMonitoringState(true, false);
+                    // Reutilizamos botones existentes: pause -> Posponer, modal/start -> Iniciar Descanso
+                    // Configurar botón Posponer (usa el botón de Pausar)
+                    pauseBtn.disabled = false;
+                    pauseBtn.className = 'flex-1 flex items-center justify-center gap-2 bg-gray-300 hover:bg-gray-400 text-gray-600 font-medium py-3 px-5 rounded-full transition-all duration-300';
+                    pauseBtn.innerHTML = '<i class="fas fa-forward w-4 h-4"></i> Posponer';
+
+                    // Configurar el botón Iniciar (abría modal). Aquí lo usamos para iniciar descanso con confirmación rápida
+                    showModalBtn.disabled = false;
+                    showModalBtn.className = 'flex-1 flex items-center justify-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-3 px-5 rounded-full shadow-sm transition-all duration-300';
+                    showModalBtn.innerHTML = '<i class="fas fa-play w-4 h-4"></i> Iniciar Descanso';
+
+                    // Mostrar mini reloj con icono de descanso
+                    pomodoroDiv.classList.remove('hidden');
+                    pomodoroDiv.classList.add('flex');
+                    pomodoroIcon.src = '{% static "img/iconos/descanso.png" %}';
+                    pomodoroTime.textContent = `${config.breakDurationMinutes}:00`;
+                    break;
+
+                case 'ON_BREAK':
+                    // La sesión está formalmente pausada
+                    setMonitoringState(true, true);
+
+                    // Pausar botón cambia a Reanudar (ya lo hace setMonitoringState), aseguramos estilos
+                    pauseBtn.disabled = false;
+                    pauseBtn.className = 'flex-1 flex items-center justify-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-3 px-5 rounded-full transition-all duration-300';
+                    pauseBtn.innerHTML = '<i class="fas fa-play w-4 h-4"></i> Reanudar';
+                    pauseBtn.onclick = resumeSession;
+
+                    // Mostrar timer con icono de pausa
+                    pomodoroDiv.classList.remove('hidden');
+                    pomodoroDiv.classList.add('flex');
+                    pomodoroIcon.src = '{% static "img/iconos/pausa.png" %}';
+                    startBreakTimerVisuals();
+                    break;
+            }
+        }
+
+        // --- Lógica Pomodoro ---
+        function startPomodoroWorkTimer() {
+            clearTimeout(pomodoroWorkTimer);
+            // Evitar múltiples temporizadores si se llama varias veces
+            if (currentAppState !== 'RUNNING') return;
+            pomodoroWorkTimer = setTimeout(() => {
+                if (currentAppState === 'RUNNING') {
+                    updateUI('BREAK_REMINDER');
+                }
+            }, config.workIntervalMinutes * 60 * 1000);
+        }
+
+        async function startBreak() {
+            try {
+                // Pausar formalmente el monitoreo (si no está pausado)
+                if (!isPaused) {
+                    const resp = await fetch("{% url 'monitoring:api_pause' %}", {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok || data.status === 'error') throw new Error(data.message || 'Error al pausar');
+                }
+                // Registrar descanso tomado
+                await fetch("{% url 'monitoring:api_break_taken' %}", {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+                });
+
+                clearTimeout(pomodoroWorkTimer);
+                updateUI('ON_BREAK');
+            } catch (e) {
+                console.error('[BREAK] Error al iniciar descanso:', e);
+                alert('No se pudo iniciar el descanso: ' + e.message);
+            }
+        }
+
+        async function snoozeBreak() {
+            try {
+                // Posponer por 5 minutos (configurable)
+                const minutes = 5;
+                const resp = await fetch("{% url 'monitoring:api_snooze_break' %}", {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ minutes })
+                });
+                const data = await resp.json();
+                if (!resp.ok || data.status === 'error') throw new Error(data.message || 'Error al posponer');
+                updateUI('RUNNING');
+            } catch (e) {
+                console.error('[BREAK] Error al posponer:', e);
+                alert('No se pudo posponer el descanso: ' + e.message);
+            }
+        }
+
+        function startBreakTimerVisuals() {
+            clearInterval(pomodoroBreakTimerInterval);
+            let duration = config.breakDurationMinutes * 60; // segundos
+
+            const updateTimer = () => {
+                let minutes = parseInt(duration / 60, 10);
+                let seconds = parseInt(duration % 60, 10);
+                minutes = minutes < 10 ? '0' + minutes : minutes;
+                seconds = seconds < 10 ? '0' + seconds : seconds;
+                pomodoroTime.textContent = `${minutes}:${seconds}`;
+                if (duration <= 0) {
+                    clearInterval(pomodoroBreakTimerInterval);
+                    pomodoroTime.textContent = '¡Listo!';
+                    return;
+                }
+                duration--;
+            };
+
+            updateTimer();
+            pomodoroBreakTimerInterval = setInterval(updateTimer, 1000);
+        }
         
         window.previousState = { isActive: false, isPaused: false };
 
         // --- Event Listeners ---
-        startBtn.addEventListener('click', async () => {
+    startBtn.addEventListener('click', async () => {
             if (sessionStarting) {
                 console.log('[START] Ya hay una sesión iniciándose...');
                 return;
@@ -383,7 +557,7 @@
                             'Content-Type': 'application/json'
                         }
                     }).catch(err => console.error('[VIDEO] Error al detener sesión:', err));
-                    setMonitoringState(false, false);
+                    updateUI('STOPPED');
                     sessionStarting = false;
                 };
                 
@@ -395,7 +569,8 @@
                     console.log('[VIDEO] Stream cargado correctamente');
                 };
                 
-                setMonitoringState(true, false);
+                // Estado se manejará solo vía updateUI
+                updateUI('RUNNING');
                 console.log('[START] Monitoreo iniciado correctamente');
                 
             } catch (error) {
@@ -419,7 +594,7 @@
                 }
                 
                 alert(errorMessage);
-                setMonitoringState(false, false);
+                updateUI('STOPPED');
                 
                 // *** NUEVO: Si hay error, intentar detener cualquier sesión que se haya creado ***
                 try {
@@ -443,6 +618,12 @@
 
         pauseBtn.addEventListener('click', async () => {
             if (!isMonitoringActive || pauseBtn.disabled) return;
+
+            // En estado de recordatorio de descanso, este botón actúa como 'Posponer'
+            if (currentAppState === 'BREAK_REMINDER') {
+                await snoozeBreak();
+                return;
+            }
             
             pauseBtn.disabled = true;
             stopBtn.disabled = true;
@@ -469,7 +650,8 @@
                 }
                 
                 console.log(`[PAUSE] ${actionText} exitoso`);
-                setMonitoringState(true, nextPauseState);
+                // Estado se manejará solo vía updateUI
+                updateUI(nextPauseState ? 'PAUSED' : 'RUNNING');
                 
                 if (data.blink_count !== undefined) {
                     metricBlinksEl.textContent = data.blink_count;
@@ -478,19 +660,20 @@
             } catch (error) {
                 console.error(`[PAUSE] Error al ${actionText.toLowerCase()}:`, error);
                 alert(`Error al ${actionText.toLowerCase()}: ${error.message}`);
-                setMonitoringState(true, isPaused);
+                updateUI(isPaused ? 'PAUSED' : 'RUNNING');
             } finally {
                 pauseBtn.disabled = false;
                 stopBtn.disabled = false;
             }
         });
 
-        stopBtn.addEventListener('click', async () => {
+    stopBtn.addEventListener('click', async () => {
             if (!isMonitoringActive) return;
             
             try {
                 console.log('[STOP] Deteniendo monitoreo...');
-                setMonitoringState(false, false);
+    // Estado se manejará solo vía updateUI
+    updateUI('STOPPED');
                 
                 const response = await fetch("{% url 'monitoring:api_stop' %}", {
                     method: 'POST',
@@ -539,7 +722,7 @@
                 } catch (error) {
                     console.error('[METRICS] Error fatal en polling:', error);
                     alert('Se perdió la conexión con el servidor. Deteniendo monitoreo.');
-                    setMonitoringState(false, false);
+                    updateUI('STOPPED');
                 }
             }, 1000);
         }
@@ -556,14 +739,29 @@
             
             try {
                 const metrics = data.metrics;
-                const earValue = metrics.avg_ear !== undefined ? parseFloat(metrics.avg_ear).toFixed(2) : '--';
+                const yawnCount = metrics.total_yawns !== undefined ? metrics.total_yawns : (metrics.yawn_count !== undefined ? metrics.yawn_count : 0);
                 const faceDetected = metrics.faces !== undefined && metrics.faces > 0;
                 const focusText = metrics.focus || (faceDetected ? 'Atento' : 'No Detectado');
                 const eyesDetected = metrics.eyes_detected || false;
                 const blinkCount = metrics.total_blinks !== undefined ? metrics.total_blinks : 
                                  (metrics.blink_count !== undefined ? metrics.blink_count : 0);
 
-                if (metricEarEl) metricEarEl.textContent = earValue;
+                // 🔎 DEBUG: Verificar datos crudos recibidos desde backend
+                try {
+                    console.debug('[METRICS]', {
+                        yawns: yawnCount,
+                        focus: focusText,
+                        blinks: blinkCount,
+                        face: faceDetected,
+                        eyes: eyesDetected,
+                        raw_yawn_count: metrics.yawn_count,
+                        raw_total_yawns: metrics.total_yawns,
+                        fps: metrics.fps,
+                        detection_rate: metrics.detection_rate
+                    });
+                } catch (e) { /* no-op */ }
+
+                if (metricYawnsEl) metricYawnsEl.textContent = yawnCount;
                 if (metricFocusEl) metricFocusEl.textContent = focusText;
                 if (metricBlinksEl) metricBlinksEl.textContent = blinkCount;
                 
@@ -585,7 +783,7 @@
 
         function resetMetrics() {
             try {
-                if (metricEarEl) metricEarEl.textContent = '--';
+                if (metricYawnsEl) metricYawnsEl.textContent = '0';
                 if (metricFocusEl) metricFocusEl.textContent = '--';
                 if (metricBlinksEl) metricBlinksEl.textContent = '0';
                 
@@ -605,9 +803,9 @@
             }
         }
 
-        // --- Inicialización ---
-        setMonitoringState(false, false);
-        console.log('[INIT] Sistema de monitoreo inicializado');
+    // --- Inicialización ---
+    updateUI('STOPPED');
+        console.log('[INIT] Sistema de monitoreo con Pomodoro inicializado');
     });
 </script>
 {% endblock %}

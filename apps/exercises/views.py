@@ -26,12 +26,15 @@ def exercise_data(request, pk):
     """
     exercise = get_object_or_404(Exercise, pk=pk, is_active=True)
     
-    steps_data = list(exercise.steps.values(
-        'step_order', 
-        'instruction', 
-        'icon_class', 
-        'duration_seconds'
-    ).order_by('step_order'))
+    # Serializar pasos incluyendo la URL del video si existe
+    steps_data = []
+    for step in exercise.steps.order_by('step_order'):
+        steps_data.append({
+            'step_order': step.step_order,
+            'instruction': step.instruction,
+            'duration_seconds': step.duration_seconds,
+            'video_url': step.video_clip.url if getattr(step, 'video_clip', None) and step.video_clip else None,
+        })
 
     data = {
         'id': exercise.id,

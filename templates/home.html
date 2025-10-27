@@ -1,111 +1,185 @@
-{% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Dashboard | VisionPulse{% endblock %}
-
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
 {% block content %}
-<div class="max-w-7xl mx-auto">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-text-primary dark:text-dark-text-primary mb-1">Bienvenido, {{ user.first_name|default:user.username }}</h1>
-        <p class="text-text-secondary dark:text-dark-text-secondary">Monitoreo y cuidado inteligente para tu salud visual.</p>
-    </div>
+<div class="welcome-section mb-6">
+    <h1 class="text-3xl font-bold text-text-primary dark:text-dark-text-primary mb-1">Bienvenida, {{ user.get_full_name|default:user.username }}</h1>
+    <p class="text-base text-text-secondary dark:text-dark-text-secondary">Monitoreo y cuidado inteligente para tu salud visual</p>
+</div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-        <div class="metric-card dark:bg-dark-surface dark:border-dark-border-color">
-            <div class="metric-header">
-                <div class="metric-icon bg-accent-peach dark:bg-dark-accent-peach"><i class="fas fa-chart-line text-text-primary dark:text-dark-text-primary"></i></div>
-                <p class="metric-title">Total de Sesiones</p>
+<div class="stats-grid grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="stat-card bg-white dark:bg-dark-surface border border-border-color dark:border-dark-border-color rounded-2xl p-6">
+        <div class="stat-header flex items-center gap-3 mb-3">
+            <div class="stat-icon clock bg-[#F9E5D8] text-[#8B6F47] w-12 h-12 rounded-full flex items-center justify-center">
+                <i class="fas fa-clock text-lg"></i>
             </div>
-            <p class="metric-value">48</p>
-            <p class="metric-trend text-accent-green dark:text-dark-accent-green"><i class="fas fa-arrow-up"></i> 12% vs semana pasada</p>
+            <span class="stat-title text-sm text-text-secondary dark:text-dark-text-secondary font-normal">Tiempo Pantalla Diario</span>
         </div>
-        <div class="metric-card dark:bg-dark-surface dark:border-dark-border-color">
-            <div class="metric-header">
-                <div class="metric-icon bg-alert-amber"><i class="fas fa-clock"></i></div>
-                <p class="metric-title">Tiempo Total de Uso</p>
+        <div class="stat-value text-4xl font-bold text-text-primary dark:text-dark-text-primary mb-1">{{ total_hours }}h</div>
+        <div class="stat-label text-sm text-text-secondary dark:text-dark-text-secondary">Promedio diario</div>
+    </div>
+    <div class="stat-card bg-white dark:bg-dark-surface border border-border-color dark:border-dark-border-color rounded-2xl p-6">
+        <div class="stat-header flex items-center gap-3 mb-3">
+            <div class="stat-icon eye bg-[#FCE8DC] text-[#D4794D] w-12 h-12 rounded-full flex items-center justify-center">
+                <i class="fas fa-eye text-lg"></i>
             </div>
-            <p class="metric-value">156h</p>
-            <p class="metric-trend text-accent-green dark:text-dark-accent-green"><i class="fas fa-arrow-up"></i> 8% este mes</p>
+            <span class="stat-title text-sm text-text-secondary dark:text-dark-text-secondary font-normal">Ritmo de Parpadeo</span>
         </div>
-        <div class="metric-card dark:bg-dark-surface dark:border-dark-border-color">
-            <div class="metric-header">
-                <div class="metric-icon bg-alert-coral"><i class="fas fa-exclamation-triangle"></i></div>
-                <p class="metric-title">Alertas Generadas</p>
-            </div>
-            <p class="metric-value">23</p>
-            <p class="metric-trend text-accent-green dark:text-dark-accent-green"><i class="fas fa-arrow-up"></i> 5 esta semana</p>
-        </div>
-        <div class="metric-card dark:bg-dark-surface dark:border-dark-border-color">
-            <div class="metric-header">
-                <div class="metric-icon bg-accent-green dark:bg-dark-accent-green"><i class="fas fa-dumbbell"></i></div>
-                <p class="metric-title">Ejercicios Completados</p>
-            </div>
-            <p class="metric-value">34</p>
-            <p class="metric-trend text-accent-green dark:text-dark-accent-green"><i class="fas fa-arrow-up"></i> 15% vs semana pasada</p>
-        </div>
-        <div class="metric-card dark:bg-dark-surface dark:border-dark-border-color">
-            <div class="metric-header">
-                <div class="metric-icon bg-accent-peach dark:bg-dark-accent-peach"><i class="fas fa-coffee text-text-primary dark:text-dark-text-primary"></i></div>
-                <p class="metric-title">Descansos Hoy</p>
-            </div>
-            <p class="metric-value">4/6</p>
-            <div class="w-full bg-border-color rounded-full h-1.5 mt-2 dark:bg-dark-border-color"><div class="bg-accent-green dark:bg-dark-accent-green h-1.5 rounded-full" style="width: 67%"></div></div>
+        <div class="stat-value text-4xl font-bold text-text-primary dark:text-dark-text-primary mb-1">{{ avg_blink_rate }}</div>
+        <div class="stat-label text-sm text-text-secondary dark:text-dark-text-secondary flex items-center gap-1">
+            <i class="fas fa-arrow-down text-xs text-orange-500"></i>
+            <span>Ideal: 15-20 parpadeos/min</span>
         </div>
     </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 card p-6 dark:bg-dark-surface dark:border-dark-border-color">
-            <h3 class="text-lg font-semibold text-text-primary dark:text-dark-text-primary">Monitor de Actividad Visual</h3>
-            <p class="text-sm text-text-secondary dark:text-dark-text-secondary mb-4">Actividad de hoy</p>
-            <div class="h-72"><canvas id="activityChart"></canvas></div>
-        </div>
-        <div class="card p-6 dark:bg-dark-surface dark:border-dark-border-color">
-            <h3 class="text-lg font-semibold text-text-primary dark:text-dark-text-primary mb-4">Alertas Recientes</h3>
-            <div class="space-y-3">
-                <div class="alert-item hover:bg-background-primary dark:hover:bg-dark-background-primary">
-                    <div class="alert-icon bg-alert-amber"><i class="fas fa-exclamation"></i></div>
-                    <div>
-                        <p class="text-sm font-medium text-text-primary dark:text-dark-text-primary">Fatiga visual detectada</p>
-                        <p class="text-xs text-text-secondary dark:text-dark-text-secondary">hace 2 horas</p>
-                    </div>
-                </div>
-                <div class="alert-item hover:bg-background-primary dark:hover:bg-dark-background-primary">
-                    <div class="alert-icon bg-accent-peach text-text-primary dark:text-dark-text-primary"><i class="fas fa-arrow-down"></i></div>
-                    <div>
-                        <p class="text-sm font-medium text-text-primary dark:text-dark-text-primary">Nivel de parpadeo bajo</p>
-                        <p class="text-xs text-text-secondary dark:text-dark-text-secondary">hace 4 horas</p>
-                    </div>
-                </div>
+    <div class="stat-card bg-white dark:bg-dark-surface border border-border-color dark:border-dark-border-color rounded-2xl p-6">
+        <div class="stat-header flex items-center gap-3 mb-3">
+            <div class="stat-icon coffee bg-[#E8DDD0] text-[#8B7355] w-12 h-12 rounded-full flex items-center justify-center">
+                <i class="fas fa-coffee text-lg"></i>
             </div>
+            <span class="stat-title text-sm text-text-secondary dark:text-dark-text-secondary font-normal">Pausas Completadas</span>
+        </div>
+        <div class="stat-value text-4xl font-bold text-text-primary dark:text-dark-text-primary mb-1">{{ completed_breaks }}/{{ recommended_breaks }}</div>
+        <div class="stat-label text-sm text-text-secondary dark:text-dark-text-secondary">Completadas hoy</div>
+    </div>
+</div>
+
+<div class="main-grid grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Estado Visual - Columna izquierda -->
+    <div class="card bg-white dark:bg-dark-surface border border-border-color dark:border-dark-border-color rounded-2xl p-6">
+        <h2 class="text-xl font-bold text-text-primary dark:text-dark-text-primary mb-4">Estado Visual</h2>
+        <div class="visual-status mb-6">
+            <div class="progress-label text-sm font-semibold text-right mb-3 text-text-primary dark:text-dark-text-primary">{{ visual_status }}%</div>
+            <div class="progress-bar w-full h-8 bg-gradient-to-r from-[#D4523F] via-[#E89552] to-[#A8B5A8] rounded-full relative mb-4">
+                <div class="progress-indicator absolute top-1/2 -translate-y-1/2" style="right: calc({{ progress_right }}%); width: 4px; height: 40px; background: #2C2C2C; border-radius: 2px;"></div>
+            </div>
+            <p class="status-text text-sm italic text-center text-text-secondary dark:text-dark-text-secondary leading-relaxed">
+                {% if visual_status >= 80 %}¡Tu vista está en estado óptimo!{% elif visual_status >= 50 %}Precaución: Fatiga leve detectada{% else %}Atención: Fatiga visual elevada{% endif %}
+            </p>
+        </div>
+        
+        <div class="space-y-3 mt-8">
+            <a href="{% url 'monitoring:live_session' %}" class="action-card flex items-center gap-4 p-4 bg-white dark:bg-dark-surface border border-border-color dark:border-dark-border-color rounded-xl cursor-pointer hover:shadow-md transition-shadow">
+                <div class="action-icon-wrapper w-12 h-12 bg-[#F5EFE6] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-video text-xl text-[#2C2C2C]"></i>
+                </div>
+                <div class="action-content flex-1">
+                    <h3 class="font-semibold text-base text-text-primary dark:text-dark-text-primary mb-0.5">Iniciar Monitoreo</h3>
+                    <p class="text-sm text-text-secondary dark:text-dark-text-secondary leading-tight">Comienza una nueva sesión de<br>monitoreo visual en tiempo real</p>
+                </div>
+                <div class="action-play-btn w-12 h-12 bg-[#2C2C2C] rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-play text-white text-sm ml-0.5"></i>
+                </div>
+            </a>
+            
+            <a href="{% url 'exercises:catalog' %}" class="action-card flex items-center gap-4 p-4 bg-white dark:bg-dark-surface border border-border-color dark:border-dark-border-color rounded-xl cursor-pointer hover:shadow-md transition-shadow">
+                <div class="action-icon-wrapper w-12 h-12 bg-[#F5EFE6] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-dumbbell text-xl text-[#2C2C2C]"></i>
+                </div>
+                <div class="action-content flex-1">
+                    <h3 class="font-semibold text-base text-text-primary dark:text-dark-text-primary mb-0.5">Realizar Ejercicios</h3>
+                    <p class="text-sm text-text-secondary dark:text-dark-text-secondary leading-tight">Realiza ejercicios guiados<br>para reducir la fatiga visual</p>
+                </div>
+                <div class="action-play-btn w-12 h-12 bg-[#2C2C2C] rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-play text-white text-sm ml-0.5"></i>
+                </div>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Monitor de Actividad Visual - Columna derecha (2 columnas) -->
+    <div class="card bg-white dark:bg-dark-surface border border-border-color dark:border-dark-border-color rounded-2xl p-6 lg:col-span-2">
+        <h2 class="text-xl font-bold text-text-primary dark:text-dark-text-primary mb-1">Monitor de Actividad Visual</h2>
+        <p class="text-sm text-text-secondary dark:text-dark-text-secondary mb-6">Actividad de hoy</p>
+        <div class="chart-legend flex gap-6 mb-6">
+        <div class="chart-legend flex gap-12 mb-6 justify-center w-full">
+            <div class="legend-item flex flex-col items-center gap-2 text-sm text-text-secondary dark:text-dark-text-secondary text-center">
+                <div class="legend-dot blinks w-4 h-4 rounded-full bg-[#A8B5A8]"></div>
+                <span class="block w-24 text-center">Parpadeos/min</span>
+            </div>
+            <div class="legend-item flex flex-col items-center gap-2 text-sm text-text-secondary dark:text-dark-text-secondary text-center">
+                <div class="legend-dot rest w-4 h-4 rounded-full bg-[#E89F5F]"></div>
+                <span class="block w-24 text-center">Descansos</span>
+            </div>
+        </div>
+        </div>
+        <div class="chart-container" style="height: 320px;">
+            <canvas id="activityChart"></canvas>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const ctx = document.getElementById('activityChart')?.getContext('2d');
-        if (ctx) {
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'],
-                    datasets: [{
-                        label: 'Parpadeos/min', data: [18, 16, 12, 15, 14, 10, 13, 11],
-                        borderColor: '#A8B89F', backgroundColor: 'rgba(168, 184, 159, 0.1)',
-                        tension: 0.4, borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#A8B89F', fill: true
-                    }]
+    const ctx = document.getElementById('activityChart').getContext('2d');
+    const chartLabels = JSON.parse('{{ chart_labels|safe|escapejs }}');
+    const chartData = JSON.parse('{{ chart_data|safe|escapejs }}');
+    const breaksChartData = JSON.parse('{{ breaks_chart_data|safe|escapejs }}');
+    
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartLabels,
+            datasets: [
+                {
+                    label: 'Parpadeos/min',
+                    data: chartData,
+                    borderColor: '#A8B5A8',
+                    backgroundColor: 'rgba(168, 181, 168, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 0,
+                    borderWidth: 3
                 },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { color: '#8C7E6A' } },
-                        y: { grid: { color: 'rgba(140, 126, 106, 0.1)' }, ticks: { color: '#8C7E6A' } }
+                {
+                    label: 'Descansos',
+                    data: breaksChartData,
+                    borderColor: '#E89F5F',
+                    backgroundColor: 'rgba(232, 159, 95, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 0,
+                    borderWidth: 3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 18,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        stepSize: 2,
+                        color: '#9CA3AF',
+                        font: {
+                            size: 12
+                        },
+                        padding: 8
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#9CA3AF',
+                        font: {
+                            size: 12
+                        },
+                        padding: 8
                     }
                 }
-            });
+            }
         }
     });
 </script>

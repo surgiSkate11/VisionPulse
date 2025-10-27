@@ -20,6 +20,8 @@ urlpatterns = [
     path('', HomeView.as_view(), name='home'),
     path('landing/', landing_view, name='landing'),
     path('security/', SeguridadView.as_view(), name='controller'),
+    # path('profile/', profile_view, name='profile'),
+    # path('configuraciones/', configuration_view, name='configuraciones'),
     path('terminos/', terms, name='terms'),
     path('privacy/', privacy, name='privacy'),
     # rutas de modulos

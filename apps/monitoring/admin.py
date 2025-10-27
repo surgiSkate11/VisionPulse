@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
-from .models import MonitorSession, BlinkEvent, AlertEvent
+from .models import MonitorSession, AlertEvent, AlertTypeConfig
 
 @admin.register(MonitorSession)
 class MonitorSessionAdmin(admin.ModelAdmin):
@@ -15,8 +15,10 @@ class MonitorSessionAdmin(admin.ModelAdmin):
         'end_time_local',   # Display localized time
         'duration_display', # Display formatted duration
         'total_blinks',
+        'total_yawns',  # 🔥 NUEVO
         'alerts_count',
         'avg_ear_display', # Display formatted EAR
+        'focus_display',  # 🔥 NUEVO
     )
     list_filter = ('user', 'start_time')
     search_fields = ('user__email', 'user__username', 'id') # Search by user email/username or session ID
@@ -33,10 +35,18 @@ class MonitorSessionAdmin(admin.ModelAdmin):
             'classes': ('collapse',) # Collapsible section
         }),
         ('Metrics', {
-            'fields': ('total_blinks', 'avg_ear', 'focus_percent', 'alerts_count')
+            'fields': ('total_blinks', 'total_yawns', 'avg_ear', 'avg_mar', 'focus_percent', 'alerts_count')
+        }),
+        ('Head Pose Metrics', {
+            'fields': ('avg_head_yaw', 'avg_head_pitch', 'avg_head_roll', 'head_pose_variance'),
+            'classes': ('collapse',)  # 🔥 NUEVO: Métricas de postura
+        }),
+        ('Quality Metrics', {
+            'fields': ('avg_brightness', 'detection_rate'),
+            'classes': ('collapse',)  # 🔥 NUEVO: Métricas de calidad
         }),
         ('Metadata', {
-            'fields': ('metadata', 'created_at'),
+            'fields': ('metadata', 'final_metrics', 'created_at'),
             'classes': ('collapse',)
         }),
     )
@@ -77,37 +87,25 @@ class MonitorSessionAdmin(admin.ModelAdmin):
         return f"{obj.avg_ear:.3f}" if obj.avg_ear is not None else "-"
     avg_ear_display.short_description = 'Avg. EAR'
     avg_ear_display.admin_order_field = 'avg_ear'
+    
+    def focus_display(self, obj):
+        """🔥 NUEVO: Formats focus percentage."""
+        if obj.focus_percent is not None:
+            color = (
+                '#4CAF50' if obj.focus_percent >= 70
+                else '#FF9800' if obj.focus_percent >= 50
+                else '#F44336'
+            )
+            value_str = f"{obj.focus_percent:.1f}%"
+            return format_html(
+                '<span style="color: {};">{}</span>',
+                color,
+                value_str
+            )
+        return "-"
+    focus_display.short_description = 'Enfoque'
+    focus_display.admin_order_field = 'focus_percent'
 
-@admin.register(BlinkEvent)
-class BlinkEventAdmin(admin.ModelAdmin):
-    """
-    Admin interface options for BlinkEvent model.
-    """
-    list_display = ('id', 'session_link', 'timestamp_local', 'ear_value_display')
-    list_filter = ('session__user', 'timestamp') # Filter by user via session
-    search_fields = ('session__id', 'session__user__email')
-    readonly_fields = ('timestamp',)
-    list_per_page = 50
-    ordering = ('-timestamp',)
-
-    def session_link(self, obj):
-        """Creates a link to the MonitorSession admin page."""
-        link = reverse("admin:monitoring_monitorsession_change", args=[obj.session.id])
-        return format_html('<a href="{}">Session {}</a>', link, obj.session.id)
-    session_link.short_description = 'Session'
-    session_link.admin_order_field = 'session'
-
-    def timestamp_local(self, obj):
-        """Displays timestamp in local timezone."""
-        return obj.timestamp.astimezone().strftime('%d/%m/%Y %H:%M:%S.%f')[:-3] # Include milliseconds
-    timestamp_local.short_description = 'Timestamp (Local)'
-    timestamp_local.admin_order_field = 'timestamp'
-
-    def ear_value_display(self, obj):
-        """Formats EAR value."""
-        return f"{obj.ear_value:.3f}" if obj.ear_value is not None else "-"
-    ear_value_display.short_description = 'EAR Value'
-    ear_value_display.admin_order_field = 'ear_value'
 
 
 @admin.register(AlertEvent)
@@ -125,13 +123,13 @@ class AlertEventAdmin(admin.ModelAdmin):
 
     fieldsets = (
          (None, {
-            'fields': ('session', 'alert_type')
+            'fields': ('session', 'alert_type', 'message')
         }),
         ('Status & Timestamps', {
             'fields': ('triggered_at', 'resolved', 'resolved_at')
         }),
          ('Details', {
-            'fields': ('metadata',),
+            'fields': ('metadata', 'voice_clip'),
             'classes': ('collapse',)
         }),
     )
@@ -164,3 +162,56 @@ class AlertEventAdmin(admin.ModelAdmin):
             alert.save()
             updated_count += 1
         self.message_user(request, f'{updated_count} alerts marked as resolved.')
+
+
+@admin.register(AlertTypeConfig)
+class AlertTypeConfigAdmin(admin.ModelAdmin):
+    """
+    Admin interface for configuring default voice clips and descriptions per alert type.
+    """
+    list_display = ('alert_type_display', 'description_short', 'has_voice_clip', 'is_active', 'updated_at')
+    list_filter = ('is_active', 'updated_at')
+    search_fields = ('alert_type', 'description')
+    readonly_fields = ('updated_at',)
+    list_per_page = 20
+    
+    fieldsets = (
+        (None, {
+            'fields': ('alert_type', 'is_active')
+        }),
+        ('Content', {
+            'fields': ('description', 'default_voice_clip')
+        }),
+        ('Metadata', {
+            'fields': ('updated_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def alert_type_display(self, obj):
+        """Display alert type with its human-readable label"""
+        return format_html(
+            '<strong>{}</strong><br><span style="color: #666; font-size: 11px;">{}</span>',
+            obj.get_alert_type_display(),
+            obj.alert_type
+        )
+    alert_type_display.short_description = 'Tipo de Alerta'
+    alert_type_display.admin_order_field = 'alert_type'
+    
+    def description_short(self, obj):
+        """Display shortened description"""
+        if not obj.description:
+            return format_html('<span style="color: #999;">Sin descripción</span>')
+        desc = obj.description[:60] + '...' if len(obj.description) > 60 else obj.description
+        return format_html('<span>{}</span>', desc)
+    description_short.short_description = 'Descripción'
+    
+    def has_voice_clip(self, obj):
+        """Display if alert type has a default voice clip"""
+        if obj.default_voice_clip:
+            return format_html(
+                '<span style="color: #4CAF50;">✓ Sí</span>'
+            )
+        return format_html('<span style="color: #999;">✕ No</span>')
+    has_voice_clip.short_description = 'Audio Default'
+    has_voice_clip.admin_order_field = 'default_voice_clip'

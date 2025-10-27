@@ -178,8 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h2 id="exercise-title" class="text-3xl font-bold text-text-primary dark:text-dark-text-primary"></h2>
                 <p id="total-timer" class="text-sm text-text-secondary dark:text-dark-text-secondary"></p>
             </div>
-            <div class="w-40 h-40 mx-auto bg-accent-peach/50 dark:bg-dark-accent-peach/50 rounded-full flex items-center justify-center mb-6">
-                <i id="step-icon" class="text-6xl text-text-primary dark:text-dark-text-primary"></i>
+            <div class="w-56 h-56 mx-auto bg-accent-peach/50 dark:bg-dark-accent-peach/50 rounded-2xl flex items-center justify-center mb-6 overflow-hidden">
+                <video id="step-video" class="w-full h-full object-cover rounded-2xl" autoplay loop muted playsinline></video>
             </div>
             <div class="bg-white/50 dark:bg-dark-surface/50 rounded-2xl p-6 shadow-inner">
                 <div class="flex justify-between items-center text-sm text-text-secondary dark:text-dark-text-secondary mb-3">
@@ -205,7 +205,19 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateStepUI() {
         const step = currentExercise.steps[currentStepIndex];
         document.getElementById('exercise-title').textContent = currentExercise.title;
-        document.getElementById('step-icon').className = `${step.icon_class} text-6xl text-text-primary dark:text-dark-text-primary transition-transform duration-300 transform group-hover:scale-110`;
+        const videoEl = document.getElementById('step-video');
+        if (step.video_url) {
+            if (videoEl.src !== step.video_url) {
+                videoEl.src = step.video_url;
+            }
+            // Reiniciar la reproducción al cambiar de paso
+            videoEl.currentTime = 0;
+            videoEl.play().catch(() => {});
+        } else {
+            // Sin video: limpiar src y mostrar un fondo neutro
+            videoEl.removeAttribute('src');
+            videoEl.load();
+        }
         document.getElementById('step-instruction').textContent = step.instruction;
         document.getElementById('step-badge').textContent = `${currentStepIndex + 1} / ${currentExercise.steps.length}`;
     }
@@ -217,6 +229,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const progressPercentage = ((currentStepIndex + 1) / currentExercise.steps.length) * 100;
         document.getElementById('progress-bar').style.width = `${progressPercentage}%`;
+    }
+
+    // Pausar/Reanudar el video cuando se pause el ejercicio
+    const originalTogglePause = togglePause;
+    togglePause = function() {
+        originalTogglePause();
+        const videoEl = document.getElementById('step-video');
+        if (!videoEl) return;
+        if (isPaused) videoEl.pause(); else videoEl.play().catch(() => {});
     }
 
     // --- Listeners Iniciales ---

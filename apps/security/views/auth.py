@@ -1,6 +1,6 @@
 from django.shortcuts import redirect, render
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django .contrib.auth.models import User
+from django .contrib.auth.models import User, Group
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -74,6 +74,14 @@ def signup(request):
             if getattr(user, 'email', None):
                 user.email = user.email.lower()
             user.save()
+            
+            # Asignar automáticamente al grupo "General"
+            try:
+                general_group, created = Group.objects.get_or_create(name='General')
+                user.groups.add(general_group)
+            except Exception as e:
+                messages.warning(request, f"Usuario creado, pero no se pudo asignar al grupo General: {e}")
+            
             messages.success(request, "Cuenta creada correctamente.")
             cuenta_creada = True
             # resetear formulario vacío para evitar mostrar datos antiguos

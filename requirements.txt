@@ -36,6 +36,10 @@ requests==2.32.3
 python-docx==1.0.1  # Para generar documentos Word
 XlsxWriter==3.1.9  # Para generar Excel
 
+# Texto a voz (TTS)
+# gTTS ya no se usa para generar audios automáticamente.
+# gTTS==2.5.3
+
 # Frontend y herramientas de desarrollo
 whitenoise==6.6.0     # Para servir archivos estáticos
 python-dotenv==1.0.0  # Para manejar variables de entorno
@@ -52,3 +56,6 @@ coverage==7.3.2
 # Websockets y tiempo real
 websockets==12.0
 django-eventstream==4.5.1
+
+# Modelos mejorados (opcional)
+ultralytics

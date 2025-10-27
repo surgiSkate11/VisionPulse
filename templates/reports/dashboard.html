@@ -1,410 +1,796 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Reportes de Salud Visual | VisionPulse{% endblock %}
-{% block content %}
-<div class="page-header">
-    <h1><i class="fas fa-file-medical-alt"></i> Reportes de Salud Visual</h1>
-    <p>Análisis detallado de tu salud visual y progreso</p>
-</div>
 
-<div class="reports-dashboard">
-    <div class="report-summary">
-        <div class="summary-card">
-            <div class="summary-icon health">
-                <i class="fas fa-heart-pulse"></i>
-            </div>
-            <div class="summary-content">
-                <h3>Puntaje General</h3>
-                <span class="score">{{ user.get_health_score|floatformat:0|default:0 }}/100</span>
-                <p class="score-description">
-                    {% if user.get_health_score >= 80 %}
-                        Excelente salud visual
-                    {% elif user.get_health_score >= 60 %}
-                        Buena salud visual
-                    {% elif user.get_health_score >= 40 %}
-                        Salud visual regular
-                    {% else %}
-                        Necesita atención
-                    {% endif %}
-                </p>
-            </div>
-        </div>
+{% block title %}{{ page_title }}{% endblock %}
 
-        <div class="summary-card">
-            <div class="summary-icon warning">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <div class="summary-content">
-                <h3>Alertas del Mes</h3>
-                <span class="score">{{ user.fatigue_episodes|default:0 }}</span>
-                <p class="score-description">Episodios de fatiga detectados</p>
-            </div>
-        </div>
-
-        <div class="summary-card">
-            <div class="summary-icon success">
-                <i class="fas fa-dumbbell"></i>
-            </div>
-            <div class="summary-content">
-                <h3>Ejercicios Realizados</h3>
-                <span class="score">{{ user.exercises_completed|default:0 }}</span>
-                <p class="score-description">Total de ejercicios completados</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="reports-grid">
-        <div class="report-card">
-            <div class="report-header">
-                <h3>Reporte Semanal</h3>
-                <span class="report-date">Última semana</span>
-            </div>
-            <div class="report-content">
-                <div class="report-metric">
-                    <span class="metric-label">Tiempo de monitoreo</span>
-                    <span class="metric-value">{{ user.total_monitoring_time|default:0 }} min</span>
-                </div>
-                <div class="report-metric">
-                    <span class="metric-label">Sesiones completadas</span>
-                    <span class="metric-value">{{ user.total_sessions|default:0 }}</span>
-                </div>
-                <div class="report-metric">
-                    <span class="metric-label">Descansos tomados</span>
-                    <span class="metric-value">{{ user.breaks_taken|default:0 }}</span>
-                </div>
-            </div>
-            <button class="btn-generate">
-                <i class="fas fa-download"></i>
-                Generar Reporte
-            </button>
-        </div>
-
-        <div class="report-card">
-            <div class="report-header">
-                <h3>Análisis Mensual</h3>
-                <span class="report-date">Último mes</span>
-            </div>
-            <div class="report-content">
-                <div class="trend-indicator positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>Mejora del 15% en salud visual</span>
-                </div>
-                <div class="report-metric">
-                    <span class="metric-label">Promedio de parpadeo</span>
-                    <span class="metric-value">18/min</span>
-                </div>
-                <div class="report-metric">
-                    <span class="metric-label">Tiempo frente a pantalla</span>
-                    <span class="metric-value">7.2h/día</span>
-                </div>
-            </div>
-            <button class="btn-generate">
-                <i class="fas fa-download"></i>
-                Generar Reporte
-            </button>
-        </div>
-
-        <div class="report-card">
-            <div class="report-header">
-                <h3>Reporte Personalizado</h3>
-                <span class="report-date">Configurable</span>
-            </div>
-            <div class="report-content">
-                <p>Crea un reporte personalizado seleccionando fechas específicas y métricas de interés.</p>
-                <div class="custom-options">
-                    <label>
-                        <input type="checkbox" checked> Sesiones de monitoreo
-                    </label>
-                    <label>
-                        <input type="checkbox" checked> Ejercicios oculares
-                    </label>
-                    <label>
-                        <input type="checkbox"> Alertas de fatiga
-                    </label>
-                </div>
-            </div>
-            <button class="btn-generate primary">
-                <i class="fas fa-cog"></i>
-                Configurar Reporte
-            </button>
-        </div>
-    </div>
-
-    <div class="recommendations-section">
-        <h2>Recomendaciones Personalizadas</h2>
-        <div class="recommendations-grid">
-            <div class="recommendation-card">
-                <div class="recommendation-icon">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="recommendation-content">
-                    <h4>Frecuencia de Descansos</h4>
-                    <p>Basado en tu patrón de trabajo, te recomendamos tomar descansos cada 20 minutos.</p>
-                </div>
-            </div>
-            
-            <div class="recommendation-card">
-                <div class="recommendation-icon">
-                    <i class="fas fa-dumbbell"></i>
-                </div>
-                <div class="recommendation-content">
-                    <h4>Ejercicios Recomendados</h4>
-                    <p>Los ejercicios de enfoque lejano-cercano serían beneficiosos para tu rutina diaria.</p>
-                </div>
-            </div>
-            
-            <div class="recommendation-card">
-                <div class="recommendation-icon">
-                    <i class="fas fa-lightbulb"></i>
-                </div>
-                <div class="recommendation-content">
-                    <h4>Iluminación del Ambiente</h4>
-                    <p>Considera ajustar la iluminación de tu espacio de trabajo para reducir el contraste.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
+{% block extra_css %}
 <style>
-.page-header {
-    margin-bottom: 2rem;
-    text-align: center;
-}
-
-.page-header h1 {
-    color: var(--primary-health);
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-}
-
-.reports-dashboard {
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.report-summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.summary-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.summary-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    color: white;
-}
-
-.summary-icon.health {
-    background: var(--gradient-health);
-}
-
-.summary-icon.warning {
-    background: var(--gradient-fatigue);
-}
-
-.summary-icon.success {
-    background: var(--gradient-vision);
-}
-
-.summary-content h3 {
-    margin: 0 0 0.5rem 0;
-    color: #374151;
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-.score {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--primary-health);
-    display: block;
-    line-height: 1;
-}
-
-.score-description {
-    margin: 0.25rem 0 0 0;
-    font-size: 0.8rem;
-    color: #6b7280;
-}
-
-.reports-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.report-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.report-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.report-header h3 {
-    margin: 0;
-    color: #374151;
-    font-size: 1.1rem;
-}
-
-.report-date {
-    font-size: 0.85rem;
-    color: #6b7280;
-}
-
-.report-content {
-    margin-bottom: 1.5rem;
-}
-
-.report-metric {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-}
-
-.metric-label {
-    font-size: 0.9rem;
-    color: #6b7280;
-}
-
-.metric-value {
-    font-weight: 600;
-    color: #374151;
-}
-
-.trend-indicator {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    font-size: 0.9rem;
-}
-
-.trend-indicator.positive {
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--primary-health);
-}
-
-.btn-generate {
-    width: 100%;
-    background: var(--gradient-vision);
-    color: white;
-    border: none;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    transition: transform 0.2s;
-}
-
-.btn-generate:hover {
-    transform: translateY(-1px);
-}
-
-.btn-generate.primary {
-    background: var(--gradient-health);
-}
-
-.custom-options {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
-.custom-options label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    color: #374151;
-    cursor: pointer;
-}
-
-.recommendations-section {
-    background: white;
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.recommendations-section h2 {
-    margin-bottom: 1.5rem;
-    color: #374151;
-    text-align: center;
-}
-
-.recommendations-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1rem;
-}
-
-.recommendation-card {
-    display: flex;
-    gap: 1rem;
-    padding: 1rem;
-    background: #f9fafb;
-    border-radius: 8px;
-}
-
-.recommendation-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    background: var(--gradient-fatigue);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1rem;
-    flex-shrink: 0;
-}
-
-.recommendation-content h4 {
-    margin: 0 0 0.5rem 0;
-    color: #374151;
-    font-size: 0.9rem;
-}
-
-.recommendation-content p {
-    margin: 0;
-    color: #6b7280;
-    font-size: 0.85rem;
-    line-height: 1.4;
-}
+    :root {
+        --bg-primary: #F5EFE7;
+        --bg-secondary: #FFF4E6;
+        --white-soft: #FFFBF5;
+        --text-primary: #2C2416;
+        --text-secondary: #8C7E6A;
+        --accent-green: #7CA982;
+        --accent-peach: #F4C2A6;
+        --alert-amber: #E8B86D;
+        --alert-coral: #E07A5F;
+        --border: rgba(140, 126, 106, 0.2);
+    }
+    
+    body { background-color: var(--bg-primary); }
+    
+    .badge-green { background-color: var(--accent-green); color: white; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 500; display: inline-block; }
+    .badge-amber { background-color: var(--alert-amber); color: white; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 500; display: inline-block; }
+    .badge-coral { background-color: var(--alert-coral); color: white; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 500; display: inline-block; }
+    .badge-outline-green { border: 1px solid var(--accent-green); color: var(--accent-green); background: transparent; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 500; display: inline-block; }
+    .badge-outline-coral { border: 1px solid var(--alert-coral); color: var(--alert-coral); background: transparent; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 500; display: inline-block; }
+    
+    .period-btn, .date-filter { transition: all 0.2s ease; cursor: pointer; }
+    .period-btn.active, .date-filter.active { background-color: var(--accent-green) !important; color: white !important; }
+    .period-btn:not(.active):hover, .date-filter:not(.active):hover { background-color: rgba(140, 126, 106, 0.1); }
+    
+    .tab-trigger { transition: all 0.2s ease; cursor: pointer; }
+    .tab-trigger.active { background-color: white !important; color: var(--text-primary) !important; }
+    .tab-trigger:not(.active):hover { background-color: rgba(255, 255, 255, 0.5); }
+    
+    .view-btn { transition: all 0.2s ease; cursor: pointer; }
+    .view-btn:hover { color: var(--text-primary) !important; background-color: rgba(140, 126, 106, 0.1); }
+    
+    .custom-date-popup.shake { animation: shake 0.5s; }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
 </style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen p-10" style="background-color: var(--bg-primary);">
+    <div class="max-w-7xl mx-auto">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold mb-2" style="color: var(--text-primary);">Reportes y Estadísticas</h1>
+                <p class="text-base" style="color: var(--text-secondary);">Análisis detallado de tu salud visual</p>
+            </div>
+            <div class="flex gap-2 relative">
+                <button class="period-btn active px-4 py-2 rounded-xl text-sm font-medium" data-period="today" style="background-color: var(--accent-green); color: white;">
+                    Hoy
+                </button>
+                <button class="period-btn px-4 py-2 rounded-xl text-sm font-medium" data-period="week" style="background-color: transparent; color: var(--text-secondary);">
+                    Última semana
+                </button>
+                <button class="period-btn px-4 py-2 rounded-xl text-sm font-medium" data-period="month" style="background-color: transparent; color: var(--text-secondary);">
+                    Último mes
+                </button>
+                <button class="date-filter px-4 py-2 rounded-xl text-sm font-medium border" id="customDateBtn" style="background-color: var(--white-soft); border-color: var(--border); color: var(--text-secondary);">
+                    Fecha personalizada
+                </button>
+                
+                <!-- Popup de Fecha Personalizada -->
+                <div class="custom-date-popup hidden absolute top-full right-0 mt-1 bg-white border rounded-xl shadow-lg p-4 z-50" id="customDatePopup" style="border-color: var(--border); min-width: 280px;">
+                    <div class="text-sm mb-2" style="color: var(--text-secondary);">Selecciona el rango de fechas:</div>
+                    <div class="flex flex-col gap-3 mb-4">
+                        <div class="flex items-center gap-2">
+                            <label class="text-sm whitespace-nowrap" style="color: var(--text-secondary);">Desde</label>
+                            <input type="date" id="startDatePicker" class="flex-1 px-3 py-2 border rounded-lg text-sm" style="border-color: var(--border);">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="text-sm whitespace-nowrap" style="color: var(--text-secondary);">Hasta</label>
+                            <input type="date" id="endDatePicker" class="flex-1 px-3 py-2 border rounded-lg text-sm" style="border-color: var(--border);">
+                        </div>
+                    </div>
+                    <button class="w-full px-3 py-2 text-white rounded-lg text-sm font-medium transition-colors hover:opacity-90" id="applyCustomDateBtn" style="background-color: var(--accent-green);">
+                        Aplicar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Screen Time Card -->
+            <div class="rounded-2xl border shadow-sm" style="background-color: var(--white-soft); border-color: var(--border);">
+                <div class="p-5 pb-2">
+                    <div class="text-sm font-medium mb-1" style="color: var(--text-secondary);">Tiempo de Pantalla</div>
+                    <div class="text-sm" style="color: var(--text-secondary);">Horas frente a la pantalla</div>
+                </div>
+                <div class="px-5 pb-5">
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-4xl font-bold" id="screenTimeValue" style="color: var(--text-primary);">0h</span>
+                        <svg class="w-4 h-4 trend-icon" id="screenTimeTrendIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                            <polyline points="17 18 23 18 23 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="text-xs mt-1" id="screenTimeTrend" style="color: var(--text-secondary);">0% este período</div>
+                </div>
+            </div>
+
+            <!-- Alerts Card -->
+            <div class="rounded-2xl border shadow-sm" style="background-color: var(--white-soft); border-color: var(--border);">
+                <div class="p-5 pb-2">
+                    <div class="text-sm font-medium mb-1" style="color: var(--text-secondary);">Alertas Generadas</div>
+                    <div class="text-sm" style="color: var(--text-secondary);">Alertas emitidas este período</div>
+                </div>
+                <div class="px-5 pb-5">
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-4xl font-bold" id="alertsValue" style="color: var(--text-primary);">0</span>
+                        <svg class="w-4 h-4 trend-icon" id="alertsTrendIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="text-xs mt-1" id="alertsTrend" style="color: var(--text-secondary);">0 esta semana</div>
+                </div>
+            </div>
+
+            <!-- Exercises Card -->
+            <div class="rounded-2xl border shadow-sm" style="background-color: var(--white-soft); border-color: var(--border);">
+                <div class="p-5 pb-2">
+                    <div class="text-sm font-medium mb-1" style="color: var(--text-secondary);">Ejercicios Completados</div>
+                    <div class="text-sm" style="color: var(--text-secondary);">Ejercicios realizados</div>
+                </div>
+                <div class="px-5 pb-5">
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-4xl font-bold" id="exercisesValue" style="color: var(--text-primary);">0</span>
+                        <svg class="w-4 h-4 trend-icon" id="exercisesTrendIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="text-xs mt-1" id="exercisesTrend" style="color: var(--text-secondary);">0% vs semana pasada</div>
+                </div>
+            </div>
+
+            <!-- Sessions Card -->
+            <div class="rounded-2xl border shadow-sm" style="background-color: var(--white-soft); border-color: var(--border);">
+                <div class="p-5 pb-2">
+                    <div class="text-sm font-medium mb-1" style="color: var(--text-secondary);">Total de Sesiones</div>
+                    <div class="text-sm" style="color: var(--text-secondary);">Sesiones completadas</div>
+                </div>
+                <div class="px-5 pb-5">
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-4xl font-bold" id="sessionsValue" style="color: var(--text-primary);">0</span>
+                        <svg class="w-4 h-4 trend-icon" id="sessionsTrendIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="text-xs mt-1" id="sessionsTrend" style="color: var(--text-secondary);">0% vs semana pasada</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Fatigue Chart -->
+            <div class="rounded-2xl border shadow-sm" style="background-color: var(--white-soft); border-color: var(--border);">
+                <div class="p-5 pb-2">
+                    <div class="text-lg font-semibold mb-1" style="color: var(--text-primary);">Evolución de Fatiga Visual</div>
+                    <div class="text-sm" style="color: var(--text-secondary);">Índice de fatiga durante el período</div>
+                </div>
+                <div class="px-5 pb-5">
+                    <div style="height: 250px;">
+                        <canvas id="fatigueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen Time Chart -->
+            <div class="rounded-2xl border shadow-sm" style="background-color: var(--white-soft); border-color: var(--border);">
+                <div class="p-5 pb-2">
+                    <div class="text-lg font-semibold mb-1" style="color: var(--text-primary);">Tiempo de Pantalla</div>
+                    <div class="text-sm" style="color: var(--text-secondary);">Horas diarias frente a la pantalla</div>
+                </div>
+                <div class="px-5 pb-5">
+                    <div style="height: 250px;">
+                        <canvas id="screenTimeChart"></canvas>
+                    </div>
+                    <div class="text-center text-xs mt-2" id="screenTimeFooter" style="color: var(--text-secondary);">Promedio semanal: 0h</div>
+                </div>
+            </div>
+
+            <!-- Distribution Chart -->
+            <div class="rounded-2xl border shadow-sm" style="background-color: var(--white-soft); border-color: var(--border);">
+                <div class="p-5 pb-2">
+                    <div class="text-lg font-semibold mb-1" style="color: var(--text-primary);">Distribución de Alertas</div>
+                    <div class="text-sm" style="color: var(--text-secondary);">Categorización de alertas del período</div>
+                </div>
+                <div class="px-5 pb-5">
+                    <div style="height: 250px;">
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                    <div class="flex flex-wrap justify-center gap-4 mt-4" id="distributionLegend"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sessions Table -->
+        <div class="rounded-2xl border shadow-sm mb-8" style="background-color: var(--white-soft); border-color: var(--border);">
+            <div class="p-5 pb-2">
+                <div class="text-lg font-semibold mb-1" style="color: var(--text-primary);">Historial de Sesiones</div>
+                <div class="text-sm" style="color: var(--text-secondary);">Sesiones de monitoreo recientes</div>
+            </div>
+            <div class="px-5 pb-5">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b" style="border-color: var(--border);">
+                                <th class="text-left py-3 px-3 text-sm font-medium" style="color: var(--text-secondary);">Fecha/Hora</th>
+                                <th class="text-left py-3 px-3 text-sm font-medium" style="color: var(--text-secondary);">Duración</th>
+                                <th class="text-left py-3 px-3 text-sm font-medium" style="color: var(--text-secondary);">Parpadeos/min</th>
+                                <th class="text-left py-3 px-3 text-sm font-medium" style="color: var(--text-secondary);">Foco Promedio</th>
+                                <th class="text-left py-3 px-3 text-sm font-medium" style="color: var(--text-secondary);">Alertas</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="sessionsTableBody">
+                            <tr><td colspan="6" class="text-center py-8" style="color: var(--text-secondary);">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="flex justify-center gap-2 mt-4" id="paginationControls"></div>
+            </div>
+        </div>
+
+        <!-- Alerts & Export Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Alerts History -->
+            <div class="rounded-2xl border shadow-sm" style="background-color: var(--white-soft); border-color: var(--border);">
+                <div class="p-5 pb-2">
+                    <div class="text-lg font-semibold mb-1" style="color: var(--text-primary);">Historial de Alertas</div>
+                </div>
+                <div class="px-5 pb-5">
+                    <div class="flex gap-2 rounded-xl p-1 mb-4" style="background-color: var(--bg-primary);">
+                        <button class="tab-trigger active flex-1 px-4 py-2 rounded-lg text-sm" data-type="all" style="background-color: white; color: var(--text-primary);">Todas</button>
+                        <button class="tab-trigger flex-1 px-4 py-2 rounded-lg text-sm" data-type="fatiga" style="background-color: transparent; color: var(--text-secondary);">Fatiga Visual</button>
+                        <button class="tab-trigger flex-1 px-4 py-2 rounded-lg text-sm" data-type="distraccion" style="background-color: transparent; color: var(--text-secondary);">Distracción</button>
+                    </div>
+                    <div id="alertsContainer">
+                        <div class="text-center py-8" style="color: var(--text-secondary);">Cargando...</div>
+                    </div>
+                    <div class="flex justify-center gap-2 mt-4" id="alertsPaginationControls"></div>
+                </div>
+            </div>
+
+            <!-- Generate Report -->
+            <div class="rounded-2xl shadow-sm" style="background: linear-gradient(135deg, var(--accent-peach), var(--bg-secondary));">
+                <div class="p-5 pb-2">
+                    <div class="text-lg font-semibold mb-1" style="color: var(--text-primary);">Generar Reporte</div>
+                    <div class="text-sm" style="color: var(--text-secondary);">Exporta tus datos para análisis detallado</div>
+                </div>
+                <div class="px-5 pb-5">
+                    <div class="flex flex-col gap-3 mb-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="sessionsExport" checked class="w-4 h-4 cursor-pointer">
+                            <span class="text-sm" style="color: var(--text-primary);">Sesiones completas</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="alertsExport" class="w-4 h-4 cursor-pointer">
+                            <span class="text-sm" style="color: var(--text-primary);">Alertas generadas</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="exercisesExport" class="w-4 h-4 cursor-pointer">
+                            <span class="text-sm" style="color: var(--text-primary);">Ejercicios realizados</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="chartsExport" class="w-4 h-4 cursor-pointer">
+                            <span class="text-sm" style="color: var(--text-primary);">Gráficas estadísticas</span>
+                        </label>
+                    </div>
+                    <select class="w-full px-3 py-2 bg-white border rounded-xl text-sm mb-4 cursor-pointer" id="reportFormat" style="border-color: var(--border); color: var(--text-primary);">
+                        <option>PDF</option>
+                        <option>CSV</option>
+                    </select>
+                    <select class="w-full px-3 py-2 bg-white border rounded-xl text-sm mb-4 cursor-pointer" id="reportType" style="border-color: var(--border); color: var(--text-primary);">
+                        <option>Reporte semanal</option>
+                        <option>Reporte mensual</option>
+                        <option value="custom">Personalizado</option>
+                    </select>
+                    <div class="hidden flex gap-3 mb-4" id="customRangeContainer">
+                        <div class="flex-1 flex items-center gap-2">
+                            <label class="text-sm whitespace-nowrap" style="color: var(--text-secondary);">Desde</label>
+                            <input type="date" id="startDate" class="flex-1 px-3 py-2 border rounded-lg text-sm" style="border-color: var(--border);">
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <label class="text-sm whitespace-nowrap" style="color: var(--text-secondary);">Hasta</label>
+                            <input type="date" id="endDate" class="flex-1 px-3 py-2 border rounded-lg text-sm" style="border-color: var(--border);">
+                        </div>
+                    </div>
+                    <button class="w-full px-6 py-3 text-white rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all hover:opacity-90" id="generateReportBtn" style="background-color: var(--accent-green);">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Generar Reporte
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal de Detalle de Sesión -->
+<div class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center px-4" id="sessionDetailModal">
+    <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold" style="color: var(--text-primary);">Detalle de la Sesión</h2>
+            <button class="close-modal text-2xl hover:opacity-70" style="color: var(--text-secondary);">&times;</button>
+        </div>
+        <div class="flex flex-col gap-4" id="sessionDetailContent">
+            <div class="text-center py-8" style="color: var(--text-secondary);">Cargando...</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+    // State management
+    let currentPeriod = 'today';
+    let currentPage = 1;
+    let currentAlertPage = 1;
+    let currentAlertFilter = 'all';
+    const itemsPerPage = 5;
+    const alertItemsPerPage = 2;
+    let allSessionsData = [];
+    let allAlertsData = [];
+    let fatigueChart, screenTimeChart, distributionChart;
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        initCharts();
+        loadDashboardData('today');
+        setupEventListeners();
+    });
+
+    // Initialize all charts
+    function initCharts() {
+        const fatigueCtx = document.getElementById('fatigueChart').getContext('2d');
+        fatigueChart = new Chart(fatigueCtx, {
+            type: 'line',
+            data: {
+                labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                datasets: [{
+                    label: 'Índice de Fatiga',
+                    data: [0],
+                    borderColor: '#E07A5F',
+                    backgroundColor: 'rgba(224,122,95,0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#E07A5F',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, max: 100, grid: { color: 'rgba(140,126,106,0.1)' }, ticks: { color: '#8C7E6A' } },
+                    x: { grid: { display: false }, ticks: { color: '#8C7E6A' } }
+                }
+            }
+        });
+
+        const screenCtx = document.getElementById('screenTimeChart').getContext('2d');
+        screenTimeChart = new Chart(screenCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                datasets: [{
+                    label: 'Horas',
+                    data: [0],
+                    backgroundColor: 'rgba(124,169,130,0.8)',
+                    borderColor: '#7CA982',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, max: 10, grid: { color: 'rgba(140,126,106,0.1)' }, ticks: { color: '#8C7E6A' } },
+                    x: { grid: { display: false }, ticks: { color: '#8C7E6A' } }
+                }
+            }
+        });
+
+        const distCtx = document.getElementById('distributionChart').getContext('2d');
+        distributionChart = new Chart(distCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Distracción', 'Fatiga', 'Sin alerta'],
+                datasets: [{
+                    data: [0, 0, 0],
+                    backgroundColor: ['#F4C2A6', '#E07A5F', '#7CA982'],
+                    borderColor: ['#F4C2A6', '#E07A5F', '#7CA982'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                cutout: '60%'
+            }
+        });
+    }
+
+    // Setup all event listeners
+    function setupEventListeners() {
+        // Period buttons
+        document.querySelectorAll('.period-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.period-btn, .date-filter').forEach(b => {
+                    b.classList.remove('active');
+                });
+                btn.classList.add('active');
+                currentPeriod = btn.dataset.period;
+                currentPage = 1;
+                currentAlertPage = 1;
+                document.getElementById('customDatePopup').classList.add('hidden');
+                loadDashboardData(currentPeriod);
+            });
+        });
+
+        // Custom date picker
+        const customDateBtn = document.getElementById('customDateBtn');
+        const customDatePopup = document.getElementById('customDatePopup');
+        
+        customDateBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            customDatePopup.classList.toggle('hidden');
+        });
+
+        document.getElementById('applyCustomDateBtn').addEventListener('click', () => {
+            const start = document.getElementById('startDatePicker').value;
+            const end = document.getElementById('endDatePicker').value;
+            
+            if (!start || !end) {
+                customDatePopup.classList.add('shake');
+                setTimeout(() => customDatePopup.classList.remove('shake'), 500);
+                return;
+            }
+            
+            const sDate = new Date(start);
+            const eDate = new Date(end);
+            
+            if (sDate > eDate) {
+                customDatePopup.classList.add('shake');
+                setTimeout(() => customDatePopup.classList.remove('shake'), 500);
+                return;
+            }
+            
+            customDateBtn.innerHTML = `${start} - ${end}`;
+            document.querySelectorAll('.period-btn, .date-filter').forEach(b => b.classList.remove('active'));
+            customDateBtn.classList.add('active');
+            currentPeriod = 'custom';
+            currentPage = 1;
+            currentAlertPage = 1;
+            loadDashboardData('custom', start, end);
+            customDatePopup.classList.add('hidden');
+        });
+
+        // Close popup when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!customDatePopup.contains(e.target) && e.target !== customDateBtn) {
+                customDatePopup.classList.add('hidden');
+            }
+        });
+
+        // Alert filters
+        document.querySelectorAll('.tab-trigger').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab-trigger').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentAlertFilter = tab.dataset.type;
+                currentAlertPage = 1;
+                renderAlerts(allAlertsData);
+            });
+        });
+
+        // Report type change
+        document.getElementById('reportType').addEventListener('change', (e) => {
+            const container = document.getElementById('customRangeContainer');
+            if (e.target.value === 'custom') {
+                container.classList.remove('hidden');
+                container.classList.add('flex');
+            } else {
+                container.classList.add('hidden');
+                container.classList.remove('flex');
+            }
+        });
+
+        // Generate report button
+        document.getElementById('generateReportBtn').addEventListener('click', () => {
+            alert('Función de generación de reporte próximamente disponible');
+        });
+
+        // Modal close
+        document.querySelector('.close-modal').addEventListener('click', () => {
+            const modal = document.getElementById('sessionDetailModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        });
+
+        window.addEventListener('click', (e) => {
+            const modal = document.getElementById('sessionDetailModal');
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        });
+    }
+
+    // Load dashboard data from API
+    function loadDashboardData(period, startDate = null, endDate = null) {
+        let url = `/reports/api/data/?period=${period}`;
+        if (period === 'custom' && startDate && endDate) {
+            url += `&start_date=${startDate}&end_date=${endDate}`;
+        }
+
+        fetch(url)
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    updateDashboard(result.data);
+                } else {
+                    console.error('Error loading data:', result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading dashboard data:', error);
+            });
+    }
+
+    // Update dashboard with new data
+    function updateDashboard(data) {
+        // Update summary cards
+        document.getElementById('screenTimeValue').textContent = data.summary.screen_time;
+        document.getElementById('screenTimeTrend').textContent = `${data.summary.screen_time_trend.toFixed(1)}% este período`;
+        
+        document.getElementById('alertsValue').textContent = data.summary.alerts;
+        document.getElementById('alertsTrend').textContent = `${data.summary.alerts_trend} esta semana`;
+        
+        document.getElementById('exercisesValue').textContent = data.summary.exercises;
+        document.getElementById('exercisesTrend').textContent = `${data.summary.exercises_trend.toFixed(1)}% vs semana pasada`;
+        
+        document.getElementById('sessionsValue').textContent = data.summary.sessions;
+        document.getElementById('sessionsTrend').textContent = `${data.summary.sessions_trend.toFixed(1)}% vs semana pasada`;
+
+        // Update charts
+        fatigueChart.data.labels = data.fatigue_chart.labels;
+        fatigueChart.data.datasets[0].data = data.fatigue_chart.data;
+        fatigueChart.update();
+
+        screenTimeChart.data.labels = data.screen_time_chart.labels;
+        screenTimeChart.data.datasets[0].data = data.screen_time_chart.data;
+        screenTimeChart.update();
+        document.getElementById('screenTimeFooter').textContent = `Promedio semanal: ${data.screen_time_chart.average}h`;
+
+        distributionChart.data.datasets[0].data = data.distribution_chart.data;
+        distributionChart.update();
+        updateDistributionLegend(data.distribution_chart.data);
+
+        // Store data and render tables
+        allSessionsData = data.sessions;
+        allAlertsData = data.alerts;
+        renderSessionsTable(allSessionsData);
+        renderAlerts(allAlertsData);
+    }
+
+    // Update distribution legend with percentages
+    function updateDistributionLegend(data) {
+        const legendContainer = document.getElementById('distributionLegend');
+        const total = data.reduce((a, b) => a + b, 0);
+        const labels = ['Distracción', 'Fatiga', 'Sin alerta'];
+        const colors = ['#F4C2A6', '#E07A5F', '#7CA982'];
+        
+        legendContainer.innerHTML = '';
+        labels.forEach((label, index) => {
+            const pct = total > 0 ? ((data[index] / total) * 100).toFixed(0) : 0;
+            const item = document.createElement('div');
+            item.className = 'flex items-center gap-2 text-sm';
+            item.innerHTML = `
+                <div class="w-4 h-4 rounded" style="background-color: ${colors[index]}"></div>
+                <span>${label} (${pct}%)</span>
+            `;
+            legendContainer.appendChild(item);
+        });
+    }
+
+    // Render sessions table with pagination
+    function renderSessionsTable(sessions) {
+        const body = document.getElementById('sessionsTableBody');
+        const pag = document.getElementById('paginationControls');
+        
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = Math.min(start + itemsPerPage, sessions.length);
+        const items = sessions.slice(start, end);
+        
+        body.innerHTML = '';
+        
+        if (items.length === 0) {
+            body.innerHTML = '<tr><td colspan="6" class="text-center py-8" style="color: var(--text-secondary);">No hay sesiones en este período</td></tr>';
+            pag.innerHTML = '';
+            return;
+        }
+        
+        items.forEach(s => {
+            const row = document.createElement('tr');
+            row.className = 'border-b transition-colors hover:bg-opacity-50';
+            row.style.borderColor = 'var(--border)';
+            
+            const blinkClass = s.blinks >= 15 ? 'badge-green' : s.blinks >= 12 ? 'badge-amber' : 'badge-coral';
+            const alertClass = s.alerts > 2 ? 'badge-outline-coral' : 'badge-outline-green';
+            
+            row.innerHTML = `
+                <td class="py-4 px-3 text-sm" style="color: var(--text-primary);">${s.date}</td>
+                <td class="py-4 px-3 text-sm" style="color: var(--text-primary);">${s.duration}</td>
+                <td class="py-4 px-3 text-sm"><span class="${blinkClass}">${s.blinks}</span></td>
+                <td class="py-4 px-3 text-sm" style="color: var(--text-primary);">${s.focus}</td>
+                <td class="py-4 px-3 text-sm"><span class="${alertClass}">${s.alerts}</span></td>
+                <td class="py-4 px-3">
+                    <button class="view-btn text-sm px-3 py-1 rounded-lg" style="color: var(--text-secondary);" data-session='${JSON.stringify(s)}'>
+                        Ver detalle
+                    </button>
+                </td>
+            `;
+            body.appendChild(row);
+        });
+        
+        // Add click listeners to view buttons
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const session = JSON.parse(btn.dataset.session);
+                showSessionDetail(session);
+            });
+        });
+        
+        // Render pagination
+        renderPagination(pag, sessions.length, currentPage, itemsPerPage, (page) => {
+            currentPage = page;
+            renderSessionsTable(sessions);
+        });
+    }
+
+    // Render alerts with filtering and pagination
+    function renderAlerts(alerts) {
+        let filtered = alerts;
+        if (currentAlertFilter === 'fatiga') {
+            filtered = alerts.filter(a => a.type.includes('Fatiga'));
+        } else if (currentAlertFilter === 'distraccion') {
+            filtered = alerts.filter(a => a.type.includes('Distracción'));
+        }
+        
+        const cont = document.getElementById('alertsContainer');
+        const pag = document.getElementById('alertsPaginationControls');
+        
+        const start = (currentAlertPage - 1) * alertItemsPerPage;
+        const end = Math.min(start + alertItemsPerPage, filtered.length);
+        const items = filtered.slice(start, end);
+        
+        cont.innerHTML = '';
+        
+        if (items.length === 0) {
+            cont.innerHTML = '<div class="text-center py-8" style="color: var(--text-secondary);">No hay alertas en este período</div>';
+            pag.innerHTML = '';
+            return;
+        }
+        
+        items.forEach(a => {
+            const card = document.createElement('div');
+            card.className = 'rounded-xl p-4 mb-3';
+            card.style.backgroundColor = 'var(--bg-primary)';
+            
+            const iconColor = a.type.includes('Fatiga') ? 'var(--alert-amber)' : 'var(--accent-peach)';
+            
+            card.innerHTML = `
+                <div class="flex gap-3">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background-color: ${iconColor};">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center mb-1">
+                            <div class="font-semibold" style="color: var(--text-primary);">${a.type}</div>
+                            <div class="text-xs" style="color: var(--text-secondary);">${a.date}</div>
+                        </div>
+                        <div class="text-sm mb-2" style="color: var(--text-secondary);">${a.description}</div>
+                        <span class="badge-green">${a.status}</span>
+                    </div>
+                </div>
+            `;
+            cont.appendChild(card);
+        });
+        
+        // Render pagination
+        renderPagination(pag, filtered.length, currentAlertPage, alertItemsPerPage, (page) => {
+            currentAlertPage = page;
+            renderAlerts(alerts);
+        });
+    }
+
+    // Generic pagination renderer
+    function renderPagination(container, totalItems, currentPage, itemsPerPage, onPageChange) {
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        container.innerHTML = '';
+        
+        if (totalPages <= 1) return;
+        
+        // Previous button
+        const prev = document.createElement('button');
+        prev.className = `px-3 py-2 border rounded-lg text-sm transition-all ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}`;
+        prev.style.borderColor = 'var(--border)';
+        prev.style.color = 'var(--text-secondary)';
+        prev.textContent = 'Anterior';
+        prev.onclick = () => { if (currentPage > 1) onPageChange(currentPage - 1); };
+        container.appendChild(prev);
+        
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.className = `px-3 py-2 border rounded-lg text-sm transition-all`;
+            btn.style.borderColor = i === currentPage ? 'var(--accent-green)' : 'var(--border)';
+            btn.style.backgroundColor = i === currentPage ? 'var(--accent-green)' : 'transparent';
+            btn.style.color = i === currentPage ? 'white' : 'var(--text-secondary)';
+            btn.textContent = i;
+            btn.onclick = () => onPageChange(i);
+            container.appendChild(btn);
+        }
+        
+        // Next button
+        const next = document.createElement('button');
+        next.className = `px-3 py-2 border rounded-lg text-sm transition-all ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}`;
+        next.style.borderColor = 'var(--border)';
+        next.style.color = 'var(--text-secondary)';
+        next.textContent = 'Siguiente';
+        next.onclick = () => { if (currentPage < totalPages) onPageChange(currentPage + 1); };
+        container.appendChild(next);
+    }
+
+    // Show session detail modal
+    function showSessionDetail(session) {
+        const content = document.getElementById('sessionDetailContent');
+        content.innerHTML = `
+            <div class="flex justify-between p-3 rounded-lg" style="background-color: var(--bg-primary);">
+                <span class="font-medium" style="color: var(--text-secondary);">Fecha y Hora:</span>
+                <span class="font-semibold" style="color: var(--text-primary);">${session.date}</span>
+            </div>
+            <div class="flex justify-between p-3 rounded-lg" style="background-color: var(--bg-primary);">
+                <span class="font-medium" style="color: var(--text-secondary);">Duración:</span>
+                <span class="font-semibold" style="color: var(--text-primary);">${session.duration}</span>
+            </div>
+            <div class="flex justify-between p-3 rounded-lg" style="background-color: var(--bg-primary);">
+                <span class="font-medium" style="color: var(--text-secondary);">Parpadeos/min:</span>
+                <span class="font-semibold" style="color: var(--text-primary);">${session.blinks}</span>
+            </div>
+            <div class="flex justify-between p-3 rounded-lg" style="background-color: var(--bg-primary);">
+                <span class="font-medium" style="color: var(--text-secondary);">Foco Promedio:</span>
+                <span class="font-semibold" style="color: var(--text-primary);">${session.focus}</span>
+            </div>
+            <div class="flex justify-between p-3 rounded-lg" style="background-color: var(--bg-primary);">
+                <span class="font-medium" style="color: var(--text-secondary);">Alertas:</span>
+                <span class="font-semibold" style="color: var(--text-primary);">${session.alerts}</span>
+            </div>
+        `;
+        const modal = document.getElementById('sessionDetailModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+</script>
 {% endblock %}

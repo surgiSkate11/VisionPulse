@@ -20,6 +20,13 @@ urlpatterns = [
     path('api/metrics/', views.session_metrics, name='api_session_metrics'),
     path('api/pause/', views.pause_monitoring, name='api_pause'),
     path('api/resume/', views.resume_monitoring, name='api_resume'),
+    
+    # --- Recordatorios de Descanso ---
+    path('api/snooze_break/', views.snooze_break_reminder, name='api_snooze_break'),
+    path('api/break_taken/', views.mark_break_taken, name='api_break_taken'),
+    
+    # --- Configuración de Modelos Mejorados ---
+    # Ruta eliminada: validación de configuración avanzada per-user ya no aplica
 
     # --- Stream de Video ---
     path('video_feed/', views.video_feed, name='video_feed'),

@@ -4,10 +4,10 @@
 
 @layer components {
   /* Estilos generales */
-  .card { @apply bg-surface border border-border-color rounded-2xl shadow-sm; }
+  .card { @apply bg-white border border-border-color rounded-2xl shadow-sm; }
 
   /* Header */
-  .logo-icon { @apply w-10 h-10 rounded-xl bg-gradient-to-br from-accent-green to-green-400 flex items-center justify-center text-white; }
+  .logo-icon { @apply w-14 h-14 flex items-center justify-center; }
   .notification-btn { @apply relative text-xl text-text-primary hover:bg-background-primary p-2 rounded-full transition-colors; }
   .notification-badge { @apply absolute top-1 right-1 block h-2.5 w-2.5 rounded-full bg-alert-coral ring-2 ring-surface; }
   .user-avatar { @apply w-10 h-10 rounded-full bg-accent-green text-white flex items-center justify-center font-bold; }
@@ -23,7 +23,7 @@
   .nav-text { @apply font-medium whitespace-nowrap transition-opacity duration-150; }
 
   /* Dashboard */
-  .metric-card { @apply bg-surface border border-border-color rounded-2xl p-4 shadow-sm transition hover:shadow-md flex flex-col justify-start; }
+  .metric-card { @apply bg-white border border-border-color rounded-2xl p-4 shadow-sm transition hover:shadow-md flex flex-col justify-start; }
   .metric-header { @apply flex items-center gap-3 mb-1; }
   .metric-icon { @apply w-10 h-10 rounded-lg flex items-center justify-center text-white text-xl; }
   .metric-title { @apply text-sm text-text-secondary; }
@@ -36,12 +36,22 @@
 @layer components {
   /* Layout */
   .card {
-    @apply bg-surface border border-border-color rounded-2xl shadow-sm;
+    @apply bg-white border border-border-color rounded-2xl shadow-sm;
   }
 
   /* Header */
   .logo-icon {
-    @apply w-10 h-10 rounded-xl bg-gradient-to-br from-accent-green to-green-400 flex items-center justify-center;
+    width: 3.5rem;
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    outline: none !important;
+    /* Sin gradiente, sin color, sin borde ovalado, sin líneas punteadas */
   }
   .notification-btn {
     @apply relative text-xl text-text-primary hover:bg-background-primary p-2 rounded-full transition-colors;
@@ -107,9 +117,8 @@
   }
 
   /* Header */
-  .logo-icon {
-    @apply w-10 h-10 rounded-xl bg-gradient-to-br from-accent-green to-green-400 flex items-center justify-center;
-  }
+  /* .logo-icon eliminado - ya está definido arriba sin gradiente */
+  
   .notification-btn {
     @apply relative text-xl text-text-primary hover:bg-background-primary p-2 rounded-full transition-colors;
   }

@@ -189,24 +189,183 @@ class User(AbstractUser, PermissionsMixin):
         default='morning', blank=True, help_text="Horario donde más trabajas frente a la pantalla"
     )
 
-    # --- Campos de Configuración ---
-    ear_threshold = models.FloatField("Umbral EAR", default=0.20, validators=[MinValueValidator(0.05), MaxValueValidator(0.40)])
-    blink_window_frames = models.PositiveSmallIntegerField("Ventana confirmación (frames)", default=3, validators=[MinValueValidator(1), MaxValueValidator(10)])
-    blink_rate_threshold = models.PositiveIntegerField(default=15, validators=[MinValueValidator(5), MaxValueValidator(30)], help_text="Parpadeos mínimos por minuto para alerta")
-    monitoring_frequency = models.PositiveIntegerField(default=30, validators=[MinValueValidator(10), MaxValueValidator(300)], help_text="Frecuencia de análisis visual en segundos")
-    break_reminder_interval = models.PositiveIntegerField(default=20, validators=[MinValueValidator(5), MaxValueValidator(120)], help_text="Intervalo para recordatorios de descanso en minutos")
-    dark_mode = models.BooleanField(default=False)
-    notification_mode = models.CharField(max_length=10, choices=[('visual', 'Visual'), ('sound', 'Sonora'), ('both', 'Ambos'), ('none', 'Ninguno')], default='both')
-    alert_volume = models.FloatField(default=0.5, validators=[MinValueValidator(0.0), MaxValueValidator(1.0)])
-    data_collection_consent = models.BooleanField(default=False)
-    anonymous_analytics = models.BooleanField(default=True)
-    camera_enabled = models.BooleanField(default=True)
-    face_detection_sensitivity = models.FloatField(default=0.7, validators=[MinValueValidator(0.1), MaxValueValidator(1.0)], help_text="Sensibilidad de detección facial (0.1-1.0)")
-    fatigue_threshold = models.FloatField(default=0.7, validators=[MinValueValidator(0.1), MaxValueValidator(1.0)], help_text="Umbral para alertas de fatiga (0.1-1.0)")
-    sampling_interval_seconds = models.PositiveIntegerField(default=5, validators=[MinValueValidator(1), MaxValueValidator(60)])
-    notify_inactive_tab = models.BooleanField(default=True)
-    locale = models.CharField("Idioma/Localización", max_length=10, default='es', blank=True)
-    timezone = models.CharField("Zona horaria", max_length=50, default='America/Guayaquil', blank=True)
+    # --- Campos de Configuración: Métricas de Ojos ---
+    ear_threshold = models.FloatField(
+        "Umbral EAR", 
+        default=0.20, 
+        validators=[MinValueValidator(0.05), MaxValueValidator(0.40)],
+        help_text="Sensibilidad de apertura ocular (EAR). Más bajo = más sensible."
+    )
+    fatigue_threshold = models.FloatField(
+        "Factor Fatiga (EAR %)", 
+        default=0.7, 
+        validators=[MinValueValidator(0.1), MaxValueValidator(1.0)], 
+        help_text="Porcentaje del EAR base para alerta de fatiga (ej: 0.7 = 70% de tu EAR normal)."
+    )
+    microsleep_duration_seconds = models.FloatField(
+        "Duración Microsueño (seg)",
+        default=1.5, 
+        validators=[MinValueValidator(0.8), MaxValueValidator(5.0)], 
+        help_text="Segundos con ojos cerrados para disparar alerta de microsueño. (Peligro: >1 seg)"
+    )
+    blink_window_frames = models.PositiveSmallIntegerField(
+        "Ventana confirmación (frames)", 
+        default=3, 
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        help_text="Frames consecutivos con ojos cerrados para confirmar un parpadeo."
+    )
+    
+    # --- Campos de Configuración: Tasa de Parpadeo ---
+    low_blink_rate_threshold = models.PositiveSmallIntegerField(
+        "Umbral Parpadeo Bajo (por min)",
+        default=10, 
+        validators=[MinValueValidator(3), MaxValueValidator(20)], 
+        help_text="Alertar si parpadea MENOS de X veces por minuto. (Normal: 15-20, Concentración: 3-8)"
+    )
+    high_blink_rate_threshold = models.PositiveSmallIntegerField(
+        "Umbral Parpadeo Alto (por min)",
+        default=35, 
+        validators=[MinValueValidator(25), MaxValueValidator(60)], 
+        help_text="Alertar si parpadea MÁS de X veces por minuto. (Normal: 15-20, Estrés: >30)"
+    )
+    
+    # --- Campos de Configuración: Boca y Bostezos ---
+    yawn_mar_threshold = models.FloatField(
+        "Umbral Bostezo (MAR)",
+        default=0.6, 
+        validators=[MinValueValidator(0.4), MaxValueValidator(1.0)], 
+        help_text="Sensibilidad de detección de bostezo (proporción de apertura de boca)."
+    )
+    
+    # --- Campos de Configuración: Pose de Cabeza (Distracción y Postura) ---
+    distraction_angle_threshold = models.PositiveSmallIntegerField(
+        "Ángulo de Distracción (°)",
+        default=25, 
+        validators=[MinValueValidator(10), MaxValueValidator(45)], 
+        help_text="Ángulo (grados) de desviación de la cabeza para considerarse 'distraído'."
+    )
+    postural_rigidity_duration_seconds = models.PositiveSmallIntegerField(
+        "Duración Rigidez Postural (seg)",
+        default=180, 
+        validators=[MinValueValidator(60), MaxValueValidator(600)], 
+        help_text="Tiempo (segundos) sin mover la cabeza para alertar sobre rigidez."
+    )
+    
+    # --- Campos de Configuración: Ambiente ---
+    low_light_threshold = models.PositiveSmallIntegerField(
+        "Umbral Luz Baja (Luminancia)",
+        default=70, 
+        validators=[MinValueValidator(30), MaxValueValidator(120)], 
+        help_text="Nivel de brillo (0-255) por debajo del cual se considera 'Iluminación Baja'."
+    )
+    
+    # --- Campos de Configuración: Sistema de Monitoreo ---
+    monitoring_frequency = models.PositiveIntegerField(
+        "Frecuencia de análisis (seg)", 
+        default=30, 
+        validators=[MinValueValidator(10), MaxValueValidator(300)], 
+        help_text="Frecuencia de análisis visual profundo en segundos."
+    )
+    break_reminder_interval = models.PositiveIntegerField(
+        "Recordatorio Descanso (min)", 
+        default=20, 
+        validators=[MinValueValidator(5), MaxValueValidator(120)], 
+        help_text="Intervalo para recordatorios de descanso en minutos."
+    )
+    face_detection_sensitivity = models.FloatField(
+        "Sensibilidad Detección Facial", 
+        default=0.7, 
+        validators=[MinValueValidator(0.1), MaxValueValidator(1.0)], 
+        help_text="Sensibilidad de detección facial (0.1-1.0)."
+    )
+    sampling_interval_seconds = models.PositiveIntegerField(
+        "Intervalo Muestreo (seg)",
+        default=5, 
+        validators=[MinValueValidator(1), MaxValueValidator(60)],
+        help_text="Intervalo de captura de frames para análisis."
+    )
+    camera_enabled = models.BooleanField(
+        "Cámara Habilitada",
+        default=True,
+        help_text="Habilitar o deshabilitar el uso de la cámara."
+    )
+    
+    # --- Campos de Configuración: Overlay Facial (Rendimiento) ---
+    face_overlay_enabled = models.BooleanField(
+        "Overlay Facial Habilitado",
+        default=True,
+        help_text="Mostrar el óvalo verde sobre el rostro detectado. Desactivar en dispositivos de gama baja."
+    )
+    face_overlay_glow_intensity = models.FloatField(
+        "Intensidad Brillo Overlay",
+        default=0.6,
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+        help_text="Intensidad del brillo del óvalo facial (0.0-1.0). Menor valor = menos GPU."
+    )
+    face_overlay_blur_sigma = models.PositiveSmallIntegerField(
+        "Sigma Desenfoque Overlay",
+        default=9,
+        validators=[MinValueValidator(1), MaxValueValidator(20)],
+        help_text="Cantidad de desenfoque del glow (1-20). Menor valor = más rápido."
+    )
+
+    # --- Campos de Configuración: Interfaz y Notificaciones ---
+    dark_mode = models.BooleanField("Modo Oscuro", default=False)
+    notification_mode = models.CharField(
+        "Modo de Notificación",
+        max_length=10, 
+        choices=[
+            ('visual', 'Visual'), 
+            ('sound', 'Sonora'), 
+            ('both', 'Ambos'), 
+            ('none', 'Ninguno')
+        ], 
+        default='both'
+    )
+    alert_volume = models.FloatField(
+        "Volumen de Alertas",
+        default=0.5, 
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+        help_text="Volumen de las alertas sonoras (0.0-1.0)."
+    )
+    notify_inactive_tab = models.BooleanField(
+        "Notificar en Tab Inactiva",
+        default=True,
+        help_text="Mostrar notificaciones cuando la pestaña no está activa."
+    )
+    email_notifications = models.BooleanField(
+        "Notificaciones por Email",
+        default=True,
+        help_text="Recibir notificaciones por correo electrónico."
+    )
+    
+    # --- Campos de Configuración: Privacidad y Datos ---
+    data_collection_consent = models.BooleanField(
+        "Consentimiento Recolección Datos",
+        default=False,
+        help_text="Autorizar recolección de datos para mejorar el servicio."
+    )
+    anonymous_analytics = models.BooleanField(
+        "Analíticas Anónimas",
+        default=True,
+        help_text="Permitir analíticas anónimas para estadísticas generales."
+    )
+    
+    # --- Campos de Configuración: Localización ---
+    locale = models.CharField(
+        "Idioma/Localización", 
+        max_length=10, 
+        default='es', 
+        blank=True,
+        help_text="Código de idioma (ej: 'es', 'en', 'fr')."
+    )
+    timezone = models.CharField(
+        "Zona horaria", 
+        max_length=50, 
+        default='America/Guayaquil', 
+        blank=True,
+        help_text="Zona horaria del usuario (ej: 'America/Guayaquil')."
+    )
 
     # --- Campos de Estadísticas de Salud Visual ---
     total_monitoring_time = models.PositiveIntegerField(default=0, help_text="Tiempo total monitoreado en minutos")
@@ -215,7 +374,7 @@ class User(AbstractUser, PermissionsMixin):
     longest_streak = models.PositiveIntegerField(default=0)
     last_streak_update = models.DateField(null=True, blank=True)
     exercises_completed = models.PositiveIntegerField(default=0, help_text="Ejercicios oculares completados")
-    breaks_taken = models.PositiveIntegerField(default=0, help_text="Descansos tomados por alertas")
+    # breaks_taken eliminado: era redundante con exercises_completed
     fatigue_episodes = models.PositiveIntegerField(default=0, help_text="Episodios de fatiga detectados")
     email_notifications = models.BooleanField(default=True)
 
@@ -225,6 +384,119 @@ class User(AbstractUser, PermissionsMixin):
 
     def __str__(self):
         return self.get_full_name() or self.username
+
+    def update_monitoring_stats(self):
+        """
+        Actualiza las estadísticas de monitoreo del usuario.
+        Debe llamarse después de completar una sesión.
+        """
+        from apps.monitoring.models import MonitorSession
+        from django.db.models import Sum, Count
+        
+        completed_sessions = MonitorSession.objects.filter(
+            user=self,
+            status='completed'
+        )
+        
+        # Total de sesiones
+        self.total_sessions = completed_sessions.count()
+        
+        # Tiempo total de monitoreo
+        total_duration = completed_sessions.aggregate(
+            total=Sum('total_duration')
+        )['total'] or 0
+        
+        if total_duration == 0:
+            total_duration = completed_sessions.aggregate(
+                total=Sum('duration_seconds')
+            )['total'] or 0
+        
+        self.total_monitoring_time = int(total_duration / 60) if total_duration else 0
+        
+        self.save(update_fields=['total_sessions', 'total_monitoring_time'])
+    
+    def update_exercise_stats(self):
+        """
+        Actualiza las estadísticas de ejercicios del usuario.
+        """
+        from apps.exercises.models import ExerciseSession
+        
+        self.exercises_completed = ExerciseSession.objects.filter(
+            user=self,
+            completed=True
+        ).count()
+        
+        self.save(update_fields=['exercises_completed'])
+    
+    def update_fatigue_stats(self):
+        """
+        Actualiza las estadísticas de fatiga del usuario.
+        """
+        from apps.monitoring.models import AlertEvent
+        
+        self.fatigue_episodes = AlertEvent.objects.filter(
+            session__user=self,
+            alert_type='fatigue'
+        ).count()
+        
+        self.save(update_fields=['fatigue_episodes'])
+    
+    def update_streak(self):
+        """
+        Actualiza la racha de días consecutivos del usuario.
+        """
+        from apps.monitoring.models import MonitorSession
+        from django.db.models import Count
+        from datetime import date, timedelta
+        
+        today = date.today()
+        
+        # Si ya se actualizó hoy, no hacer nada
+        if self.last_streak_update and self.last_streak_update >= today:
+            return
+        
+        # Obtener sesiones completadas agrupadas por fecha
+        sessions_by_date = MonitorSession.objects.filter(
+            user=self,
+            status='completed'
+        ).values('start_time__date').annotate(
+            count=Count('id')
+        ).order_by('-start_time__date')
+        
+        if not sessions_by_date.exists():
+            self.current_streak = 0
+            self.last_streak_update = today
+            self.save(update_fields=['current_streak', 'last_streak_update'])
+            return
+        
+        dates_with_sessions = [item['start_time__date'] for item in sessions_by_date]
+        
+        # Calcular racha actual
+        current_streak = 0
+        check_date = today
+        
+        # Revisar si hay sesión hoy o ayer
+        if today not in dates_with_sessions and (today - timedelta(days=1)) not in dates_with_sessions:
+            current_streak = 0
+        else:
+            for session_date in dates_with_sessions:
+                if session_date == check_date:
+                    current_streak += 1
+                    check_date = check_date - timedelta(days=1)
+                elif session_date == check_date - timedelta(days=1):
+                    current_streak += 1
+                    check_date = session_date - timedelta(days=1)
+                else:
+                    break
+        
+        self.current_streak = current_streak
+        
+        # Actualizar racha más larga
+        if current_streak > self.longest_streak:
+            self.longest_streak = current_streak
+        
+        self.last_streak_update = today
+        self.save(update_fields=['current_streak', 'longest_streak', 'last_streak_update'])
 
 
 # =========================
