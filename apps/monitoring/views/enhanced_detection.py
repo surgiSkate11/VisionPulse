@@ -16,15 +16,12 @@ import os
 import cv2
 import numpy as np
 
-# Importar modelos especializados (opcionales)
+# Importar modelos especializados 
 try:
     from l2cs import Pipeline as GazePipeline  # type: ignore
     GAZE_AVAILABLE = True
 except Exception:
     GAZE_AVAILABLE = False
-    logging.warning("[ENHANCED] L2CS no disponible. Usando método básico de gaze.")
-
-try:
     from ultralytics import YOLO  # type: ignore
     YOLO_AVAILABLE = True
 except Exception:
@@ -118,7 +115,7 @@ class EnhancedYawnDetector:
             mouth_points = [61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291,
                             146, 91, 181, 84, 17, 314, 405, 321, 375]
             coords = np.array([
-                [int(landmarks.landmark[i].x * w), int(landmarks.landmark[i].y * h)]
+                [int(landmarks.landmark[i].x """ * """ w), int(landmarks.landmark[i].y * h)]
                 for i in mouth_points
             ])
             x_min, y_min = coords.min(axis=0)

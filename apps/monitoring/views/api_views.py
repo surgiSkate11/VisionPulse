@@ -3,7 +3,46 @@ API Views - Endpoints de la API para monitoreo
 Este módulo contiene todas las vistas de API (JSON responses) para el sistema de monitoreo
 """
 
+from django.http import JsonResponse, StreamingHttpResponse
 import logging
+import numpy as np
+# Safe serialization helper
+def safe_serialize_response(data: dict) -> JsonResponse:
+    """
+    Serializa una respuesta de forma segura, convirtiendo tipos no serializables.
+    """
+    def convert_value(obj):
+        if obj is None:
+            return None
+        if isinstance(obj, (np.integer, np.int64, np.int32, np.int16, np.int8)):
+            return int(obj)
+        if isinstance(obj, (np.floating, np.float64, np.float32, np.float16)):
+            return float(obj)
+        if isinstance(obj, (np.bool_, bool)):
+            return bool(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        if isinstance(obj, (int, float, str, type(None))):
+            return obj
+        if isinstance(obj, dict):
+            return {k: convert_value(v) for k, v in obj.items()}
+            from django.http import JsonResponse, StreamingHttpResponse
+        if isinstance(obj, (list, tuple)):
+            return [convert_value(item) for item in obj]
+        try:
+            return float(obj)
+        except (ValueError, TypeError):
+            return str(obj)
+    try:
+        serializable_data = convert_value(data)
+        return JsonResponse(serializable_data, safe=False)
+    except Exception as e:
+        logging.error(f"[API] Error serializando respuesta: {e}")
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error de serialización: {str(e)}',
+            'original_status': data.get('status', 'unknown')
+        }, status=500)
 import time
 import json
 
@@ -131,24 +170,29 @@ def stop_session(request):
 @require_http_methods(["POST"])
 def pause_monitoring(request):
     """Pausa la sesión actual"""
-    success, message, data = controller.pause_session()
-    
-    if not success:
+    try:
+        success, message, data = controller.pause_session()
+        if not success:
+            return JsonResponse({
+                'status': 'error',
+                'message': message
+            }, status=400)
+        response_data = {
+            'status': 'success',
+            'message': str(message),
+            'total_blinks': int(data.get('blink_count', 0)),
+            'blink_count': int(data.get('blink_count', 0)),
+            'is_paused': bool(data.get('is_paused', True)),
+            'session_id': data.get('session_id'),
+            'timestamp': str(data.get('timestamp', ''))
+        }
+        return safe_serialize_response(response_data)
+    except Exception as e:
+        logging.exception("[API] Error en pause_monitoring")
         return JsonResponse({
             'status': 'error',
-            'message': message
-        }, status=400)
-    
-    response_data = {
-        'status': 'success',
-        'message': message,
-        'total_blinks': data.get('blink_count', 0),  # Garantizar ambos campos
-        'blink_count': data.get('blink_count', 0),   # Para retrocompatibilidad
-        'is_paused': data.get('is_paused', True),    # True porque estamos pausando
-        'session_id': data.get('session_id'),
-        'timestamp': data.get('timestamp')
-    }
-    return JsonResponse(response_data)
+            'message': f'Error al pausar: {str(e)}'
+        }, status=500)
 
 
 @login_required
@@ -156,48 +200,110 @@ def pause_monitoring(request):
 @require_http_methods(["POST"])
 def resume_monitoring(request):
     """Reanuda la sesión actual"""
-    success, message, data = controller.resume_session()
-    
-    if not success:
+    try:
+        success, message, data = controller.resume_session()
+        if not success:
+            return JsonResponse({
+                'status': 'error',
+                'message': message
+            }, status=400)
+        response_data = {
+            'status': 'success',
+            'message': str(message),
+            'total_blinks': int(data.get('blink_count', 0)),
+            'blink_count': int(data.get('blink_count', 0)),
+            'is_paused': bool(data.get('is_paused', False)),
+            'session_id': data.get('session_id'),
+            'timestamp': str(data.get('timestamp', ''))
+        }
+        return safe_serialize_response(response_data)
+    except Exception as e:
+        logging.exception("[API] Error en resume_monitoring")
         return JsonResponse({
             'status': 'error',
-            'message': message
-        }, status=400)
-    
-    response_data = {
-        'status': 'success',
-        'message': message,
-        'total_blinks': data.get('blink_count', 0),  # Garantizar ambos campos
-        'blink_count': data.get('blink_count', 0),   # Para retrocompatibilidad
-        'is_paused': data.get('is_paused', False),   # False porque estamos reanudando
-        'session_id': data.get('session_id'),
-        'timestamp': data.get('timestamp')
-    }
-    return JsonResponse(response_data)
+            'message': f'Error al reanudar: {str(e)}'
+        }, status=500)
 
 
 @login_required
 def session_metrics(request):
     """Retorna las métricas actuales de la sesión"""
-    return JsonResponse(controller.get_metrics())
+    try:
+        metrics_data = controller.get_metrics()
+        if not isinstance(metrics_data, dict):
+            logging.error(f"[API] get_metrics() retornó tipo inválido: {type(metrics_data)}")
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Error interno: formato de métricas inválido',
+                'metrics': {},
+                'is_paused': False,
+                'alerts': []
+            }, status=500)
+        return safe_serialize_response(metrics_data)
+    except Exception as e:
+        logging.exception("[API] Error inesperado en session_metrics")
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error obteniendo métricas: {str(e)}',
+            'metrics': {
+                'ear': 0.0,
+                'focus': 'Error',
+                'faces': 0,
+                'eyes_detected': False,
+                'total_blinks': 0
+            },
+            'is_paused': False,
+            'alerts': []
+        }, status=500)
 
 
 @login_required
 def camera_status(request):
     """Verifica el estado de la cámara y devuelve información de diagnóstico"""
     
-    # Verificar si camera_manager está inicializado
-    if not controller.camera_manager:
-        return JsonResponse({
-            'camera_running': False,
-            'video_initialized': False,
-            'video_opened': False,
-            'session_active': False,
-            'is_paused': False,
-            'error_count': 0,
-            'can_read_frames': False,
-            'message': 'CameraManager no inicializado. Inicia una sesión primero.'
+    try:
+        if not controller.camera_manager:
+            return safe_serialize_response({
+                'camera_running': False,
+                'video_initialized': False,
+                'video_opened': False,
+                'session_active': False,
+                'is_paused': False,
+                'error_count': 0,
+                'can_read_frames': False,
+                'message': 'CameraManager no inicializado. Inicia una sesión primero.'
+            })
+
+        status = {
+            'camera_running': bool(controller.camera_manager.is_running),
+            'video_initialized': controller.camera_manager.video is not None,
+            'video_opened': bool(controller.camera_manager.video.isOpened() if controller.camera_manager.video else False),
+            'session_active': controller.camera_manager.session_id is not None,
+            'is_paused': bool(controller.camera_manager.is_paused),
+            'error_count': int(controller.camera_manager.error_count),
+        }
+
+        try:
+            if controller.camera_manager.video:
+                frame_test = controller.camera_manager.video.read()[0]
+                status['can_read_frames'] = bool(frame_test)
+            else:
+                status['can_read_frames'] = False
+        except Exception as e:
+            status['can_read_frames'] = False
+            status['read_error'] = str(e)
+
+        return safe_serialize_response({
+            'status': 'success',
+            'camera_status': status,
+            'message': 'Estado de la cámara obtenido correctamente'
         })
+    except Exception as e:
+        logging.exception("[API] Error en camera_status")
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error obteniendo estado: {str(e)}'
+        }, status=500)
     
     status = {
         'camera_running': controller.camera_manager.is_running,

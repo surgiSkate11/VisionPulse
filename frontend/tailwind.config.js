@@ -75,7 +75,9 @@ module.exports = {
           100: '#FFF9C2',
           300: '#f0c76c',
           400: '#f7d774',
-          600: '#e6b800',
+        },
+        peach: {
+          75: '#faeee1', 
         },
         green: {
           100: '#E6F9D5',

@@ -1,3 +1,22 @@
+import numpy as np
+
+class CameraManager:
+    # ...existing code...
+    def validate_frame_dimensions(self, frame: np.ndarray) -> bool:
+        """
+        Valida que el frame tenga dimensiones válidas antes de procesar.
+        """
+        if frame is None:
+            logging.error("[CAMERA] Frame es None")
+            return False
+        if not hasattr(frame, 'shape') or len(frame.shape) < 2:
+            logging.error(f"[CAMERA] Frame sin shape válido: {getattr(frame, 'shape', None)}")
+            return False
+        h, w = frame.shape[:2]
+        if h < 10 or w < 10:
+            logging.error(f"[CAMERA] Dimensiones inválidas: h={h}, w={w}")
+            return False
+        return True
 # apps/monitoring/views/camera.py
 """
 Módulo para la gestión de cámara y detección de parpadeos.
@@ -6,6 +25,7 @@ Contiene las clases BlinkDetector y CameraManager.
 
 import cv2
 import mediapipe as mp
+import numpy as np
 import threading
 import time
 import numpy as np
@@ -16,7 +36,9 @@ import logging
 import os
 from django.utils import timezone
 
+
 from ..models import MonitorSession, AlertEvent
+from .improved_detector import UnifiedDetectionSystem
 
 # Configuración de logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Reduce TF logging
@@ -235,53 +257,48 @@ class BlinkDetector:
             chin = face_landmarks[HeadPosePoints.CHIN]
             left_eye = face_landmarks[HeadPosePoints.LEFT_EYE_CORNER]
             right_eye = face_landmarks[HeadPosePoints.RIGHT_EYE_CORNER]
-            
+
             # Convertir a coordenadas de píxeles
             h, w = frame_shape[:2]
-            
-            # Puntos 2D
+
             nose_tip_2d = (int(nose_tip.x * w), int(nose_tip.y * h))
             chin_2d = (int(chin.x * w), int(chin.y * h))
             left_eye_2d = (int(left_eye.x * w), int(left_eye.y * h))
             right_eye_2d = (int(right_eye.x * w), int(right_eye.y * h))
-            
+
             # Estimar yaw (izquierda/derecha) basado en la posición relativa de la nariz
             eye_center_x = (left_eye_2d[0] + right_eye_2d[0]) / 2
             face_center_x = w / 2
             nose_offset_x = nose_tip_2d[0] - eye_center_x
             face_width = abs(right_eye_2d[0] - left_eye_2d[0])
-            
+
             # Normalizar y convertir a grados aproximados (-45 a 45 grados)
             yaw = (nose_offset_x / face_width) * 90 if face_width > 0 else 0
             yaw = max(-45, min(45, yaw))  # Limitar rango
-            
+
             # Estimar pitch (arriba/abajo) basado en la posición vertical de la nariz vs ojos
             eye_center_y = (left_eye_2d[1] + right_eye_2d[1]) / 2
             nose_offset_y = nose_tip_2d[1] - eye_center_y
             face_height = abs(chin_2d[1] - eye_center_y)
-            
+
             # Normalizar y convertir a grados aproximados (-30 a 30 grados)
             pitch = -(nose_offset_y / face_height) * 60 if face_height > 0 else 0
             pitch = max(-30, min(30, pitch))  # Limitar rango
-            
+
             # --- CÁLCULO DE ROLL ---
             # Estimar roll (inclinación) basado en la diferencia de altura de los ojos
-            try:
-                delta_y = right_eye_2d[1] - left_eye_2d[1]
-                delta_x = right_eye_2d[0] - left_eye_2d[0]
-                
-                if delta_x != 0:
-                    roll = float(np.degrees(np.arctan(delta_y / delta_x)))
-                else:
-                    roll = 0.0
-                
-                # Limitar rango razonable
-                roll = float(max(-45, min(45, roll)))
-            except Exception:
-                roll = 0.0  # Fallback
-            
-            return yaw, pitch, roll
-            
+            delta_y = right_eye_2d[1] - left_eye_2d[1]
+            delta_x = right_eye_2d[0] - left_eye_2d[0]
+
+            if delta_x != 0:
+                roll = float(np.degrees(np.arctan(delta_y / delta_x)))
+            else:
+                roll = 0.0
+
+            # Limitar rango razonable
+            roll = max(-45, min(45, roll))
+
+            return float(yaw), float(pitch), float(roll)
         except Exception as e:
             print(f"[ERROR] Error estimando pose de cabeza: {str(e)}")
             return 0.0, 0.0, 0.0
@@ -637,9 +654,10 @@ class CameraManager:
         self.effective_config = effective_config or {}
         
         # Inicializar detector con configuración del usuario
-        self.blink_detector = BlinkDetector(user_config=user_config)
-        
+        # 🆕 Usar el sistema unificado
+        self.detection_system = UnifiedDetectionSystem(user_config=user_config)
         self.blink_counter = 0
+        self.yawn_counter = 0
         self.last_frame_time = 0
         
         # Usar intervalo de muestreo del usuario si está disponible
@@ -694,6 +712,21 @@ class CameraManager:
         except Exception as e:
             logging.warning(f"[CAMERA] Error al inicializar enhanced models (global): {e}")
 
+        def validate_frame_dimensions(self, frame: np.ndarray) -> bool:
+            """
+            Valida que el frame tenga dimensiones válidas antes de procesar.
+            """
+            if frame is None:
+                logging.error("[CAMERA] Frame es None")
+                return False
+            if not hasattr(frame, 'shape') or len(frame.shape) < 2:
+                logging.error(f"[CAMERA] Frame sin shape válido: {getattr(frame, 'shape', None)}")
+                return False
+            h, w = frame.shape[:2]
+            if h < 10 or w < 10:
+                logging.error(f"[CAMERA] Dimensiones inválidas: h={h}, w={w}")
+                return False
+            return True
         
     def start_camera(self) -> bool:
         """Inicia la cámara con reintentos y configuración optimizada (no bloqueante)"""
@@ -881,100 +914,45 @@ class CameraManager:
             ret, frame = self.video.read()
             if not ret or frame is None:
                 self.error_count += 1
-                if self.error_count >= self.max_errors:
-                    self.handle_camera_error()
-                logging.warning(f"[CAMERA] Error al leer frame ({self.error_count}/{self.max_errors})")
                 return None, {'error': 'frame_read_error'}
 
-            # Ajuste adaptativo de calidad según FPS observado
-            instantaneous_fps = 1.0 / (current_time - self.last_frame_time) if self.last_frame_time > 0 else self.target_fps
-            self._adjust_processing_quality(instantaneous_fps)
+            # Validar dimensiones del frame antes de procesar
+            if not self.validate_frame_dimensions(frame):
+                self.error_count += 1
+                return None, {'error': 'invalid_frame_dimensions'}
 
-            # Procesar frame y detectar parpadeo
-            is_blink, metrics = self.blink_detector.detect_blink(frame)
+            # 🆕 Procesar con sistema unificado
+            metrics = self.detection_system.process_frame(frame)
 
-            # Integrar modelos mejorados (no invasivo)
-            if self.multi_detector is not None:
-                try:
-                    enhanced = self.multi_detector.analyze_frame(frame)
-                    # Exponer métricas adicionales
-                    metrics['gaze_yaw'] = enhanced.get('gaze_yaw')
-                    metrics['gaze_pitch'] = enhanced.get('gaze_pitch')
-                    metrics['yawn_confidence'] = enhanced.get('yawn_confidence', 0.0)
-                    metrics['is_using_phone'] = enhanced.get('is_using_phone', False)
-                    metrics['phone_confidence'] = enhanced.get('phone_confidence', 0.0)
+            # Actualizar contadores
+            if metrics.get('blink_detected', False):
+                self.blink_counter += 1
 
-                    # Ajustar foco si gaze indica claramente atención
-                    if enhanced.get('is_focused_gaze') is True:
-                        metrics['focus'] = 'Atento'
-                    elif enhanced.get('is_using_phone'):
-                        metrics['focus'] = 'Uso de celular'
+            # Sincronizar contador de bostezos desde el detector
+            self.yawn_counter = self.detection_system.yawn_detector.yawn_counter
 
-                    # Señalizar bostezo fuerte por CNN (sin alterar contador aún)
-                    if enhanced.get('is_yawning_cnn') and metrics.get('mar', 0.0) < 0.5:
-                        metrics['is_yawning'] = True
-                except Exception as e:
-                    logging.debug(f"[CAMERA] Enhanced integration skipped: {e}")
-
-            # Actualizar contadores de rendimiento
-            self.frames_processed += 1
-            if metrics.get('eyes_detected', False):
-                self.valid_detections += 1
-
-            # Verificar si se debe realizar análisis profundo
-            should_analyze = self.should_perform_analysis()
+            # Agregar métricas adicionales y propagar eyes_detected
+            metrics.update({
+                'total_blinks': self.blink_counter,
+                'total_yawns': self.yawn_counter,
+                'yawn_count': self.yawn_counter,
+                'fps': 1.0 / (current_time - self.last_frame_time) if self.last_frame_time > 0 else 0,
+                'error_count': self.error_count,
+                'session_id': self.session_id,
+                'eyes_detected': metrics.get('eyes_detected', False)
+            })
 
             # Actualizar métricas con thread safety
             with self._metrics_lock:
-                detection_rate = (self.valid_detections / self.frames_processed * 100.0) if self.frames_processed > 0 else 0.0
-                self.latest_metrics = {
-                    **metrics,
-                    'fps': 1.0 / (current_time - self.last_frame_time) if self.last_frame_time > 0 else 0,
-                    'error_count': self.error_count,
-                    'needs_deep_analysis': should_analyze,
-                    'detection_rate': detection_rate,
-                    # Sincronizar explícitamente el contador de bostezos con el detector
-                    'yawn_count': self.blink_detector.yawn_counter,
-                    'total_yawns': self.blink_detector.yawn_counter  # Alias para compatibilidad
-                }
-                if logging.getLogger().isEnabledFor(logging.DEBUG):
-                    try:
-                        logging.debug(
-                            f"[YAWN][SYNC] yawn_count={self.blink_detector.yawn_counter}, mar={metrics.get('mar', 0.0):.3f}, is_yawning={metrics.get('is_yawning', False)}"
-                        )
-                    except Exception:
-                        pass
+                self.latest_metrics = metrics
 
-                if is_blink:
-                    self.blink_counter += 1
-                    duration_ms = metrics.get('blink_duration_ms', None)
-                        # self.register_blink(duration_ms)  # Eliminado para optimización
-
-                # 🔥 NUEVO: Detectar y registrar bostezos automáticamente
-                current_yawn_count = int(metrics.get('yawn_count', 0))
-                previous_yawn_count = getattr(self, '_last_yawn_count_registered', 0)
-                
-                if current_yawn_count > previous_yawn_count:
-                    new_yawns = current_yawn_count - previous_yawn_count
-                    for _ in range(new_yawns):
-                        self.register_yawn()
-                    self._last_yawn_count_registered = current_yawn_count
-                    logging.info(f"[YAWN] Registrados {new_yawns} bostezo(s). Total: {current_yawn_count}")
-                
-                # Realizar análisis profundo si corresponde
-                if should_analyze:
-                    self.perform_deep_analysis(metrics)
-
-            self.last_frame_time = current_time
+            self.last_frame_time = time.time()
             self.error_count = 0
 
-            return frame, self.latest_metrics
+            return frame, metrics
 
         except Exception as e:
             logging.error(f"[CAMERA] Error procesando frame: {str(e)}")
-            self.error_count += 1
-            if self.error_count >= self.max_errors:
-                self.handle_camera_error()
             return None, {'error': f'processing_error: {str(e)}'}
 
     def _adjust_processing_quality(self, fps: float):
@@ -990,15 +968,12 @@ class CameraManager:
                 self.blink_detector.processing_scale = 0.7  # 70% resolución
                 # Mantener overlay activado solo si el usuario lo tiene habilitado y no estamos muy lentos
                 self.blink_detector.overlay_runtime_enabled = True
-            else:
-                # FPS saludable: máxima precisión visual
                 self.blink_detector.processing_scale = 1.0
                 self.blink_detector.overlay_runtime_enabled = True
         except Exception as e:
             logging.debug(f"[ADAPT] No se pudo ajustar calidad: {e}")
     
     def handle_camera_error(self):
-        """Maneja errores críticos de la cámara intentando reiniciarla"""
         logging.error("[CAMERA] Error crítico detectado, intentando reiniciar la cámara")
         try:
             if self.video and self.video.isOpened():
@@ -1010,6 +985,7 @@ class CameraManager:
                 logging.info("[CAMERA] Cámara reiniciada exitosamente")
                 self.error_count = 0
             else:
+                    # 🆕 Procesar con sistema unificado
                 logging.error("[CAMERA] No se pudo reiniciar la cámara")
                 self.is_running = False
                 
@@ -1023,7 +999,17 @@ class CameraManager:
             try:
                 metrics = self.latest_metrics.copy()
                 current_time = time.time()
-                
+
+                # Validar que las métricas sean del frame válido
+                if not isinstance(metrics, dict):
+                    logging.error("[METRICS] latest_metrics no es dict")
+                    metrics = {}
+
+                # Validar dimensiones si hay frame
+                if 'frame' in metrics and not self.validate_frame_dimensions(metrics['frame']):
+                    logging.error("[METRICS] Frame inválido en métricas")
+                    metrics = {}
+
                 # Agregar métricas adicionales
                 metrics.update({
                     'total_blinks': self.blink_counter,
@@ -1033,15 +1019,15 @@ class CameraManager:
                     'fps': 1.0 / (current_time - self.last_frame_time) if self.last_frame_time > 0 else 0,
                     'system_time': current_time,
                     'uptime': current_time - self.last_frame_time if self.last_frame_time > 0 else 0,
-                    'yawn_count': self.blink_detector.yawn_counter,  # Contador de bostezos en tiempo real
-                    'total_yawns': self.blink_detector.yawn_counter  # Alias para compatibilidad
+                    'yawn_count': self.yawn_counter,
+                    'total_yawns': self.yawn_counter
                 })
-                
+
                 if self.session_id:
                     metrics['session_id'] = self.session_id
-                    
+
                 return metrics
-                
+
             except Exception as e:
                 logging.error(f"[METRICS] Error al obtener métricas: {str(e)}")
                 return {

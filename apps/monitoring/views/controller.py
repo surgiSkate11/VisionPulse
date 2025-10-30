@@ -4,6 +4,7 @@ Este módulo maneja el ciclo de vida completo de las sesiones de monitoreo
 """
 
 import logging
+import numpy as np
 import threading
 import time
 import json
@@ -198,11 +199,9 @@ class MonitoringController:
             'pause_duration': 0,
             'alert_count': 0
         }
-        # self.active_alerts.clear()  # Si ya no existe, eliminar
-        # self.last_alert_time = 0     # Si ya no existe, eliminar
         self.metrics_cache.clear()
         self.metrics_cache_time = 0
-        self.alert_states.clear() # Limpiar estados de alerta
+        self.alert_states.clear() # Limpio los estados de alerta
 
         # Resetear acumuladores
         self.ear_samples = []
@@ -295,7 +294,7 @@ class MonitoringController:
                             avg_focus = float(max(0.0, min(100.0, avg_focus)))
 
                         # 🔥 NUEVO: Calcular métricas avanzadas del último snapshot
-                        yawn_count = int(self.camera_manager.blink_detector.yawn_counter)
+                        yawn_count = int(self.camera_manager.detection_system.yawn_detector.yawn_counter)
                         avg_mar = final_metrics.get('mar', 0.0)
 
                         # Si tenemos muestras acumuladas de head pose, promediarlas; si no, usar snapshot final
@@ -362,7 +361,7 @@ class MonitoringController:
                             'total_alerts': int(self.session_data['alert_count']),
                             'ear_samples_count': len(self.ear_samples),
                             'focus_samples_count': len(self.focus_samples),
-                            'yawn_count': int(self.camera_manager.blink_detector.yawn_counter),
+                            'yawn_count': int(self.camera_manager.detection_system.yawn_detector.yawn_counter),
                             # Convertir final_metrics a tipos serializables
                             'final_snapshot': {
                                 k: (float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else v)
@@ -384,7 +383,7 @@ class MonitoringController:
                             'pause_duration': float(pause_duration),
                             'total_blinks': int(self.camera_manager.blink_counter),
                             'total_alerts': int(self.session_data['alert_count']),
-                            'total_yawns': int(self.camera_manager.blink_detector.yawn_counter),
+                            'total_yawns': int(self.camera_manager.detection_system.yawn_detector.yawn_counter),
                             'avg_ear': float(avg_ear) if avg_ear is not None else 0.0,
                             'focus_percent': float(avg_focus) if avg_focus is not None else 0.0,
                             'avg_blink_rate': float(self.camera_manager.blink_counter / effective_duration) if effective_duration > 0 else 0.0,
@@ -394,7 +393,7 @@ class MonitoringController:
                         # FIX: Formateo seguro de logs
                         ear_str = f"{avg_ear:.3f}" if avg_ear is not None else "N/A"
                         focus_str = f"{avg_focus:.1f}" if avg_focus is not None else "N/A"
-                        yawn_str = str(self.camera_manager.blink_detector.yawn_counter)
+                        yawn_str = str(self.camera_manager.detection_system.yawn_detector.yawn_counter)
 
                         logging.info(f"[SESSION] Sesión {session.id} finalizada correctamente")
                         logging.info(f"[SESSION] Métricas: EAR={ear_str}, Focus={focus_str}%, Bostezos={yawn_str}")
@@ -675,7 +674,6 @@ class MonitoringController:
                     id=self.camera_manager.session_id
                 )
                 user = session.user
-
                 return {
                     'fatigue_ear_threshold': user.ear_threshold * user.fatigue_threshold,
                     'low_blink_rate_threshold': user.low_blink_rate_threshold,
@@ -692,9 +690,8 @@ class MonitoringController:
             'high_blink_rate_threshold': 35,
             'low_light_threshold': 70
         }
-
     def _save_alerts_to_db(self, alerts: List[Dict[str, Any]]):
-        """Guarda alertas en la base de datos de forma segura"""
+        """Guardar alertas en la base de datos """
         if not self.camera_manager or not self.camera_manager.session_id:
             return
 
@@ -724,240 +721,244 @@ class MonitoringController:
             logging.error(f"[ALERT] Error al guardar alertas: {str(e)}")
 
     def check_alertas(self, metrics: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        CORREGIDO: Validación estricta + cooldown selectivo por tipo de alerta
-        """
-        current_time = time.time()
-        new_alerts = []
+            current_time = time.time()
+            new_alerts = []
 
-        # Recordatorio de descanso
-        break_reminder = self.check_break_reminder()
-        if break_reminder:
-            new_alerts.append(break_reminder)
+            # Definir cooldown_active
+            cooldown_seconds = 5.0  
+            last_alert_time = getattr(self, 'last_alert_time', 0)
+            cooldown_active = (current_time - last_alert_time) < cooldown_seconds if last_alert_time else False
 
-        faces_count = metrics.get('faces', 0)
-        eyes_detected = metrics.get('eyes_detected', False)
+            # Recordatorio de descanso
+            break_reminder = self.check_break_reminder()
+            if break_reminder:
+                new_alerts.append(break_reminder)
 
-        # Estado de ausencia
-        if faces_count == 0:
-            if not self.alert_states.get(AlertEvent.ALERT_DRIVER_ABSENT, False):
-                new_alerts.append({
-                    'type': AlertEvent.ALERT_DRIVER_ABSENT,
-                    'level': 'high',
-                    'message': 'No se detecta ninguna persona frente a la cámara',
-                    'timestamp': current_time,
-                    'metadata': {'faces': faces_count}
-                })
-                self.alert_states[AlertEvent.ALERT_DRIVER_ABSENT] = True
-            self.alert_states[AlertEvent.ALERT_MULTIPLE_PEOPLE] = False
-            self.alert_states[AlertEvent.ALERT_DISTRACT] = False
-            self.alert_states[AlertEvent.ALERT_PHONE_USE] = False
-            self._save_alerts_to_db(new_alerts)
-            return new_alerts
-        else:
-            self.alert_states[AlertEvent.ALERT_DRIVER_ABSENT] = False
+            faces_count = metrics.get('faces', 0)
+            eyes_detected = metrics.get('eyes_detected', False)
+            # ✅ DEBUGGING: Log para verificar el estado real
+            if faces_count == 1:
+                avg_ear = metrics.get('avg_ear', 0)
+                logging.debug(f"[EYES] Faces=1, Eyes={eyes_detected}, EAR={avg_ear:.3f}")
 
-        # Estado de múltiples personas
-        if faces_count > 1:
-            if not self.alert_states.get(AlertEvent.ALERT_MULTIPLE_PEOPLE, False):
-                new_alerts.append({
-                    'type': AlertEvent.ALERT_MULTIPLE_PEOPLE,
-                    'level': 'high',
-                    'message': f'Se detectaron {faces_count} personas. Solo debe haber una',
-                    'timestamp': current_time,
-                    'metadata': {'faces': faces_count}
-                })
-                self.alert_states[AlertEvent.ALERT_MULTIPLE_PEOPLE] = True
-            self._save_alerts_to_db(new_alerts)
-            return new_alerts
-        else:
-            self.alert_states[AlertEvent.ALERT_MULTIPLE_PEOPLE] = False
-
-        # Estado de cámara obstruida
-        if faces_count > 0 and not eyes_detected:
-            if not self.alert_states.get(AlertEvent.ALERT_CAMERA_OCCLUDED, False):
-                new_alerts.append({
-                    'type': AlertEvent.ALERT_CAMERA_OCCLUDED,
-                    'level': 'medium',
-                    'message': 'Cámara parcialmente obstruida. Se detecta rostro pero no los ojos',
-                    'timestamp': current_time,
-                    'metadata': {'faces': faces_count, 'eyes_detected': False}
-                })
-                self.alert_states[AlertEvent.ALERT_CAMERA_OCCLUDED] = True
-            self._save_alerts_to_db(new_alerts)
-            return new_alerts
-        else:
-            self.alert_states[AlertEvent.ALERT_CAMERA_OCCLUDED] = False
-
-        # === A PARTIR DE AQUÍ: Solo si hay 1 cara Y ojos detectados ===
-
-        try:
-            # Obtener configuración del usuario
-            user_config = self._get_user_config()
-
-            # === ALERTAS BASADAS EN EAR (con cooldown) ===
-            avg_ear = metrics.get('avg_ear', 1.0)
-
-            if 0 < avg_ear <= 1.0 and not cooldown_active:
-                # Fatiga visual
-                if avg_ear < user_config['fatigue_ear_threshold']:
+            # Estado de ausencia
+            if faces_count == 0:
+                if not self.alert_states.get(AlertEvent.ALERT_DRIVER_ABSENT, False):
                     new_alerts.append({
-                        'type': AlertEvent.ALERT_FATIGUE,
+                        'type': AlertEvent.ALERT_DRIVER_ABSENT,
                         'level': 'high',
-                        'message': f'Fatiga visual detectada (EAR: {avg_ear:.3f})',
+                        'message': 'No se detecta ninguna persona frente a la cámara',
                         'timestamp': current_time,
-                        'metadata': {'ear': avg_ear, 'threshold': user_config['fatigue_ear_threshold']}
+                        'metadata': {'faces': faces_count}
                     })
+                    self.alert_states[AlertEvent.ALERT_DRIVER_ABSENT] = True
+                self.alert_states[AlertEvent.ALERT_MULTIPLE_PEOPLE] = False
+                self.alert_states[AlertEvent.ALERT_DISTRACT] = False
+                self.alert_states[AlertEvent.ALERT_PHONE_USE] = False
+                self._save_alerts_to_db(new_alerts)
+                return new_alerts
+            else:
+                self.alert_states[AlertEvent.ALERT_DRIVER_ABSENT] = False
 
-                # Microsueño
-                if metrics.get('is_microsleep', False):
-                    duration = metrics.get('microsleep_duration', 0)
+            # Estado de múltiples personas
+            if faces_count > 1:
+                if not self.alert_states.get(AlertEvent.ALERT_MULTIPLE_PEOPLE, False):
                     new_alerts.append({
-                        'type': AlertEvent.ALERT_MICROSLEEP,
-                        'level': 'critical',
-                        'message': f'¡Microsueño detectado! Ojos cerrados {duration:.1f}s',
+                        'type': AlertEvent.ALERT_MULTIPLE_PEOPLE,
+                        'level': 'high',
+                        'message': f'Se detectaron {faces_count} personas. Solo debe haber una',
                         'timestamp': current_time,
-                        'metadata': {'duration_seconds': duration}
+                        'metadata': {'faces': faces_count}
                     })
+                    self.alert_states[AlertEvent.ALERT_MULTIPLE_PEOPLE] = True
+                self._save_alerts_to_db(new_alerts)
+                return new_alerts
+            else:
+                self.alert_states[AlertEvent.ALERT_MULTIPLE_PEOPLE] = False
 
-            # === ALERTAS BASADAS EN HEAD POSE (con cooldown) ===
-            focus_state = metrics.get('focus', 'No detectado')
-            head_yaw = metrics.get('head_yaw', 0.0)
-            head_pitch = metrics.get('head_pitch', 0.0)
-
-            if abs(head_yaw) < 90 and abs(head_pitch) < 90 and not cooldown_active:
-                # Lista de estados de distracción REALES
-                distracted_states = ['Mirando a los lados', 'Mirando arriba', 'Distraído']
-                
-                if focus_state in distracted_states:
+            # Estado de cámara obstruida
+            if faces_count > 0 and not eyes_detected:
+                if not self.alert_states.get(AlertEvent.ALERT_CAMERA_OCCLUDED, False):
                     new_alerts.append({
-                        'type': AlertEvent.ALERT_DISTRACT,
+                        'type': AlertEvent.ALERT_CAMERA_OCCLUDED,
                         'level': 'medium',
-                        'message': f'Distracción: {focus_state}',
+                        'message': 'Cámara parcialmente obstruida. Se detecta rostro pero no los ojos',
                         'timestamp': current_time,
-                        'metadata': {'focus_state': focus_state, 'yaw': head_yaw, 'pitch': head_pitch}
+                        'metadata': {'faces': faces_count, 'eyes_detected': False}
+                    })
+                    self.alert_states[AlertEvent.ALERT_CAMERA_OCCLUDED] = True
+                self._save_alerts_to_db(new_alerts)
+                return new_alerts
+            else:
+                self.alert_states[AlertEvent.ALERT_CAMERA_OCCLUDED] = False
+
+            # === A PARTIR DE AQUÍ: Solo si hay 1 cara Y ojos detectados ===
+
+            try:
+                # Obtener configuración del usuario
+                user_config = self._get_user_config()
+
+                # === ALERTAS BASADAS EN EAR (con cooldown) ===
+                avg_ear = metrics.get('avg_ear', 1.0)
+
+                if 0 < avg_ear <= 1.0 and not cooldown_active:
+                    # Fatiga visual
+                    if avg_ear < user_config['fatigue_ear_threshold']:
+                        new_alerts.append({
+                            'type': AlertEvent.ALERT_FATIGUE,
+                            'level': 'high',
+                            'message': f'Fatiga visual detectada (EAR: {avg_ear:.3f})',
+                            'timestamp': current_time,
+                            'metadata': {'ear': avg_ear, 'threshold': user_config['fatigue_ear_threshold']}
+                        })
+
+                    # Microsueño
+                    if metrics.get('is_microsleep', False):
+                        duration = metrics.get('microsleep_duration', 0)
+                        new_alerts.append({
+                            'type': AlertEvent.ALERT_MICROSLEEP,
+                            'level': 'critical',
+                            'message': f'¡Microsueño detectado! Ojos cerrados {duration:.1f}s',
+                            'timestamp': current_time,
+                            'metadata': {'duration_seconds': duration}
+                        })
+
+                # === ALERTAS BASADAS EN HEAD POSE (con cooldown) ===
+                focus_state = metrics.get('focus', 'No detectado')
+                head_yaw = metrics.get('head_yaw', 0.0)
+                head_pitch = metrics.get('head_pitch', 0.0)
+
+                if abs(head_yaw) < 90 and abs(head_pitch) < 90 and not cooldown_active:
+                    # Lista de estados de distracción REALES
+                    distracted_states = ['Mirando a los lados', 'Mirando arriba', 'Distraído']
+                
+                    if focus_state in distracted_states:
+                        new_alerts.append({
+                            'type': AlertEvent.ALERT_DISTRACT,
+                            'level': 'medium',
+                            'message': f'Distracción: {focus_state}',
+                            'timestamp': current_time,
+                            'metadata': {'focus_state': focus_state, 'yaw': head_yaw, 'pitch': head_pitch}
+                        })
+
+                    # Uso de celular (específico y más estricto)
+                    if focus_state == 'Uso de celular' and abs(head_pitch) > 30:
+                        new_alerts.append({
+                            'type': AlertEvent.ALERT_PHONE_USE,
+                            'level': 'high',
+                            'message': 'Posible uso de celular detectado',
+                            'timestamp': current_time,
+                            'metadata': {'yaw': head_yaw, 'pitch': head_pitch}
+                        })
+
+                    # Estabilidad de pose (solo si hay suficientes datos)
+                    head_pose_stability = metrics.get('head_pose_stability', 'insufficient_data')
+
+                    if head_pose_stability == 'rigid':
+                        variance = metrics.get('head_pose_variance', 0)
+                        new_alerts.append({
+                            'type': AlertEvent.ALERT_POSTURAL_RIGIDITY,
+                            'level': 'low',
+                            'message': f'Rigidez postural detectada',
+                            'timestamp': current_time,
+                            'metadata': {'variance': variance}
+                        })
+
+                    elif head_pose_stability == 'agitated':
+                        variance = metrics.get('head_pose_variance', 0)
+                        new_alerts.append({
+                            'type': AlertEvent.ALERT_HEAD_AGITATION,
+                            'level': 'low',
+                            'message': f'Movimiento excesivo de cabeza',
+                            'timestamp': current_time,
+                            'metadata': {'variance': variance}
+                        })
+
+                # === 🔥 ALERTAS DE BOSTEZOS - SIN COOLDOWN ===
+                current_yawn_count = int(metrics.get('total_yawns', 0))
+                is_yawning_now = metrics.get('is_yawning', False)
+
+                # Detectar bostezo activo AHORA
+                if is_yawning_now and current_yawn_count > self.last_yawn_count_seen:
+                    new_yawns = current_yawn_count - self.last_yawn_count_seen
+                    mar = metrics.get('mar', 0.0)
+                    yawn_duration = metrics.get('mouth_open_duration', 0)
+
+                    new_alerts.append({
+                        'type': AlertEvent.ALERT_YAWN,
+                        'level': 'medium',
+                        'message': f'Bostezo detectado ({new_yawns} nuevo(s))',
+                        'timestamp': current_time,
+                        'metadata': {
+                            'mar': mar,
+                            'duration': yawn_duration,
+                            'total_yawns': current_yawn_count,
+                            'new_yawns': new_yawns
+                        }
                     })
 
-                # Uso de celular (específico y más estricto)
-                if focus_state == 'Uso de celular' and abs(head_pitch) > 30:
-                    new_alerts.append({
-                        'type': AlertEvent.ALERT_PHONE_USE,
-                        'level': 'high',
-                        'message': 'Posible uso de celular detectado',
-                        'timestamp': current_time,
-                        'metadata': {'yaw': head_yaw, 'pitch': head_pitch}
-                    })
+                    # Actualizar contador
+                    self.last_yawn_count_seen = current_yawn_count
+                    logging.info(f"[YAWN] Detectados {new_yawns} bostezo(s) nuevo(s). Total: {current_yawn_count}")
 
-                # Estabilidad de pose (solo si hay suficientes datos)
-                head_pose_stability = metrics.get('head_pose_stability', 'insufficient_data')
-
-                if head_pose_stability == 'rigid':
-                    variance = metrics.get('head_pose_variance', 0)
+                # === ALERTAS BASADAS EN BRILLO (con cooldown bajo) ===
+                brightness = metrics.get('brightness', 255)
+                if brightness < user_config['low_light_threshold'] and not cooldown_active:
                     new_alerts.append({
-                        'type': AlertEvent.ALERT_POSTURAL_RIGIDITY,
+                        'type': AlertEvent.ALERT_LOW_LIGHT,
                         'level': 'low',
-                        'message': f'Rigidez postural detectada',
+                        'message': f'Iluminación baja (brillo: {brightness:.0f}/255)',
                         'timestamp': current_time,
-                        'metadata': {'variance': variance}
+                        'metadata': {'brightness': brightness, 'threshold': user_config['low_light_threshold']}
                     })
 
-                elif head_pose_stability == 'agitated':
-                    variance = metrics.get('head_pose_variance', 0)
-                    new_alerts.append({
-                        'type': AlertEvent.ALERT_HEAD_AGITATION,
-                        'level': 'low',
-                        'message': f'Movimiento excesivo de cabeza',
-                        'timestamp': current_time,
-                        'metadata': {'variance': variance}
-                    })
+                # === ALERTAS BASADAS EN TASA DE PARPADEO (con cooldown) ===
+                # Solo después de 2 minutos de sesión
+                if self.session_data.get('effective_duration', 0) > 120 and not cooldown_active:
+                    effective_duration_minutes = self.session_data['effective_duration'] / 60
+                    blink_rate = self.camera_manager.blink_counter / effective_duration_minutes
 
-            # === 🔥 ALERTAS DE BOSTEZOS - SIN COOLDOWN ===
-            current_yawn_count = int(metrics.get('yawn_count', 0))
-            
-            # Solo procesar si hay NUEVOS bostezos desde la última verificación
-            if current_yawn_count > self.last_yawn_count_seen:
-                new_yawns = current_yawn_count - self.last_yawn_count_seen
+                    # Tasa baja
+                    if blink_rate < user_config['low_blink_rate_threshold']:
+                        new_alerts.append({
+                            'type': AlertEvent.ALERT_LOW_BLINK_RATE,
+                            'level': 'low',
+                            'message': f'Tasa de parpadeo baja: {blink_rate:.1f}/min',
+                            'timestamp': current_time,
+                            'metadata': {'blink_rate': blink_rate, 'threshold': user_config['low_blink_rate_threshold']}
+                        })
+
+                    # Tasa alta
+                    elif blink_rate > user_config['high_blink_rate_threshold']:
+                        new_alerts.append({
+                            'type': AlertEvent.ALERT_HIGH_BLINK_RATE,
+                            'level': 'low',
+                            'message': f'Tasa de parpadeo alta: {blink_rate:.1f}/min',
+                            'timestamp': current_time,
+                            'metadata': {'blink_rate': blink_rate, 'threshold': user_config['high_blink_rate_threshold']}
+                        })
+
+                # === GUARDAR ALERTAS Y ACTUALIZAR ESTADO ===
+                non_break_alerts = [a for a in new_alerts if a.get('type') != 'break_reminder']
+
+                if non_break_alerts:
+                    # Solo actualizar cooldown si NO son bostezos
+                    non_yawn_alerts = [a for a in non_break_alerts if a.get('type') != AlertEvent.ALERT_YAWN]
+                    if non_yawn_alerts:
+                        self.last_alert_time = current_time
                 
-                # Crear alerta por los nuevos bostezos
-                mar = metrics.get('mar', 0.0)
-                yawn_duration = metrics.get('yawn_duration', 0)
-                
-                new_alerts.append({
-                    'type': AlertEvent.ALERT_YAWN,
-                    'level': 'medium',
-                    'message': f'Bostezo detectado ({new_yawns} nuevo(s))',
-                    'timestamp': current_time,
-                    'metadata': {
-                        'mar': mar,
-                        'duration': yawn_duration,
-                        'total_yawns': current_yawn_count,
-                        'new_yawns': new_yawns
-                    }
-                })
-                
-                # Actualizar contador
-                self.last_yawn_count_seen = current_yawn_count
-                
-                logging.info(f"[YAWN] Detectados {new_yawns} bostezo(s) nuevo(s). Total: {current_yawn_count}")
+                    self.session_data['alert_count'] += len(non_break_alerts)
+                    self._save_alerts_to_db(non_break_alerts)
 
-            # === ALERTAS BASADAS EN BRILLO (con cooldown bajo) ===
-            brightness = metrics.get('brightness', 255)
-            if brightness < user_config['low_light_threshold'] and not cooldown_active:
-                new_alerts.append({
-                    'type': AlertEvent.ALERT_LOW_LIGHT,
-                    'level': 'low',
-                    'message': f'Iluminación baja (brillo: {brightness:.0f}/255)',
-                    'timestamp': current_time,
-                    'metadata': {'brightness': brightness, 'threshold': user_config['low_light_threshold']}
-                })
+                    # Log para debugging
+                    for alert in non_break_alerts:
+                        logging.info(f"[ALERT] {alert['type']}: {alert['message']}")
 
-            # === ALERTAS BASADAS EN TASA DE PARPADEO (con cooldown) ===
-            # Solo después de 2 minutos de sesión
-            if self.session_data.get('effective_duration', 0) > 120 and not cooldown_active:
-                effective_duration_minutes = self.session_data['effective_duration'] / 60
-                blink_rate = self.camera_manager.blink_counter / effective_duration_minutes
+                return new_alerts
 
-                # Tasa baja
-                if blink_rate < user_config['low_blink_rate_threshold']:
-                    new_alerts.append({
-                        'type': AlertEvent.ALERT_LOW_BLINK_RATE,
-                        'level': 'low',
-                        'message': f'Tasa de parpadeo baja: {blink_rate:.1f}/min',
-                        'timestamp': current_time,
-                        'metadata': {'blink_rate': blink_rate, 'threshold': user_config['low_blink_rate_threshold']}
-                    })
-
-                # Tasa alta
-                elif blink_rate > user_config['high_blink_rate_threshold']:
-                    new_alerts.append({
-                        'type': AlertEvent.ALERT_HIGH_BLINK_RATE,
-                        'level': 'low',
-                        'message': f'Tasa de parpadeo alta: {blink_rate:.1f}/min',
-                        'timestamp': current_time,
-                        'metadata': {'blink_rate': blink_rate, 'threshold': user_config['high_blink_rate_threshold']}
-                    })
-
-            # === GUARDAR ALERTAS Y ACTUALIZAR ESTADO ===
-            non_break_alerts = [a for a in new_alerts if a.get('type') != 'break_reminder']
-
-            if non_break_alerts:
-                # Solo actualizar cooldown si NO son bostezos
-                non_yawn_alerts = [a for a in non_break_alerts if a.get('type') != AlertEvent.ALERT_YAWN]
-                if non_yawn_alerts:
-                    self.last_alert_time = current_time
-                
-                self.session_data['alert_count'] += len(non_break_alerts)
-                self._save_alerts_to_db(non_break_alerts)
-
-                # Log para debugging
-                for alert in non_break_alerts:
-                    logging.info(f"[ALERT] {alert['type']}: {alert['message']}")
-
-            return new_alerts
-
-        except Exception as e:
-            logging.error(f"[ALERT] Error al procesar alertas: {str(e)}")
-            return new_alerts
+            except Exception as e:
+                logging.error(f"[ALERT] Error al procesar alertas: {str(e)}")
+                return new_alerts
     
     def get_metrics(self) -> Dict[str, Any]:
         """Obtiene las métricas actuales con caché y procesamiento de alertas"""
@@ -984,92 +985,82 @@ class MonitoringController:
                     'is_paused': False,
                     'alerts': []
                 }
-            
+
             try:
                 # Obtener métricas básicas
                 base_metrics = self.camera_manager.get_latest_metrics()
-                
+
+                # Sanitizar métricas base
+                base_metrics = self.sanitize_metrics_dict(base_metrics)
+
                 # Acumular muestras SOLO cuando hay detección válida
                 if not self.camera_manager.is_paused:
                     avg_ear = base_metrics.get('avg_ear', 0.0)
                     focus = base_metrics.get('focus', 'No detectado')
                     faces = base_metrics.get('faces', 0)
                     eyes_detected = base_metrics.get('eyes_detected', False)
-                    
-                # IMPORTANTE: Solo acumular si hay cara Y ojos detectados
-                if faces == 1 and eyes_detected and avg_ear > 0:
-                    self.ear_samples.append(avg_ear)
 
-                    # --- Lógica de Enfoque Simplificada ---
-                    # Confiar en el string 'focus' que viene de camera.py
-                    distracted_states = ['Mirando a los lados', 'Mirando arriba', 'Distraído', 'Uso de celular']
-                    neutral_states = ['No detectado', 'Múltiples personas']
+                    # IMPORTANTE: Solo acumular si hay cara Y ojos detectados
+                    if faces == 1 and eyes_detected and avg_ear > 0:
+                        self.ear_samples.append(float(avg_ear))
 
-                    if focus == 'Atento':
-                        self.focus_samples.append(True)
-                        self.metrics_sample_count += 1
-                    elif focus in distracted_states:
-                        self.focus_samples.append(False)
-                        self.metrics_sample_count += 1
-                    # Si es neutral, no añadir muestra
+                        distracted_states = ['Mirando a los lados', 'Mirando arriba', 'Distraído', 'Uso de celular']
+                        neutral_states = ['No detectado', 'Múltiples personas']
 
-                    # Acumular muestras de pose de cabeza si son válidas
-                    head_yaw = base_metrics.get('head_yaw', 0.0)
-                    head_pitch = base_metrics.get('head_pitch', 0.0)
-                    head_roll = base_metrics.get('head_roll')
-                    try:
-                        if isinstance(head_yaw, (int, float)) and abs(head_yaw) <= 90:
-                            self.head_yaw_samples.append(float(head_yaw))
-                        if isinstance(head_pitch, (int, float)) and abs(head_pitch) <= 90:
-                            self.head_pitch_samples.append(float(head_pitch))
-                        if isinstance(head_roll, (int, float)) and abs(head_roll) <= 180:
-                            self.head_roll_samples.append(float(head_roll))
-                    except Exception:
-                        pass
-                    
-                    # Limitar tamaño para evitar crecimiento infinito
-                    if len(self.ear_samples) > 10000:
-                        self.ear_samples = self.ear_samples[-5000:]
-                    if len(self.focus_samples) > 10000:
-                        self.focus_samples = self.focus_samples[-5000:]
-                    if len(self.head_yaw_samples) > 10000:
-                        self.head_yaw_samples = self.head_yaw_samples[-5000:]
-                    if len(self.head_pitch_samples) > 10000:
-                        self.head_pitch_samples = self.head_pitch_samples[-5000:]
-                    if len(self.head_roll_samples) > 10000:
-                        self.head_roll_samples = self.head_roll_samples[-5000:]
+                        if focus == 'Atento':
+                            self.focus_samples.append(True)
+                            self.metrics_sample_count += 1
+                        elif focus in distracted_states:
+                            self.focus_samples.append(False)
+                            self.metrics_sample_count += 1
 
-                    # 🔎 DEBUG: Log cada 30 muestras para auditar acumulación de enfoque
-                    if logging.getLogger().isEnabledFor(logging.DEBUG) and (self.metrics_sample_count % 30 == 0):
+                        # Acumular muestras de pose de cabeza
+                        head_yaw = base_metrics.get('head_yaw', 0.0)
+                        head_pitch = base_metrics.get('head_pitch', 0.0)
+                        head_roll = base_metrics.get('head_roll')
                         try:
-                            focused_count = sum(1 for f in self.focus_samples if f)
-                            focus_percent = (focused_count / len(self.focus_samples)) * 100 if self.focus_samples else 0
-                            logging.debug(
-                                f"[FOCUS] muestras={len(self.focus_samples)}, enfocado={focused_count}, porcentaje={focus_percent:.1f}%, estado_actual={focus}"
-                            )
+                            if isinstance(head_yaw, (int, float)) and abs(float(head_yaw)) <= 90:
+                                self.head_yaw_samples.append(float(head_yaw))
+                            if isinstance(head_pitch, (int, float)) and abs(float(head_pitch)) <= 90:
+                                self.head_pitch_samples.append(float(head_pitch))
+                            if isinstance(head_roll, (int, float)) and abs(float(head_roll)) <= 180:
+                                self.head_roll_samples.append(float(head_roll))
                         except Exception:
                             pass
-                
+
+                        # Limitar tamaño para evitar crecimiento infinito
+                        if len(self.ear_samples) > 10000:
+                            self.ear_samples = self.ear_samples[-5000:]
+                        if len(self.focus_samples) > 10000:
+                            self.focus_samples = self.focus_samples[-5000:]
+                        if len(self.head_yaw_samples) > 10000:
+                            self.head_yaw_samples = self.head_yaw_samples[-5000:]
+                        if len(self.head_pitch_samples) > 10000:
+                            self.head_pitch_samples = self.head_pitch_samples[-5000:]
+                        if len(self.head_roll_samples) > 10000:
+                            self.head_roll_samples = self.head_roll_samples[-5000:]
+
+                # � CONSTRUCCIÓN SEGURA DE raw_metrics
                 raw_metrics = {
-                    'avg_ear': base_metrics.get('avg_ear', 0.0),
-                    'focus': base_metrics.get('focus', 'No detectado'),
-                    'faces': base_metrics.get('faces', 0),
-                    'eyes_detected': base_metrics.get('eyes_detected', False),
-                    'total_blinks': base_metrics.get('total_blinks', 0),  # Consistente
-                    'blink_count': base_metrics.get('total_blinks', 0),   # Alias para retrocompatibilidad
-                    'yawn_count': base_metrics.get('yawn_count', 0),
-                    'total_yawns': base_metrics.get('yawn_count', 0),
-                    'is_yawning': base_metrics.get('is_yawning', False),
-                    'mar': base_metrics.get('mar', 0.0),
-                    # 🔥 Enhanced metrics (si disponibles)
-                    'gaze_yaw': base_metrics.get('gaze_yaw'),
-                    'gaze_pitch': base_metrics.get('gaze_pitch'),
-                    'yawn_confidence': base_metrics.get('yawn_confidence', 0.0),
-                    'is_using_phone': base_metrics.get('is_using_phone', False),
-                    'phone_confidence': base_metrics.get('phone_confidence', 0.0),
+                    'avg_ear': float(base_metrics.get('avg_ear', 0.0)),
+                    'focus': str(base_metrics.get('focus', 'No detectado')),
+                    'faces': int(base_metrics.get('faces', 0)),
+                    'eyes_detected': bool(base_metrics.get('eyes_detected', False)),
+                    'total_blinks': int(base_metrics.get('total_blinks', 0)),
+                    'blink_count': int(base_metrics.get('total_blinks', 0)),
+                    'yawn_count': int(base_metrics.get('yawn_count', 0)),
+                    'total_yawns': int(base_metrics.get('yawn_count', 0)),
+                    'is_yawning': bool(base_metrics.get('is_yawning', False)),
+                    'mar': float(base_metrics.get('mar', 0.0)),
+                    'gaze_yaw': self.safe_json_value(base_metrics.get('gaze_yaw')),
+                    'gaze_pitch': self.safe_json_value(base_metrics.get('gaze_pitch')),
+                    'yawn_confidence': float(base_metrics.get('yawn_confidence', 0.0)),
+                    'is_using_phone': bool(base_metrics.get('is_using_phone', False)),
+                    'phone_confidence': float(base_metrics.get('phone_confidence', 0.0)),
                 }
+
                 is_paused = self.camera_manager.is_paused
-                
+
                 # Verificar estado de la sesión
                 if self.camera_manager.session_id:
                     try:
@@ -1084,40 +1075,37 @@ class MonitoringController:
                                 'is_paused': False,
                                 'alerts': []
                             }
-                            
+
                         # Calcular métricas de sesión
-                        current_time = timezone.now()
-                        session_duration = (current_time - session.start_time).total_seconds()
+                        current_time_tz = timezone.now()
+                        session_duration = (current_time_tz - session.start_time).total_seconds()
                         pause_duration = sum(
                             (p.resume_time - p.pause_time).total_seconds()
                             for p in session.pauses.all()
                             if p.resume_time
                         )
                         effective_duration = session_duration - pause_duration
-                        
-                        # CORREGIDO: Calcular promedios solo con muestras válidas
+
                         current_avg_ear = 0.0
                         current_focus = 0.0
-                        
+
                         if self.ear_samples:
-                            current_avg_ear = sum(self.ear_samples) / len(self.ear_samples)
-                        
+                            current_avg_ear = float(sum(self.ear_samples) / len(self.ear_samples))
+
                         if self.focus_samples:
-                            # Porcentaje de muestras donde is_focused es True
                             focused_count = sum(1 for is_focused in self.focus_samples if is_focused)
-                            current_focus = (focused_count / len(self.focus_samples)) * 100
-                        
-                        # Agregar métricas calculadas
+                            current_focus = float((focused_count / len(self.focus_samples)) * 100)
+
                         raw_metrics.update({
-                            'session_duration': session_duration,
-                            'effective_duration': effective_duration,
-                            'blink_rate': (self.camera_manager.blink_counter / effective_duration) if effective_duration > 0 else 0,
-                            'alert_count': self.session_data['alert_count'],
-                            'current_avg_ear': current_avg_ear,
-                            'current_focus_percent': current_focus,
-                            'samples_collected': len(self.ear_samples)
+                            'session_duration': float(session_duration),
+                            'effective_duration': float(effective_duration),
+                            'blink_rate': float((self.camera_manager.blink_counter / effective_duration) if effective_duration > 0 else 0),
+                            'alert_count': int(self.session_data['alert_count']),
+                            'current_avg_ear': float(current_avg_ear),
+                            'current_focus_percent': float(current_focus),
+                            'samples_collected': int(len(self.ear_samples))
                         })
-                        
+
                     except MonitorSession.DoesNotExist:
                         logging.error(f"[METRICS] Sesión {self.camera_manager.session_id} no encontrada")
                         return {
@@ -1127,36 +1115,46 @@ class MonitoringController:
                             'is_paused': False,
                             'alerts': []
                         }
-                
+
                 # Procesar alertas
                 new_alerts = self.check_alertas(raw_metrics)
-                
+
+                # 🔥 SANITIZAR ALERTAS
+                sanitized_alerts = []
+                for alert in new_alerts:
+                    try:
+                        sanitized_alert = self.sanitize_metrics_dict(alert)
+                        sanitized_alerts.append(sanitized_alert)
+                    except Exception as e:
+                        logging.error(f"[METRICS] Error sanitizando alerta: {e}")
+
                 # Construir respuesta
                 response = {
                     'status': 'success',
                     'metrics': raw_metrics,
-                    'is_paused': is_paused,
-                    'alerts': new_alerts,
-                    'timestamp': time.time()
+                    'is_paused': bool(is_paused),
+                    'alerts': sanitized_alerts,
+                    'timestamp': float(time.time())
                 }
-                
+
                 if is_paused:
                     response['message'] = 'Monitoreo en pausa'
-                elif new_alerts:
-                    response['message'] = new_alerts[0]['message']
+                elif sanitized_alerts:
+                    response['message'] = str(sanitized_alerts[0].get('message', ''))
                 else:
                     response['message'] = 'Monitoreo activo'
-                
+
                 # Actualizar caché
                 self.metrics_cache = response
                 self.metrics_cache_time = time.time()
-                
+
                 return response
-                
+
             except Exception as e:
                 error_msg = f"Error al obtener métricas: {str(e)}"
                 logging.error(f"[METRICS] {error_msg}")
-                
+                logging.exception(e)
+
                 return {
                     'status': 'error',
                     'message': error_msg,

@@ -46,6 +46,20 @@ class MonitorSession(models.Model):
     avg_brightness = models.FloatField(null=True, blank=True, validators=[MinValueValidator(0.0), MaxValueValidator(255.0)])
     detection_rate = models.FloatField(null=True, blank=True, validators=[MinValueValidator(0.0), MaxValueValidator(100.0)], help_text="Porcentaje de frames con detección exitosa")
     
+    # Métricas para detección de celular
+    phone_detection_count = models.PositiveIntegerField(
+        default=0,
+        help_text="Número de veces que se detectó uso de celular"
+    )
+    
+    # Métrica de enfoque temporal
+    avg_focus_score = models.FloatField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0.0), MaxValueValidator(100.0)],
+        help_text="Score promedio de enfoque temporal (%)"
+    )
+    
     # Métricas de enfoque (ambos campos para compatibilidad)
     focus_percent = models.FloatField(null=True, blank=True, validators=[MinValueValidator(0.0), MaxValueValidator(100.0)])
     focus_score = models.FloatField(null=True, blank=True, validators=[MinValueValidator(0.0), MaxValueValidator(100.0)])

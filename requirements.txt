@@ -14,8 +14,8 @@ psycopg2-binary==2.9.9  # Versión binaria precompilada
 pillow==10.1.0
 opencv-python==4.8.1.78
 numpy==1.26.0
-mediapipe==0.10.21  # Última versión compatible con Python 3.12
-# dlib>=19.24.0  # Para detección facial - Requiere CMake, instalar por separado
+mediapipe==0.10.21 
+# dlib==19.24.2
 imutils==0.5.4  # Utilidades de procesamiento de imágenes
 
 # Autenticación y seguridad
@@ -30,6 +30,7 @@ PyJWT==2.8.0
 defusedxml==0.7.1
 
 # Generación de reportes y PDFs
+pytz # Zona horaria
 weasyprint==62.3
 reportlab==4.2.0
 requests==2.32.3
@@ -57,5 +58,8 @@ coverage==7.3.2
 websockets==12.0
 django-eventstream==4.5.1
 
-# Modelos mejorados (opcional)
+# Modelos mejorados 
 ultralytics
+scipy
+tensorflow
+matplotlib

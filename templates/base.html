@@ -5,9 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}VisionPulse{% endblock %}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" type="image/png" href="{% static 'img/dashboard/logo.png' %}" sizes="32x32">
+    <link rel="icon" type="image/png" href="{% static 'img/dashboard/logo.svg' %}" sizes="32x32">
     <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
     {% block extra_css %}{% endblock %}
 
@@ -19,20 +20,20 @@
         }
     </script>
 </head>
-<body class="bg-background-primary text-text-primary font-sans dark:bg-dark-background-primary dark:text-dark-text-primary">
+<body class="bg-peach-75 text-gray-900 font-sans dark:bg-gray-800 dark:text-gray-100 min-h-screen overflow-x-hidden">
     <div class="flex min-h-screen">
         {% if user.is_authenticated %}
-        <header class="fixed top-0 left-0 right-0 h-[72px] bg-surface dark:bg-dark-surface border-b border-border-color dark:border-dark-border-color flex items-center justify-between px-6 z-40 shadow-sm">
+    <header class="fixed top-0 left-0 right-0 h-[80px] bg-surface dark:bg-dark-surface border-b border-border-color dark:border-dark-border-color flex items-center justify-between px-6 z-40 shadow-sm">
             <div class="flex items-center gap-4">
                 <button class="menu-toggle text-text-primary dark:text-dark-text-primary text-2xl lg:hidden" id="menuToggle">
                     <i class="fas fa-bars"></i>
                 </button>
                 <a href="{% url 'security:home' %}" class="flex items-center gap-3">
                     <div class="logo-icon">
-                        <img src="{% static 'img/dashboard/logo.png' %}" alt="VisionPulse Logo" class="h-12 w-12 object-contain" style="background: transparent; box-shadow: none; border: none; outline: none;">
+                        <img src="{% static 'img/dashboard/logo.svg' %}" alt="VisionPulse Logo" class="h-20 w-20 object-contain" style="box-shadow: none; border: none; outline: none;">
                     </div>
                     <div>
-                        <div class="font-bold text-lg text-text-primary dark:text-dark-text-primary">VisionPulse</div>
+                        <div class="font-black text-2xl text-text-primary dark:text-dark-text-primary" style="font-family: 'Nunito', sans-serif; font-weight: 900;">VisionPulse</div>
                         <div class="text-xs text-text-secondary dark:text-dark-text-secondary">Cuidado visual inteligente</div>
                     </div>
                 </a>
@@ -51,12 +52,12 @@
                         <div class="font-semibold text-sm text-text-primary dark:text-dark-text-primary">{{ user.get_full_name|default:user.username }}</div>
                         <div class="text-xs text-text-secondary dark:text-dark-text-secondary">{{ user.email }}</div>
                     </div>
-                    <div class="user-avatar">{{ user.username|first|upper }}</div>
+                    <div class="user-avatar text-2xl w-14 h-14 flex items-center justify-center bg-[#E8DDD0] rounded-full">{{ user.username|first|upper }}</div>
                 </div>
             </div>
         </header>
 
-        <aside id="sidebar" class="fixed top-[72px] left-0 h-[calc(100vh-72px)] bg-surface border-r border-border-color z-30 transition-all duration-300 w-72 dark:bg-dark-surface dark:border-dark-border-color">
+    <aside id="sidebar" class="fixed top-[80px] left-0 h-[calc(100vh-80px)] bg-surface border-r border-border-color z-30 transition-all duration-300 w-72 dark:bg-dark-surface dark:border-dark-border-color">
             <nav class="flex flex-col h-full">
                 <div class="flex-1 p-4 space-y-2 overflow-y-auto">
                     {% for menu_item in sidebar_menu %}
@@ -77,8 +78,8 @@
         </aside>
         {% endif %}
 
-        <main id="mainContent" class="flex-1 pt-[72px] transition-all duration-300 {% if user.is_authenticated %}ml-72{% endif %}">
-            <div class="p-4 md:p-8">
+    <main id="mainContent" class="flex-1 pt-[80px] transition-all duration-300 {% if user.is_authenticated %}ml-72{% endif %}">
+            <div class="pt-4 pb-4 px-4 md:pt-6 md:pb-6 md:px-8">
                 {% block content %}{% endblock %}
             </div>
         </main>

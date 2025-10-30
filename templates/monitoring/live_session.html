@@ -4,96 +4,126 @@
 {% block title %}Monitoreo en Vivo | VisionPulse{% endblock %}
 
 {% block content %}
-<div class="flex flex-col items-center justify-center w-full p-4">
-    <div class="w-full max-w-xl">
-        <h1 class="text-3xl font-semibold text-primary dark:text-dark-primary mb-2 text-center md:text-left">Monitoreo en vivo</h1>
-        <p class="text-secondary dark:text-dark-secondary mb-6 text-center md:text-left">Rutinas guiadas para el cuidado de tu visión</p>
+<!-- Header en esquina superior -->
+<div class="mb-4">
+    <h1 class="text-2xl font-semibold text-primary dark:text-dark-primary mb-1">Monitoreo en vivo</h1>
+    <p class="text-secondary dark:text-dark-secondary text-sm">Rutinas guiadas para el cuidado de tu visión</p>
+</div>
 
-        <div class="bg-surface dark:bg-dark-surface rounded-2xl shadow-lg dark:shadow-xl dark:shadow-black/20 p-6 md:p-8">
-            <h2 class="text-base font-medium text-primary dark:text-dark-primary mb-5">Captura en tiempo real</h2>
+<div class="max-w-2xl mx-auto">
 
-            <div class="flex justify-between flex-wrap gap-2 mb-6">
-                <span class="bg-gray-700 text-white text-xs px-4 py-1.5 rounded-full">
-                    Parpadeos: <span id="metric-blinks" class="text-white font-medium">0</span>
-                </span>
-                <span class="bg-gray-700 text-white text-xs px-4 py-1.5 rounded-full">
-                    Enfoque: <span id="metric-focus" class="text-white font-medium">--</span>
-                </span>
-                <span class="bg-gray-700 text-white text-xs px-4 py-1.5 rounded-full">
-                    Bostezos: <span id="metric-yawns" class="text-white font-medium">0</span>
+    <!-- Contenedor Principal -->
+    <div class="bg-surface dark:bg-dark-surface rounded-2xl shadow-lg dark:shadow-xl dark:shadow-black/20 p-5">
+        <!-- Título -->
+        <h2 class="text-base font-medium text-primary dark:text-dark-primary mb-3">Captura en tiempo real</h2>
+
+        <!-- Métricas superiores -->
+        <div class="grid grid-cols-3 gap-2 mb-3 text-center w-full">
+            <div class="flex justify-start">
+                <span class="bg-gray-700 text-white text-xs px-4 py-1.5 rounded-full mx-auto">
+                    Parpadeos: <span id="metric-blinks" class="font-medium">--</span>
                 </span>
             </div>
-
-            <div id="video-container" class="bg-gray-100 dark:bg-dark-background-primary rounded-2xl flex flex-col items-center justify-center text-center py-12 border border-border-color dark:border-dark-border relative min-h-[300px] md:min-h-[350px] overflow-hidden">
-                <img id="video-feed" src="" class="absolute top-0 left-0 w-full h-full rounded-2xl object-cover hidden transition-opacity duration-300">
-                <div id="placeholder" class="flex flex-col items-center px-4">
-                    <div class="w-20 h-20 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center mb-5 relative border-4 border-gray-400 dark:border-gray-500">
-                        <i class="fas fa-video-slash text-3xl text-gray-500 dark:text-gray-400"></i>
-                    </div>
-                    <p class="text-primary dark:text-dark-primary font-medium text-sm mb-1">Cámara Desactivada</p>
-                    <p class="text-secondary dark:text-dark-secondary text-xs max-w-xs leading-relaxed">Activa la cámara para comenzar a monitorear.</p>
-                </div>
+            <div class="flex justify-center">
+                <span class="bg-gray-700 text-white text-xs px-4 py-1.5 rounded-full mx-auto">
+                    Enfoque: <span id="metric-focus" class="font-medium">--</span>
+                </span>
             </div>
-
-            <!-- Pomodoro timer (solo visible en estados BREAK_REMINDER y ON_BREAK) -->
-            <div id="pomodoro-timer" class="hidden mt-4 items-center justify-center gap-3">
-                <img id="pomodoro-icon" src="" alt="Pomodoro icon" class="w-8 h-8">
-                <span id="pomodoro-time" class="text-lg font-semibold text-primary dark:text-dark-primary">--:--</span>
-            </div>
-
-            <div class="flex justify-center gap-4 mt-6">
-                 <div id="metric-face-status" class="bg-gray-700 text-white text-sm px-5 py-1.5 rounded-full transition-colors duration-300">Rostro: --</div>
-                 <div id="metric-eyes-status" class="bg-gray-700 text-white text-sm px-5 py-1.5 rounded-full transition-colors duration-300">Ojos: --</div>
+            <div class="flex justify-end">
+                <span class="bg-gray-700 text-white text-xs px-4 py-1.5 rounded-full mx-auto">
+                    Bostezos: <span id="metric-yawns" class="font-medium">--</span>
+                </span>
             </div>
         </div>
 
-        <div class="flex gap-4 mt-5">
-            <button id="show-privacy-modal-button" class="flex-1 flex items-center justify-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-3 px-5 rounded-full shadow-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
-                <i class="fas fa-play w-4 h-4"></i>
-                Iniciar
-            </button>
-            <button id="pause-button" disabled class="flex-1 flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-medium py-3 px-5 rounded-full transition-all duration-300 cursor-not-allowed">
-                <i class="fas fa-pause w-4 h-4"></i>
-                Pausar
-            </button>
-            <button id="stop-button" disabled class="flex-1 flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-medium py-3 px-5 rounded-full transition-all duration-300 cursor-not-allowed">
-                <i class="fas fa-stop w-4 h-4"></i>
-                Detener
-            </button>
+        <!-- Contenedor de Video -->
+        <div id="video-container" class="bg-gray-100 dark:bg-dark-background-primary rounded-2xl flex flex-col items-center justify-center text-center border border-border-color dark:border-dark-border relative overflow-hidden" style="height: 340px;">
+            <img id="video-feed" src="" class="absolute top-0 left-0 w-full h-full rounded-2xl object-cover hidden transition-opacity duration-300">
+            <div id="placeholder" class="flex flex-col items-center px-4">
+                <div class="w-20 h-20 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center mb-4 relative border-4 border-gray-400 dark:border-gray-500">
+                    <i class="fas fa-video-slash text-3xl text-gray-500 dark:text-gray-400"></i>
+                </div>
+                <p class="text-primary dark:text-dark-primary font-medium text-sm mb-1">Cámara Desactivada</p>
+                <p class="text-secondary dark:text-dark-secondary text-xs max-w-xs leading-relaxed">Activa la cámara para comenzar a monitorear tu salud visual en tiempo real</p>
+            </div>
+        </div>
+
+        <!-- Timer Pomodoro -->
+        <div id="pomodoro-timer" class="hidden mt-3 items-center justify-center gap-3">
+            <img id="pomodoro-icon" src="" alt="Pomodoro icon" class="w-8 h-8">
+            <span id="pomodoro-time" class="text-lg font-semibold text-primary dark:text-dark-primary">--:--</span>
+        </div>
+
+        <!-- Estados de detección -->
+        <div class="flex justify-center gap-8 mt-3">
+            <div id="metric-face-status" class="bg-gray-700 text-white text-sm px-8 py-1.5 rounded-full transition-colors duration-300">Rostro: No detectado</div>
+            <div id="metric-eyes-status" class="bg-gray-700 text-white text-sm px-8 py-1.5 rounded-full transition-colors duration-300">Ojos: No detectados</div>
         </div>
     </div>
 
-    <div id="privacy-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300 opacity-0">
-        <div id="privacy-modal" class="bg-surface dark:bg-dark-surface max-w-lg w-full rounded-2xl p-6 md:p-8 shadow-2xl relative transform transition-all duration-300 scale-95 opacity-0">
-            <button id="close-modal-button" class="absolute top-4 right-4 text-secondary dark:text-dark-secondary hover:text-primary dark:hover:text-dark-primary text-2xl leading-none">&times;</button>
-            <h1 class="text-xl font-semibold text-primary dark:text-dark-primary mb-1">Aviso de Privacidad</h1>
-            <p class="text-sm text-secondary dark:text-dark-secondary mb-4">Antes de comenzar, revisa estos puntos:</p>
-            <div class="bg-accent-peach/10 dark:bg-dark-accent-peach/5 border border-accent-peach/30 dark:border-dark-accent-peach/20 rounded-lg p-4 mb-5">
-                 <h2 class="text-base font-semibold text-primary dark:text-dark-primary mb-2">Tu Privacidad</h2>
-                 <ul class="list-disc list-inside space-y-1 text-xs text-secondary dark:text-dark-secondary">
-                     <li>La cámara solo se activa con tu consentimiento explícito al iniciar.</li>
-                     <li>No guardamos ni transmitimos video, solo métricas anónimas.</li>
-                     <li>El procesamiento ocurre localmente en tu dispositivo.</li>
-                     <li>Puedes detener el monitoreo en cualquier momento.</li>
-                 </ul>
-                 <div class="flex items-center gap-2 mt-3">
-                     <input type="checkbox" id="consent-checkbox" checked class="h-4 w-4 rounded border-gray-300 text-accent-green focus:ring-accent-green cursor-pointer">
-                     <label for="consent-checkbox" class="text-xs text-secondary dark:text-dark-secondary cursor-pointer select-none">Entiendo y acepto activar la cámara.</label>
-                 </div>
+    <!-- Botones de control -->
+    <div class="flex justify-center gap-3 mt-4">
+        <button id="show-privacy-modal-button" class="flex-1 max-w-[160px] flex items-center justify-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-3 px-4 rounded-full shadow-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-play w-4 h-4"></i>
+            Iniciar monitoreo
+        </button>
+        <button id="pause-button" disabled class="flex-1 max-w-[115px] flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-medium py-3 px-4 rounded-full transition-all duration-300 cursor-not-allowed">
+            <i class="fas fa-pause w-4 h-4"></i>
+            Pausar
+        </button>
+        <button id="stop-button" disabled class="flex-1 max-w-[115px] flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-medium py-3 px-4 rounded-full transition-all duration-300 cursor-not-allowed">
+            <i class="fas fa-stop w-4 h-4"></i>
+            Detener
+        </button>
+    </div>
+</div>
+
+<!-- Modal de Privacidad -->
+<div id="privacy-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300 opacity-0">
+    <div id="privacy-modal" class="bg-surface dark:bg-dark-surface max-w-lg w-full rounded-2xl p-6 md:p-8 shadow-2xl relative transform transition-all duration-300 scale-95 opacity-0">
+        <button id="close-modal-button" class="absolute top-4 right-4 text-secondary dark:text-dark-secondary hover:text-primary dark:hover:text-dark-primary text-2xl leading-none">&times;</button>
+        <h1 class="text-xl font-semibold text-primary dark:text-dark-primary mb-1">Aviso de Privacidad</h1>
+        <p class="text-sm text-secondary dark:text-dark-secondary mb-4">Antes de comenzar, revisa estos puntos:</p>
+        <div class="bg-accent-peach/10 dark:bg-dark-accent-peach/5 border border-accent-peach/30 dark:border-dark-accent-peach/20 rounded-lg p-4 mb-5">
+            <h2 class="text-base font-semibold text-primary dark:text-dark-primary mb-2">Tu Privacidad</h2>
+            <ul class="list-disc list-inside space-y-1 text-xs text-secondary dark:text-dark-secondary">
+                <li>La cámara solo se activa con tu consentimiento explícito al iniciar.</li>
+                <li>No guardamos ni transmitimos video, solo métricas anónimas.</li>
+                <li>El procesamiento ocurre localmente en tu dispositivo.</li>
+                <li>Puedes detener el monitoreo en cualquier momento.</li>
+            </ul>
+            <div class="flex items-center gap-2 mt-3">
+                <input type="checkbox" id="consent-checkbox" checked class="h-4 w-4 rounded border-gray-300 text-accent-green focus:ring-accent-green cursor-pointer">
+                <label for="consent-checkbox" class="text-xs text-secondary dark:text-dark-secondary cursor-pointer select-none">Entiendo y acepto activar la cámara.</label>
             </div>
-            <div>
-                <h2 class="text-base font-semibold text-primary dark:text-dark-primary mb-3">Checklist</h2>
-                <div class="space-y-2">
-                    <div class="flex items-center gap-2 text-sm text-secondary dark:text-dark-secondary"><div class="w-5 h-5 bg-accent-green rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-check text-xs text-white"></i></div><span>Buena iluminación.</span></div>
-                    <div class="flex items-center gap-2 text-sm text-secondary dark:text-dark-secondary"><div class="w-5 h-5 bg-accent-green rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-check text-xs text-white"></i></div><span>Cámara funcionando.</span></div>
-                    <div class="flex items-center gap-2 text-sm text-secondary dark:text-dark-secondary"><div class="w-5 h-5 bg-accent-green rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-check text-xs text-white"></i></div><span>Posición cómoda.</span></div>
+        </div>
+        <div>
+            <h2 class="text-base font-semibold text-primary dark:text-dark-primary mb-3">Checklist</h2>
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 text-sm text-secondary dark:text-dark-secondary">
+                    <div class="w-5 h-5 bg-accent-green rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-check text-xs text-white"></i>
+                    </div>
+                    <span>Buena iluminación.</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-secondary dark:text-dark-secondary">
+                    <div class="w-5 h-5 bg-accent-green rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-check text-xs text-white"></i>
+                    </div>
+                    <span>Cámara funcionando.</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-secondary dark:text-dark-secondary">
+                    <div class="w-5 h-5 bg-accent-green rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-check text-xs text-white"></i>
+                    </div>
+                    <span>Posición cómoda.</span>
                 </div>
             </div>
-            <button id="start-monitoring-button" disabled class="mt-6 w-full flex items-center justify-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-3 px-5 rounded-full shadow-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
-                <i class="fas fa-check w-4 h-4"></i>
-                Confirmar e Iniciar
-            </button>
         </div>
+        <button id="start-monitoring-button" disabled class="mt-6 w-full flex items-center justify-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-3 px-5 rounded-full shadow-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-check w-4 h-4"></i>
+            Confirmar e Iniciar
+        </button>
     </div>
 </div>
 {% endblock %}
@@ -138,17 +168,15 @@
         };
 
         // --- State Machine ---
-        // STOPPED, RUNNING, PAUSED, BREAK_REMINDER, ON_BREAK
         let currentAppState = 'STOPPED';
-        let pomodoroWorkTimer = null;           // setTimeout para trabajo
-        let pomodoroBreakTimerInterval = null;  // setInterval para descanso
+        let pomodoroWorkTimer = null;
+        let pomodoroBreakTimerInterval = null;
 
         // --- Función para verificar permisos de cámara ---
         async function checkCameraPermissions() {
             try {
                 console.log('[PERMISSIONS] Verificando permisos de cámara...');
                 
-                // Verificar si hay otras instancias usando la cámara
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(device => device.kind === 'videoinput');
                 
@@ -158,7 +186,6 @@
                 
                 console.log(`[PERMISSIONS] ${videoDevices.length} cámara(s) detectada(s)`);
                 
-                // Intentar obtener acceso a la cámara
                 let stream = null;
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({ 
@@ -170,19 +197,16 @@
                     
                     console.log('[PERMISSIONS] Permisos de cámara concedidos');
                     
-                    // Detener el stream inmediatamente
                     stream.getTracks().forEach(track => {
                         track.stop();
                         console.log('[PERMISSIONS] Track detenido:', track.label);
                     });
                     
-                    // Esperar un momento para asegurar que el stream se liberó
                     await new Promise(resolve => setTimeout(resolve, 500));
                     
                     return true;
                     
                 } catch (streamError) {
-                    // Asegurar que cualquier stream parcial se detenga
                     if (stream) {
                         stream.getTracks().forEach(track => track.stop());
                     }
@@ -261,7 +285,6 @@
             isMonitoringActive = isActive;
             isPaused = paused;
 
-            // --- Actualizar Apariencia de Botones ---
             showModalBtn.disabled = isActive;
             showModalBtn.classList.toggle('bg-accent-green', !isActive);
             showModalBtn.classList.toggle('hover:bg-green-700', !isActive);
@@ -272,7 +295,6 @@
             showModalBtn.classList.toggle('dark:text-gray-400', isActive);
             showModalBtn.classList.toggle('cursor-not-allowed', isActive);
 
-            // --- BOTÓN PAUSAR/REANUDAR ---
             pauseBtn.disabled = !isActive;
             pauseBtn.classList.toggle('cursor-not-allowed', !isActive);
             pauseBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-500', 'dark:text-gray-400', 'bg-yellow-500', 'hover:bg-yellow-600', 'bg-gray-300', 'hover:bg-gray-400', 'text-white', 'text-gray-600');
@@ -285,13 +307,11 @@
                 pauseBtn.classList.add('bg-gray-300', 'hover:bg-gray-400', 'text-gray-600');
             }
 
-            // Actualizar icono y texto del botón
             const currentPauseIconClass = isPaused ? 'fas fa-play w-4 h-4' : 'fas fa-pause w-4 h-4';
             const currentPauseTextColor = isActive ? (isPaused ? 'text-white' : 'text-gray-600') : 'text-gray-500 dark:text-gray-400';
             const pauseText = isPaused ? 'Reanudar' : 'Pausar';
             pauseBtn.innerHTML = `<i class="${currentPauseIconClass} ${currentPauseTextColor}"></i> ${pauseText}`;
 
-            // --- BOTÓN DETENER ---
             stopBtn.disabled = !isActive;
             stopBtn.classList.toggle('cursor-not-allowed', !isActive);
             stopBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-500', 'dark:text-gray-400', 'bg-alert-coral', 'hover:bg-red-700', 'text-white');
@@ -301,29 +321,23 @@
                 stopBtn.classList.add('bg-alert-coral', 'hover:bg-red-700', 'text-white');
             }
 
-            // --- FEED DE VIDEO Y PLACEHOLDER ---
             videoFeedEl.classList.toggle('hidden', !isActive);
             placeholderEl.classList.toggle('hidden', isActive);
             
-            // 🔥 CORREGIDO: No cambiar opacidad cuando está pausado - el backend envía la imagen de pausa
             videoFeedEl.style.opacity = isActive ? '1' : '0';
 
             if (isActive) {
-                // Mantener el stream activo SIEMPRE que la sesión esté activa (pausada o no)
-                // El backend se encarga de enviar la imagen de pausa cuando is_paused=True
                 if (!videoFeedEl.getAttribute('src') || wasPaused) {
                     console.log('[VIDEO] Iniciando/reiniciando stream de video');
                     videoFeedEl.src = "{% url 'monitoring:video_feed' %}?t=" + Date.now();
                 }
             } else {
-                // Solo remover src cuando la sesión se detiene completamente
                 if (videoFeedEl.getAttribute('src')) {
                     console.log('[VIDEO] Deteniendo stream de video');
                     videoFeedEl.removeAttribute('src');
                 }
             }
 
-            // --- POLLING DE MÉTRICAS ---
             if (isActive) {
                 if (!isPaused) {
                     startMetricsPoller();
@@ -340,18 +354,16 @@
             
             window.previousState = { isActive: isMonitoringActive, isPaused: isPaused };
         }
+
         // --- Gestor de Estados (UI) ---
         function updateUI(newState) {
             currentAppState = newState;
-            // Visibilidad base del timer oculto por defecto
             pomodoroDiv.classList.add('hidden');
             pomodoroDiv.classList.remove('flex');
 
             switch (newState) {
                 case 'STOPPED':
-                    // Mostrar solo botón Iniciar (a través del modal existente)
                     setMonitoringState(false, false);
-                    // Reset timers
                     clearTimeout(pomodoroWorkTimer);
                     clearInterval(pomodoroBreakTimerInterval);
                     pomodoroTime.textContent = '--:--';
@@ -359,31 +371,24 @@
 
                 case 'RUNNING':
                     setMonitoringState(true, false);
-                    // Botón Pausar ya configurado por setMonitoringState
-                    // Iniciar/reiniciar temporizador de trabajo
                     startPomodoroWorkTimer();
                     break;
 
                 case 'PAUSED':
                     setMonitoringState(true, true);
-                    clearTimeout(pomodoroWorkTimer); // pausar timer de trabajo
+                    clearTimeout(pomodoroWorkTimer);
                     break;
 
                 case 'BREAK_REMINDER':
-                    // La sesión sigue activa y no pausada
                     setMonitoringState(true, false);
-                    // Reutilizamos botones existentes: pause -> Posponer, modal/start -> Iniciar Descanso
-                    // Configurar botón Posponer (usa el botón de Pausar)
                     pauseBtn.disabled = false;
                     pauseBtn.className = 'flex-1 flex items-center justify-center gap-2 bg-gray-300 hover:bg-gray-400 text-gray-600 font-medium py-3 px-5 rounded-full transition-all duration-300';
                     pauseBtn.innerHTML = '<i class="fas fa-forward w-4 h-4"></i> Posponer';
 
-                    // Configurar el botón Iniciar (abría modal). Aquí lo usamos para iniciar descanso con confirmación rápida
                     showModalBtn.disabled = false;
                     showModalBtn.className = 'flex-1 flex items-center justify-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-3 px-5 rounded-full shadow-sm transition-all duration-300';
                     showModalBtn.innerHTML = '<i class="fas fa-play w-4 h-4"></i> Iniciar Descanso';
 
-                    // Mostrar mini reloj con icono de descanso
                     pomodoroDiv.classList.remove('hidden');
                     pomodoroDiv.classList.add('flex');
                     pomodoroIcon.src = '{% static "img/iconos/descanso.png" %}';
@@ -391,16 +396,13 @@
                     break;
 
                 case 'ON_BREAK':
-                    // La sesión está formalmente pausada
                     setMonitoringState(true, true);
 
-                    // Pausar botón cambia a Reanudar (ya lo hace setMonitoringState), aseguramos estilos
                     pauseBtn.disabled = false;
                     pauseBtn.className = 'flex-1 flex items-center justify-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-3 px-5 rounded-full transition-all duration-300';
                     pauseBtn.innerHTML = '<i class="fas fa-play w-4 h-4"></i> Reanudar';
                     pauseBtn.onclick = resumeSession;
 
-                    // Mostrar timer con icono de pausa
                     pomodoroDiv.classList.remove('hidden');
                     pomodoroDiv.classList.add('flex');
                     pomodoroIcon.src = '{% static "img/iconos/pausa.png" %}';
@@ -412,7 +414,6 @@
         // --- Lógica Pomodoro ---
         function startPomodoroWorkTimer() {
             clearTimeout(pomodoroWorkTimer);
-            // Evitar múltiples temporizadores si se llama varias veces
             if (currentAppState !== 'RUNNING') return;
             pomodoroWorkTimer = setTimeout(() => {
                 if (currentAppState === 'RUNNING') {
@@ -423,7 +424,6 @@
 
         async function startBreak() {
             try {
-                // Pausar formalmente el monitoreo (si no está pausado)
                 if (!isPaused) {
                     const resp = await fetch("{% url 'monitoring:api_pause' %}", {
                         method: 'POST',
@@ -432,7 +432,6 @@
                     const data = await resp.json();
                     if (!resp.ok || data.status === 'error') throw new Error(data.message || 'Error al pausar');
                 }
-                // Registrar descanso tomado
                 await fetch("{% url 'monitoring:api_break_taken' %}", {
                     method: 'POST',
                     headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
@@ -448,7 +447,6 @@
 
         async function snoozeBreak() {
             try {
-                // Posponer por 5 minutos (configurable)
                 const minutes = 5;
                 const resp = await fetch("{% url 'monitoring:api_snooze_break' %}", {
                     method: 'POST',
@@ -466,7 +464,7 @@
 
         function startBreakTimerVisuals() {
             clearInterval(pomodoroBreakTimerInterval);
-            let duration = config.breakDurationMinutes * 60; // segundos
+            let duration = config.breakDurationMinutes * 60;
 
             const updateTimer = () => {
                 let minutes = parseInt(duration / 60, 10);
@@ -489,7 +487,7 @@
         window.previousState = { isActive: false, isPaused: false };
 
         // --- Event Listeners ---
-    startBtn.addEventListener('click', async () => {
+        startBtn.addEventListener('click', async () => {
             if (sessionStarting) {
                 console.log('[START] Ya hay una sesión iniciándose...');
                 return;
@@ -509,16 +507,13 @@
                 
                 console.log('[START] Verificando permisos de cámara...');
                 
-                // *** CAMBIO CRÍTICO: Verificar la cámara PRIMERO ***
                 const hasPermissions = await checkCameraPermissions();
                 
                 if (!hasPermissions) {
-                    // No continuar si la verificación falló
                     console.log('[START] Verificación de cámara falló, abortando inicio');
-                    return;  // Salir inmediatamente sin iniciar sesión
+                    return;
                 }
                 
-                // Solo después de verificar la cámara, iniciar la sesión en el servidor
                 startBtn.innerHTML = '<i class="fas fa-spinner fa-spin w-4 h-4"></i> Iniciando sesión...';
                 
                 console.log('[START] Iniciando sesión en el servidor...');
@@ -549,7 +544,6 @@
                 videoFeedEl.onerror = () => {
                     console.error('[VIDEO] Error al cargar el stream');
                     alert('Error al conectar con el stream de video. La cámara puede no estar disponible.');
-                    // Detener la sesión en el servidor también
                     fetch("{% url 'monitoring:api_stop' %}", {
                         method: 'POST',
                         headers: {
@@ -569,7 +563,6 @@
                     console.log('[VIDEO] Stream cargado correctamente');
                 };
                 
-                // Estado se manejará solo vía updateUI
                 updateUI('RUNNING');
                 console.log('[START] Monitoreo iniciado correctamente');
                 
@@ -596,7 +589,6 @@
                 alert(errorMessage);
                 updateUI('STOPPED');
                 
-                // *** NUEVO: Si hay error, intentar detener cualquier sesión que se haya creado ***
                 try {
                     await fetch("{% url 'monitoring:api_stop' %}", {
                         method: 'POST',
@@ -619,7 +611,6 @@
         pauseBtn.addEventListener('click', async () => {
             if (!isMonitoringActive || pauseBtn.disabled) return;
 
-            // En estado de recordatorio de descanso, este botón actúa como 'Posponer'
             if (currentAppState === 'BREAK_REMINDER') {
                 await snoozeBreak();
                 return;
@@ -650,7 +641,6 @@
                 }
                 
                 console.log(`[PAUSE] ${actionText} exitoso`);
-                // Estado se manejará solo vía updateUI
                 updateUI(nextPauseState ? 'PAUSED' : 'RUNNING');
                 
                 if (data.blink_count !== undefined) {
@@ -667,13 +657,12 @@
             }
         });
 
-    stopBtn.addEventListener('click', async () => {
+        stopBtn.addEventListener('click', async () => {
             if (!isMonitoringActive) return;
             
             try {
                 console.log('[STOP] Deteniendo monitoreo...');
-    // Estado se manejará solo vía updateUI
-    updateUI('STOPPED');
+                updateUI('STOPPED');
                 
                 const response = await fetch("{% url 'monitoring:api_stop' %}", {
                     method: 'POST',
@@ -746,7 +735,6 @@
                 const blinkCount = metrics.total_blinks !== undefined ? metrics.total_blinks : 
                                  (metrics.blink_count !== undefined ? metrics.blink_count : 0);
 
-                // 🔎 DEBUG: Verificar datos crudos recibidos desde backend
                 try {
                     console.debug('[METRICS]', {
                         yawns: yawnCount,
@@ -803,8 +791,8 @@
             }
         }
 
-    // --- Inicialización ---
-    updateUI('STOPPED');
+        // --- Inicialización ---
+        updateUI('STOPPED');
         console.log('[INIT] Sistema de monitoreo con Pomodoro inicializado');
     });
 </script>

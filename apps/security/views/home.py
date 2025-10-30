@@ -84,41 +84,60 @@ class HomeView(LoginRequiredMixin, SidebarMenuMixin, TemplateView):
         # Calcular posición del indicador de progreso visual
         progress_right = max(0, min(100, 100 - visual_status))
         
-        # Datos para el gráfico de parpadeo (últimos 7 días)
+        # Datos para el gráfico de actividad visual (solo del día actual)
         chart_data = []
         chart_labels = []
         breaks_chart_data = []
-        
-        for i in range(7):
-            day = start_date + timedelta(days=i)
-            day_end = day + timedelta(days=1)
-            
-            day_sessions = MonitorSession.objects.filter(
-                user=user,
-                start_time__gte=day,
-                start_time__lt=day_end,
-                total_blinks__gt=0
-            )
-            
-            if day_sessions.exists():
-                avg_blinks_day = day_sessions.aggregate(
-                    avg=Avg('total_blinks')
-                )['avg']
-                blink_rate = round((avg_blinks_day or 0) / 60, 1)
+
+        # Obtener la zona horaria del usuario (asumiendo campo user.timezone)
+        import pytz
+        user_tz = getattr(user, 'timezone', None)
+        if user_tz:
+            tz = pytz.timezone(user_tz)
+        else:
+            tz = timezone.get_current_timezone()
+
+        # Definir el rango del día actual en la zona horaria del usuario
+        local_now = timezone.localtime(timezone.now(), tz)
+        start_of_today = local_now.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_today = start_of_today + timedelta(days=1)
+
+        # Obtener sesiones del día actual en la zona horaria del usuario
+        today_sessions = MonitorSession.objects.filter(
+            user=user,
+            start_time__gte=start_of_today,
+            start_time__lt=end_of_today,
+            total_blinks__gt=0
+        )
+
+        # Mostrar por hora local del usuario
+        for hour in range(0, 24):
+            hour_start = start_of_today + timedelta(hours=hour)
+            hour_end = hour_start + timedelta(hours=1)
+            hour_sessions = today_sessions.filter(start_time__gte=hour_start, start_time__lt=hour_end)
+            total_blinks = 0
+            total_minutes = 0
+            for session in hour_sessions:
+                # Usar la duración real de la sesión en minutos
+                duration_seconds = getattr(session, 'total_duration', 0) or getattr(session, 'duration_seconds', 0)
+                duration_minutes = duration_seconds / 60 if duration_seconds else 0
+                total_blinks += getattr(session, 'total_blinks', 0)
+                total_minutes += duration_minutes
+            if total_blinks > 0 and total_minutes > 0:
+                blink_rate = round(total_blinks / total_minutes, 1)
             else:
                 blink_rate = 0
-            
             chart_data.append(blink_rate)
-            chart_labels.append(day.strftime('%d/%m'))
+            chart_labels.append(f"{hour:02d}:00")
 
-            # Descansos realizados por día (ejercicios completados)
-            day_breaks = ExerciseSession.objects.filter(
+            # Descansos realizados por hora
+            hour_breaks = ExerciseSession.objects.filter(
                 user=user,
-                started_at__gte=day,
-                started_at__lt=day_end,
+                started_at__gte=hour_start,
+                started_at__lt=hour_end,
                 completed=True
             ).count()
-            breaks_chart_data.append(day_breaks)
+            breaks_chart_data.append(hour_breaks)
         
         import json
         context.update({
