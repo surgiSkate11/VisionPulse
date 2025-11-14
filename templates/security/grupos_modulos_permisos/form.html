@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+<title>{% block title %}Actualizar Asignación de Grupo-Módulo-Permiso{% endblock %}</title>
+{% load static %}
+{% block content %}
+<div id="messages-container"></div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<div class="particles" id="particles"></div>
+<section class="min-h-screen py-8 relative z-10">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12 fade-in-up">
+            <h1 class="cyber-title text-4xl md:text-6xl font-black mb-6 bg-gradient-to-r from-cyan-400 via-purple-500 to-cyan-400 bg-clip-text text-transparent">
+                <i class="fas fa-edit mr-4"></i>
+                Actualizar Asignación
+            </h1>
+            <p class="text-cyan-300 text-xl font-['Rajdhani'] font-light tracking-wider">
+                Modifica los permisos asignados a este grupo y módulo
+            </p>
+            <div class="w-32 h-1 bg-gradient-to-r from-cyan-500 to-purple-500 mx-auto mt-4 rounded-full"></div>
+        </div>
+        <div class="max-w-2xl mx-auto bg-gradient-to-br from-[#0b1121] via-[#18182f] to-[#1e293b] rounded-3xl shadow-2xl p-8">
+            <form method="post">
+                {% csrf_token %}
+                <!-- Grupo solo lectura -->
+                <div class="mb-8">
+                    <label class="block text-cyan-300 font-bold font-['Orbitron'] text-lg mb-2">Grupo</label>
+                    <input type="text" class="cyber-select w-full px-4 py-3 rounded-xl font-['Rajdhani'] text-lg bg-gray-800 text-cyan-200" value="{{ object.group.name }}" readonly>
+                    <input type="hidden" name="group" value="{{ object.group.id }}">
+                </div>
+                <!-- Módulo solo lectura -->
+                <div class="mb-8">
+                    <label class="block text-cyan-300 font-bold font-['Orbitron'] text-lg mb-2">Módulo</label>
+                    <input type="text" class="cyber-select w-full px-4 py-3 rounded-xl font-['Rajdhani'] text-lg bg-gray-800 text-cyan-200" value="{{ object.module.name }}" readonly>
+                    <input type="hidden" name="module" value="{{ object.module.id }}">
+                </div>
+                <!-- Permisos -->
+                <div class="mb-8">
+                    <label class="block text-cyan-300 font-bold font-['Orbitron'] text-lg mb-2">Permisos asignados</label>
+                    <div class="permissions-scroll single-row">
+                        {% for perm in object.module.permissions.all %}
+                        <label class="permission-item" tabindex="0">
+                            <input type="checkbox" name="permissions" class="cyber-checkbox" value="{{ perm.id }}" {% if perm in object.permissions.all %}checked{% endif %}>
+                            <span class="permission-text">{{ perm.name }}</span>
+                            <div class="permission-glow"></div>
+                        </label>
+                        {% empty %}
+                        <span class="italic text-cyan-400">Este módulo no tiene permisos configurados.</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="cyber-btn-save w-full max-w-xl text-2xl">
+                        <i class="fas fa-save mr-3"></i>Actualizar Asignación
+                    </button>
+                </div>
+            </form>
+            <div class="flex justify-center mt-8 gap-6 fade-in-up">
+                <a class="cyber-btn py-4 px-8 rounded-2xl text-lg font-bold shadow-2xl flex items-center gap-3" href="{% url 'security:group_module_permission_list' %}">
+                    <i class="fa-solid fa-list"></i> Ver todos los registros
+                </a>
+                <a class="cyber-btn py-4 px-8 rounded-2xl text-lg font-bold shadow-2xl flex items-center gap-3" href="{% url 'security:home' %}">
+                    <i class="fas fa-home"></i>Inicio
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+<style>
+    .permissions-scroll.single-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 0.7rem 1.2rem;
+        max-height: none !important;
+        overflow-y: visible !important;
+        padding: 0.5rem 0.25rem 0.5rem 0.25rem;
+        align-items: center;
+        margin-bottom: 1.2rem;
+    }
+</style>
+{% endblock %}

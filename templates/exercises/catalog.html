@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ejercicios Oculares | VisionPulse{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-text-primary dark:text-dark-text-primary mb-1">Ejercicios Oculares</h1>
+        <p class="text-text-secondary dark:text-dark-text-secondary">Rutinas guiadas para el cuidado de tu visión.</p>
+    </div>
+
+    {% if exercises %}
+    <div class="bg-gradient-to-tr from-accent-peach to-amber-200 dark:from-dark-accent-peach dark:to-amber-800 rounded-2xl p-8 mb-10 shadow-lg dark:shadow-xl dark:shadow-black/20">
+        <div class="inline-flex items-center gap-2 bg-white/50 dark:bg-dark-surface/50 text-text-primary dark:text-dark-text-primary font-medium px-3 py-1 rounded-full text-sm mb-4">
+            ✨ Recomendado para ti
+        </div>
+        <h2 class="text-2xl font-bold text-text-primary dark:text-dark-text-primary mb-2">{{ exercises.0.title }}</h2>
+        <p class="text-text-secondary dark:text-dark-text-secondary opacity-90 mb-5 max-w-lg">{{ exercises.0.description }}</p>
+        <button class="start-exercise-btn bg-accent-green hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-transform hover:scale-105 shadow-md"
+                data-exercise-id="{{ exercises.0.id }}"
+                data-url="{% url 'exercises:exercise_data' exercises.0.id %}">
+            <i class="fas fa-play mr-2"></i>
+            Comenzar Ahora
+        </button>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for exercise in exercises %}
+        <div class="card p-6 flex flex-col text-left dark:bg-dark-surface dark:border-dark-border-color transition hover:-translate-y-1 hover:shadow-xl">
+            <div class="w-14 h-14 rounded-xl bg-accent-peach dark:bg-dark-accent-peach flex items-center justify-center mb-4">
+                <i class="{{ exercise.icon_class }} text-2xl text-text-primary dark:text-dark-text-primary"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-text-primary dark:text-dark-text-primary mb-2 flex-grow">{{ exercise.title }}</h3>
+            <p class="text-text-secondary dark:text-dark-text-secondary text-sm mb-4">{{ exercise.description }}</p>
+            <div class="text-sm text-text-secondary dark:text-dark-text-secondary mb-4 border-t border-border-color dark:border-dark-border-color pt-4 flex items-center justify-between">
+                <span>
+                    <i class="fas fa-clock mr-1.5"></i>
+                    Aprox. {{ exercise.total_duration_minutes }} min
+                </span>
+                <span class="font-medium text-accent-green dark:text-green-300">
+                    {{ exercise.steps.count }} Pasos
+                </span>
+            </div>
+            <button class="start-exercise-btn w-full bg-accent-green/10 text-accent-green dark:bg-green-600 dark:text-white font-semibold py-3 rounded-lg hover:bg-accent-green hover:text-white dark:hover:bg-green-500 transition"
+                    data-exercise-id="{{ exercise.id }}"
+                    data-url="{% url 'exercises:exercise_data' exercise.id %}">
+                Iniciar
+            </button>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12 card dark:bg-dark-surface dark:border-dark-border-color">
+            <i class="fas fa-ghost text-4xl text-gray-400 mb-4"></i>
+            <p class="text-text-secondary dark:text-dark-text-secondary">No hay ejercicios disponibles en este momento.</p>
+            <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">Ejecuta 'python manage.py populate_exercises' para crearlos.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+    <!-- Incluir modal reutilizable de ejercicios -->
+    {% include 'fragments/exercise_modal.html' %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Esperar a que el modal esté disponible
+    function initializeCatalog() {
+        const exerciseModal = window.exerciseModalManager;
+        
+        if (!exerciseModal) {
+            console.warn('[CATALOG] Esperando a que el modal esté disponible...');
+            setTimeout(initializeCatalog, 100);
+            return;
+        }
+        
+        console.log('[CATALOG] Modal de ejercicios disponible, inicializando botones');
+        
+        // Botones para iniciar ejercicios
+        const startButtons = document.querySelectorAll('.start-exercise-btn');
+        
+        startButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const exerciseId = button.dataset.exerciseId;
+                
+                if (!exerciseId) {
+                    console.error('[CATALOG] No se encontró el ID del ejercicio');
+                    return;
+                }
+                
+                console.log('[CATALOG] Abriendo ejercicio:', exerciseId);
+                
+                // Abrir el modal con el ejercicio
+                exerciseModal.open(exerciseId, {
+                    onComplete: (sessionId) => {
+                        console.log('[CATALOG] Ejercicio completado:', sessionId);
+                        // Aquí podrías agregar lógica adicional como mostrar un mensaje
+                    },
+                    onClose: () => {
+                        console.log('[CATALOG] Modal cerrado');
+                    }
+                });
+            });
+        });
+    }
+    
+    // Iniciar
+    initializeCatalog();
+});
+</script>
+{% endblock %}

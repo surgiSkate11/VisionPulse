@@ -1,0 +1,617 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}VisionPulse{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="{% static 'img/dashboard/logo.png' %}" sizes="32x32">
+    <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
+    {% block extra_css %}{% endblock %}
+
+    <script>
+        // Check for saved user preference, system preference, or default to light
+        const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</head>
+<body class="bg-peach-75 text-gray-900 font-sans dark:bg-gray-800 dark:text-gray-100 min-h-screen overflow-x-hidden">
+    <div class="flex min-h-screen">
+        {% if user.is_authenticated %}
+    <header class="fixed top-0 left-0 right-0 h-[80px] bg-surface dark:bg-dark-surface border-b border-border-color dark:border-dark-border-color flex items-center justify-between px-6 z-40 shadow-sm">
+            <div class="flex items-center gap-4">
+                <button class="menu-toggle text-text-primary dark:text-dark-text-primary text-2xl lg:hidden" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="{% url 'security:home' %}" class="flex items-center gap-3">
+                    <div class="logo-icon">
+                        <img src="{% static 'img/dashboard/logo.png' %}" alt="VisionPulse Logo" class="h-14 w-14 md:h-16 md:w-16 object-contain" style="box-shadow: none; border: none; outline: none;">
+                    </div>
+                    <div>
+                        <div class="font-black text-2xl text-text-primary dark:text-dark-text-primary" style="font-family: 'Nunito', sans-serif; font-weight: 900;">VisionPulse</div>
+                        <div class="text-xs text-text-secondary dark:text-dark-text-secondary">Cuidado visual inteligente</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <!-- Theme Toggle -->
+                <button class="w-12 h-12 flex items-center justify-center rounded-full bg-peach-200 dark:bg-dark-accent-peach hover:bg-peach-300 dark:hover:bg-opacity-80 transition-colors" id="themeToggle" title="Cambiar tema">
+                    <i class="fas fa-sun text-warm-orange-400 dark:text-warm-orange-500 text-xl"></i>
+                </button>
+                
+                <!-- Notifications -->
+                <button class="relative w-12 h-12 flex items-center justify-center rounded-full bg-peach-200 dark:bg-dark-accent-peach hover:bg-peach-300 dark:hover:bg-opacity-80 transition-colors" id="notificationBtn" title="Notificaciones">
+                    <i class="fas fa-bell text-terracotta-500 dark:text-warm-orange-400 text-xl"></i>
+                    <span class="notification-badge" id="notificationCount" style="display: none; position: absolute; top: 6px; right: 6px; background: #ef4444; color: white; font-size: 9px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 3px;">0</span>
+                </button>
+                
+                <div class="user-menu relative">
+                    <button id="userMenuButton" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                        <div class="hidden sm:block text-right">
+                            <div class="font-semibold text-sm text-text-primary dark:text-dark-text-primary">{{ user.get_full_name|default:user.username }}</div>
+                            <div class="text-xs text-text-secondary dark:text-dark-text-secondary">{{ user.email }}</div>
+                        </div>
+                        <div class="user-avatar w-14 h-14 rounded-full overflow-hidden bg-peach-200 dark:bg-dark-accent-green shadow-sm cursor-pointer flex items-center justify-center">
+                            {% if user.image %}
+                                <img id="navUserAvatarImg" src="{{ user.image.url }}" alt="Avatar" class="w-full h-full object-cover">
+                            {% else %}
+                                <span id="navUserAvatarInitial" class="text-2xl text-[#F0E491] dark:text-accent-green font-semibold">{{ user.username|first|upper }}</span>
+                            {% endif %}
+                        </div>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div id="userMenuDropdown" class="hidden absolute top-full right-0 mt-3 w-56 bg-surface dark:bg-dark-surface border border-border-color dark:border-dark-border-color rounded-xl shadow-2xl overflow-hidden z-[100]">
+                        <a href="{% url 'security:profile' %}" class="block px-4 py-3 text-text-primary dark:text-dark-text-primary hover:bg-peach-100 dark:hover:bg-dark-accent-peach transition-colors">
+                            <i class="fas fa-user w-5 text-terracotta-400"></i>
+                            <span class="ml-2">Mi Perfil</span>
+                        </a>
+                        <a href="{% url 'security:user_settings' %}" class="block px-4 py-3 text-text-primary dark:text-dark-text-primary hover:bg-peach-100 dark:hover:bg-dark-accent-peach transition-colors">
+                            <i class="fas fa-cog w-5 text-terracotta-400"></i>
+                            <span class="ml-2">Configuraciones</span>
+                        </a>
+
+                        {% if is_empresa_user %}
+                        <div class="border-t border-border-color dark:border-dark-border-color my-1"></div>
+                        <a href="{% url 'security:dashboard' %}" class="block px-4 py-3 text-warm-orange-500 dark:text-warm-orange-400 font-semibold hover:bg-peach-100 dark:hover:bg-dark-accent-peach transition-colors">
+                            <i class="fas fa-chart-line w-5"></i>
+                            <span class="ml-2">Panel de Control</span>
+                        </a>
+                        {% endif %}
+
+                        <div class="border-t border-border-color dark:border-dark-border-color my-1"></div>
+                        <a href="{% url 'security:signout' %}" class="block px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                            <i class="fas fa-sign-out-alt w-5"></i>
+                            <span class="ml-2">Cerrar Sesión</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+    <aside id="sidebar" class="fixed top-[80px] left-0 h-[calc(100vh-80px)] bg-surface border-r border-border-color z-30 transition-all duration-300 w-72 dark:bg-dark-surface dark:border-dark-border-color">
+            <nav class="flex flex-col h-full">
+                <div class="flex-1 p-4 space-y-2 overflow-y-auto">
+                    {% for menu_item in sidebar_menu %}
+                        <div class="nav-section-title mt-4">{{ menu_item.name }}</div>
+                        
+                        {% for module in menu_item.modules %}
+                            <a href="{% url module.url %}" class="nav-item {% if request.resolver_match.view_name == module.url %}active{% endif %}">
+                                <i class="{{ module.icon }} fa-fw nav-icon"></i>
+                                <span class="nav-text">{{ module.name }}</span>
+                            </a>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+                <button id="collapseBtn" class="collapse-btn">
+                    <i id="collapseIcon" class="fas fa-chevron-left transition-transform duration-300"></i>
+                </button>
+            </nav>
+        </aside>
+        {% endif %}
+
+    <main id="mainContent" class="flex-1 pt-[80px] transition-all duration-300 {% if user.is_authenticated %}ml-72{% endif %}">
+            <div class="pt-4 pb-4 px-4 md:pt-6 md:pb-6 md:px-8">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Panel de Notificaciones -->
+    {% if user.is_authenticated %}
+    <div id="notificationPanel" class="fixed top-[80px] right-0 w-96 h-[calc(100vh-80px)] bg-surface dark:bg-dark-surface border-l border-border-color dark:border-dark-border-color shadow-2xl translate-x-full transition-transform duration-300 ease-in-out z-50 flex flex-col overflow-hidden" style="transform: translateX(100%);">
+        <div class="p-4 border-b border-border-color dark:border-dark-border-color">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-text-primary dark:text-dark-text-primary">Notificaciones</h3>
+                <button id="closeNotificationPanel" class="text-text-secondary dark:text-dark-text-secondary hover:text-text-primary dark:hover:text-dark-text-primary">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        <div id="notificationList" class="flex-1 overflow-y-auto p-4 space-y-3">
+            <div class="text-center text-text-secondary dark:text-dark-text-secondary py-8">
+                <i class="fas fa-bell-slash text-4xl mb-2 opacity-50"></i>
+                <p>No hay notificaciones nuevas</p>
+            </div>
+        </div>
+        <div class="p-4 border-t border-border-color dark:border-dark-border-color">
+            <button id="clearAllNotifications" class="w-full py-2 px-4 text-sm text-text-secondary dark:text-dark-text-secondary hover:text-text-primary dark:hover:text-dark-text-primary transition-colors">
+                Limpiar todas
+            </button>
+        </div>
+    </div>
+    
+    <!-- Sistema de alertas (toasts/banners) -->
+    {% include 'fragments/alert_notification.html' %}
+
+    <!-- Modal de confirmación: limpiar todas las notificaciones -->
+    <div id="confirmClearModal" class="fixed inset-0 z-[200] hidden bg-black/40 backdrop-blur-sm flex items-center justify-center">
+        <div class="modal-content bg-surface dark:bg-dark-surface rounded-2xl shadow-2xl border border-border-color dark:border-dark-border-color w-full max-w-md p-6 transform transition-all duration-200 scale-95 opacity-0">
+            <div class="mb-4">
+                <h3 class="text-lg font-semibold text-text-primary dark:text-dark-text-primary">Limpiar todas las notificaciones</h3>
+                <p class="mt-1 text-sm text-text-secondary dark:text-dark-text-secondary">¿Seguro que deseas eliminar todas las notificaciones? Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="mt-6 flex items-center justify-end gap-3">
+                <button id="cancelClearBtn" class="px-4 py-2 rounded-lg bg-peach-200 text-text-primary dark:bg-dark-accent-peach dark:text-dark-text-primary hover:opacity-90 transition">Cancelar</button>
+                <button id="confirmClearBtn" class="px-4 py-2 rounded-lg bg-accent-green text-white hover:bg-green-700 transition">Limpiar</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    // Configuración global del usuario para todos los scripts
+    window.userConfig = {
+        notification_sound: '{{ user.notification_sound|default:"sound1" }}',
+        notification_sound_enabled: {{ user.notification_sound_enabled|default:"True"|lower }},
+        alert_volume: {{ user.alert_volume|default:"0.7" }}
+    };
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Notification System
+        class NotificationManager {
+            constructor() {
+                this.notifications = [];
+                this.notificationSound = window.userConfig.notification_sound;
+                this.soundEnabled = window.userConfig.notification_sound_enabled;
+                this.audio = null;
+                this.notificationBtn = document.getElementById('notificationBtn');
+                this.notificationPanel = document.getElementById('notificationPanel');
+                this.notificationCount = document.getElementById('notificationCount');
+                this.notificationList = document.getElementById('notificationList');
+                this.closeBtn = document.getElementById('closeNotificationPanel');
+                this.clearAllBtn = document.getElementById('clearAllNotifications');
+                
+                this.init();
+            }
+            
+            init() {
+                // Event listeners con binding correcto
+                if (this.notificationBtn) {
+                    this.notificationBtn.addEventListener('click', this.handleToggleClick.bind(this));
+                }
+                
+                if (this.closeBtn) {
+                    this.closeBtn.addEventListener('click', this.handleCloseClick.bind(this));
+                }
+                
+                if (this.clearAllBtn) {
+                    this.clearAllBtn.addEventListener('click', this.handleClearClick.bind(this));
+                }
+                
+                // Prevenir que clicks dentro del panel lo cierren
+                if (this.notificationPanel) {
+                    this.notificationPanel.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                    });
+                }
+                
+                // Cerrar panel al hacer clic fuera
+                setTimeout(() => {
+                    document.addEventListener('click', (e) => {
+                        const isPanelOpen = !this.notificationPanel.classList.contains('translate-x-full');
+                        if (isPanelOpen && 
+                            !this.notificationPanel.contains(e.target) && 
+                            !this.notificationBtn.contains(e.target)) {
+                            this.closePanel();
+                        }
+                    });
+                }, 100);
+                
+                // Cargar notificaciones del localStorage
+                this.loadNotifications();
+                this.updateUI();
+                
+                // Escuchar eventos de nuevas alertas
+                window.addEventListener('newAlert', (e) => {
+                    this.addNotification(e.detail);
+                });
+            }
+            
+            handleToggleClick(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.togglePanel();
+            }
+            
+            handleCloseClick(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.closePanel();
+            }
+            
+            handleClearClick(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.clearAll();
+            }
+            
+            playSound() {
+                if (!this.soundEnabled) return;
+                try {
+                    const audio = new Audio(`{% static "audio/notifications/" %}${this.notificationSound}.mp3`);
+                    audio.volume = 0.5;
+                    audio.play().catch(() => {}); // Silenciar errores de autoplay
+                } catch (error) {
+                    // Silenciar errores
+                }
+            }
+            
+            // Método para actualizar configuración de sonido dinámicamente
+            updateSoundSettings(notificationSound, soundEnabled) {
+                this.notificationSound = notificationSound;
+                this.soundEnabled = soundEnabled;
+                console.log('[NOTIFICATION] Configuración actualizada:', {
+                    sound: this.notificationSound,
+                    enabled: this.soundEnabled
+                });
+            }
+            
+            addNotification(notification) {
+                const newNotification = {
+                    id: Date.now(),
+                    title: notification.title || 'Notificación',
+                    message: notification.message || '',
+                    type: notification.type || 'info',
+                    silent: notification.silent === true,
+                    timestamp: new Date().toISOString(),
+                    read: false
+                };
+                
+                this.notifications.unshift(newNotification);
+                this.saveNotifications();
+                this.updateUI();
+                if (!newNotification.silent) {
+                    this.playSound();
+                }
+                
+                // Auto-eliminar después de 24 horas
+                setTimeout(() => {
+                    this.removeNotification(newNotification.id);
+                }, 24 * 60 * 60 * 1000);
+            }
+            
+            removeNotification(id) {
+                this.notifications = this.notifications.filter(n => n.id !== id);
+                this.saveNotifications();
+                this.updateUI();
+            }
+            
+            markAsRead(id) {
+                const notification = this.notifications.find(n => n.id === id);
+                if (notification) {
+                    notification.read = true;
+                    this.saveNotifications();
+                    this.updateUI();
+                }
+            }
+            
+            clearAll() {
+                // Mostrar modal de confirmación
+                this.showConfirmModal();
+            }
+            
+            showConfirmModal() {
+                const modal = document.getElementById('confirmClearModal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    setTimeout(() => {
+                        modal.querySelector('.modal-content').classList.remove('scale-95', 'opacity-0');
+                        modal.querySelector('.modal-content').classList.add('scale-100', 'opacity-100');
+                    }, 10);
+                }
+            }
+            
+            hideConfirmModal() {
+                const modal = document.getElementById('confirmClearModal');
+                if (modal) {
+                    modal.querySelector('.modal-content').classList.remove('scale-100', 'opacity-100');
+                    modal.querySelector('.modal-content').classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => {
+                        modal.classList.add('hidden');
+                    }, 300);
+                }
+            }
+            
+            confirmClearAll() {
+                this.notifications = [];
+                this.saveNotifications();
+                this.updateUI();
+                this.hideConfirmModal();
+            }
+            
+            togglePanel() {
+                const isHidden = this.notificationPanel.classList.contains('translate-x-full');
+                
+                if (isHidden) {
+                    this.openPanel();
+                } else {
+                    this.closePanel();
+                }
+            }
+            
+            openPanel() {
+                // Remover clase Y estilo inline
+                this.notificationPanel.classList.remove('translate-x-full');
+                this.notificationPanel.style.transform = 'translateX(0)';
+                
+                // Marcar todas como leídas después de abrir
+                setTimeout(() => {
+                    this.notifications.forEach(n => n.read = true);
+                    this.saveNotifications();
+                    this.updateUI();
+                }, 1000);
+            }
+            
+            closePanel() {
+                // Agregar clase Y estilo inline
+                this.notificationPanel.classList.add('translate-x-full');
+                this.notificationPanel.style.transform = 'translateX(100%)';
+            }
+            
+            updateUI() {
+                // Actualizar contador
+                const unreadCount = this.notifications.filter(n => !n.read).length;
+                if (this.notificationCount) {
+                    this.notificationCount.textContent = unreadCount;
+                    this.notificationCount.style.display = unreadCount > 0 ? 'flex' : 'none';
+                }
+                
+                // Actualizar lista
+                if (this.notificationList) {
+                    if (this.notifications.length === 0) {
+                        this.notificationList.innerHTML = `
+                            <div class="text-center text-text-secondary dark:text-dark-text-secondary py-8">
+                                <i class="fas fa-bell-slash text-4xl mb-2 opacity-50"></i>
+                                <p>No hay notificaciones nuevas</p>
+                            </div>
+                        `;
+                    } else {
+                        this.notificationList.innerHTML = this.notifications.map(n => this.renderNotification(n)).join('');
+                        
+                        // Agregar event listeners para eliminar
+                        this.notifications.forEach(n => {
+                            const deleteBtn = document.getElementById(`delete-notif-${n.id}`);
+                            if (deleteBtn) {
+                                deleteBtn.addEventListener('click', () => this.removeNotification(n.id));
+                            }
+                        });
+                    }
+                }
+            }
+            
+            renderNotification(notification) {
+                const typeColors = {
+                    info: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+                    success: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+                    warning: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
+                    error: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
+                    critical: 'bg-red-200 dark:bg-red-800 text-red-900 dark:text-red-100'
+                };
+                
+                const typeIcons = {
+                    info: 'fa-info-circle',
+                    success: 'fa-check-circle',
+                    warning: 'fa-exclamation-triangle',
+                    error: 'fa-times-circle',
+                    critical: 'fa-exclamation-circle'
+                };
+                
+                const colorClass = typeColors[notification.type] || typeColors.info;
+                const iconClass = typeIcons[notification.type] || typeIcons.info;
+                const timeAgo = this.getTimeAgo(notification.timestamp);
+                
+                return `
+                    <div class="p-3 rounded-lg ${colorClass} ${notification.read ? 'opacity-60' : ''} relative group">
+                        <button id="delete-notif-${notification.id}" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class="fas fa-times text-sm"></i>
+                        </button>
+                        <div class="flex items-start gap-3">
+                            <i class="fas ${iconClass} text-lg mt-0.5"></i>
+                            <div class="flex-1">
+                                <p class="font-semibold text-sm mb-1">${this.escapeHtml(notification.title)}</p>
+                                <p class="text-xs mb-1">${this.escapeHtml(notification.message)}</p>
+                                <p class="text-xs opacity-70">${timeAgo}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            getTimeAgo(timestamp) {
+                const now = new Date();
+                const then = new Date(timestamp);
+                const diffMs = now - then;
+                const diffMins = Math.floor(diffMs / 60000);
+                
+                if (diffMins < 1) return 'Ahora';
+                if (diffMins < 60) return `Hace ${diffMins} min`;
+                const diffHours = Math.floor(diffMins / 60);
+                if (diffHours < 24) return `Hace ${diffHours} h`;
+                const diffDays = Math.floor(diffHours / 24);
+                return `Hace ${diffDays} días`;
+            }
+            
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            saveNotifications() {
+                try {
+                    localStorage.setItem('visionpulse_notifications', JSON.stringify(this.notifications));
+                } catch (e) {
+                    console.error('[NOTIFICATION] Error al guardar:', e);
+                }
+            }
+            
+            loadNotifications() {
+                try {
+                    const stored = localStorage.getItem('visionpulse_notifications');
+                    if (stored) {
+                        this.notifications = JSON.parse(stored);
+                        // Limpiar notificaciones antiguas (> 7 días)
+                        const weekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+                        this.notifications = this.notifications.filter(n => new Date(n.timestamp) > weekAgo);
+                    }
+                } catch (e) {
+                    console.error('[NOTIFICATION] Error al cargar:', e);
+                    this.notifications = [];
+                }
+            }
+        }
+        
+        // Inicializar sistema de notificaciones
+        window.notificationManager = new NotificationManager();
+        
+        // Conectar botones del modal de confirmación
+        const cancelClearBtn = document.getElementById('cancelClearBtn');
+        const confirmClearBtn = document.getElementById('confirmClearBtn');
+        const confirmModal = document.getElementById('confirmClearModal');
+        
+        if (cancelClearBtn) {
+            cancelClearBtn.addEventListener('click', () => {
+                window.notificationManager.hideConfirmModal();
+            });
+        }
+        
+        if (confirmClearBtn) {
+            confirmClearBtn.addEventListener('click', () => {
+                window.notificationManager.confirmClearAll();
+            });
+        }
+        
+        // Cerrar modal al hacer clic en el overlay
+        if (confirmModal) {
+            confirmModal.addEventListener('click', (e) => {
+                if (e.target === confirmModal) {
+                    window.notificationManager.hideConfirmModal();
+                }
+            });
+        }
+        
+        // Mostrar notificación de login si existe
+        {% if request.session.show_login_notification %}
+        setTimeout(() => {
+            window.notificationManager.addNotification({{ request.session.show_login_notification|safe }});
+            // Limpiar la notificación de la sesión
+            fetch('{% url "security:clear_login_notification" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            }).catch(e => console.log('Error limpiando notificación:', e));
+        }, 500);
+        {% endif %}
+        
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const htmlEl = document.documentElement;
+        const icon = themeToggle.querySelector('i');
+
+        // Function to update the icon based on current theme
+        const updateThemeIcon = () => {
+            const isDark = htmlEl.classList.contains('dark');
+            icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+        };
+
+        themeToggle.addEventListener('click', () => {
+            htmlEl.classList.toggle('dark');
+            const isDark = htmlEl.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeIcon();
+        });
+
+        // Initial icon update
+        updateThemeIcon();
+
+    // Sidebar Collapse
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    const collapseBtn = document.getElementById('collapseBtn');
+    const collapseIcon = document.getElementById('collapseIcon');
+
+    if (collapseBtn) {
+        collapseBtn.addEventListener('click', () => {
+            const isCollapsed = sidebar.classList.contains('w-20');
+            if (isCollapsed) {
+                // Expandir
+                sidebar.classList.replace('w-20', 'w-72');
+                mainContent.classList.replace('ml-20', 'ml-72');
+                collapseIcon.classList.remove('rotate-180');
+                sidebar.querySelectorAll('.nav-text, .nav-section-title').forEach(el => {
+                    el.classList.remove('opacity-0', 'hidden');
+                    });
+                } else {
+                    // Colapsar
+                    sidebar.classList.replace('w-72', 'w-20');
+                    mainContent.classList.replace('ml-72', 'ml-20');
+                    collapseIcon.classList.add('rotate-180');
+                    sidebar.querySelectorAll('.nav-text, .nav-section-title').forEach(el => {
+                        el.classList.add('opacity-0', 'hidden');
+                    });
+                }
+            });
+        }
+
+    // User Menu Dropdown
+    const userMenuButton = document.getElementById('userMenuButton');
+    const userMenuDropdown = document.getElementById('userMenuDropdown');
+
+    if (userMenuButton && userMenuDropdown) {
+        userMenuButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            userMenuDropdown.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!userMenuButton.contains(e.target) && !userMenuDropdown.contains(e.target)) {
+                userMenuDropdown.classList.add('hidden');
+            }
+        });
+
+        // Close dropdown when pressing Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                userMenuDropdown.classList.add('hidden');
+            }
+        });
+    }
+    });
+</script>
+    <!-- Modal del Ejercicio eliminado aquí para evitar duplicados.
+         El modal reutilizable se incluye desde 'fragments/exercise_modal.html'
+         en las páginas que lo requieren (catálogo, live_session, etc.). -->
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

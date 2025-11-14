@@ -1,0 +1,552 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Configuraciones - VisionPulse{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header con gradiente -->
+    <div class="mb-8 bg-gradient-to-r from-accent-green/20 to-sage-100/30 dark:from-dark-accent-green dark:to-dark-background-secondary rounded-2xl p-8 border border-border-color dark:border-dark-border-color shadow-sm">
+        <div class="flex items-center gap-4">
+            <div class="w-16 h-16 rounded-full bg-gradient-to-br from-accent-green to-sage-200 dark:from-accent-green dark:to-sage-100 flex items-center justify-center shadow-lg">
+                <i class="fas fa-cog text-white text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-text-primary dark:text-dark-text-primary mb-1">Configuraciones de Monitoreo</h1>
+                <p class="text-text-secondary dark:text-dark-text-secondary">Personaliza los parámetros de detección y alertas según tus necesidades</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="mb-6 space-y-3">
+            {% for message in messages %}
+                <div class="{% if message.tags == 'success' %}bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-700 dark:text-green-300{% else %}bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-700 dark:text-red-300{% endif %} border-l-4 p-4 rounded-xl shadow-sm flex items-center gap-3">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} text-xl"></i>
+                    <p class="font-medium">{{ message }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Settings Card -->
+    <div class="bg-surface dark:bg-dark-surface rounded-2xl shadow-lg border border-border-color dark:border-dark-border-color overflow-hidden">
+        <form method="post" id="settingsForm" novalidate>
+            {% csrf_token %}
+            
+            <!-- Detection Parameters -->
+            <div class="p-8 border-b-2 border-border-color dark:border-dark-border-color bg-gradient-to-br from-white to-peach-75 dark:from-dark-surface dark:to-dark-background-secondary">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-terracotta-500 to-terracotta-400 dark:from-terracotta-400 dark:to-terracotta-500 flex items-center justify-center shadow-md">
+                        <i class="fas fa-eye text-white text-lg"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-text-primary dark:text-dark-text-primary">Parámetros de Detección</h3>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- EAR Threshold -->
+                    <div>
+                        <label class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+                            {{ form.ear_threshold.label }}
+                            <span class="text-text-secondary text-xs ml-2">(0.05 - 0.40)</span>
+                        </label>
+                        {{ form.ear_threshold }}
+                        <p class="text-red-500 text-sm mt-1 hidden" data-error-for="id_ear_threshold"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
+                        <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">{{ form.ear_threshold.help_text }}</p>
+                        {% if form.ear_threshold.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.ear_threshold.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Detection Delay Seconds -->
+                    <div>
+                        <label class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+                            {{ form.detection_delay_seconds.label }}
+                            <span class="text-text-secondary text-xs ml-2">(1 - 3600)</span>
+                        </label>
+                        {{ form.detection_delay_seconds }}
+                        <p class="text-red-500 text-sm mt-1 hidden" data-error-for="id_detection_delay_seconds"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
+                        <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">{{ form.detection_delay_seconds.help_text }}</p>
+                        {% if form.detection_delay_seconds.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.detection_delay_seconds.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Microsleep Duration -->
+                    <div>
+                        <label class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+                            {{ form.microsleep_duration_seconds.label }}
+                            <span class="text-text-secondary text-xs ml-2">(5.0 - 15.0)</span>
+                        </label>
+                        {{ form.microsleep_duration_seconds }}
+                        <p class="text-red-500 text-sm mt-1 hidden" data-error-for="id_microsleep_duration_seconds"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
+                        <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">{{ form.microsleep_duration_seconds.help_text }}</p>
+                        {% if form.microsleep_duration_seconds.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.microsleep_duration_seconds.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Hysteresis Timeout Seconds -->
+                    <div>
+                        <label class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+                            {{ form.hysteresis_timeout_seconds.label }}
+                            <span class="text-text-secondary text-xs ml-2">(5 - 3600)</span>
+                        </label>
+                        {{ form.hysteresis_timeout_seconds }}
+                        <p class="text-red-500 text-sm mt-1 hidden" data-error-for="id_hysteresis_timeout_seconds"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
+                        <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">{{ form.hysteresis_timeout_seconds.help_text }}</p>
+                        {% if form.hysteresis_timeout_seconds.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.hysteresis_timeout_seconds.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Low Blink Rate -->
+                    <div>
+                        <label class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+                            {{ form.low_blink_rate_threshold.label }}
+                            <span class="text-text-secondary text-xs ml-2">(3 - 20)</span>
+                        </label>
+                        {{ form.low_blink_rate_threshold }}
+                        <p class="text-red-500 text-sm mt-1 hidden" data-error-for="id_low_blink_rate_threshold"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
+                        <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">{{ form.low_blink_rate_threshold.help_text }}</p>
+                        {% if form.low_blink_rate_threshold.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.low_blink_rate_threshold.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- High Blink Rate -->
+                    <div>
+                        <label class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+                            {{ form.high_blink_rate_threshold.label }}
+                            <span class="text-text-secondary text-xs ml-2">(25 - 60)</span>
+                        </label>
+                        {{ form.high_blink_rate_threshold }}
+                        <p class="text-red-500 text-sm mt-1 hidden" data-error-for="id_high_blink_rate_threshold"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
+                        <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">{{ form.high_blink_rate_threshold.help_text }}</p>
+                        {% if form.high_blink_rate_threshold.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.high_blink_rate_threshold.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Low Light Threshold -->
+                    <div>
+                        <label class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+                            {{ form.low_light_threshold.label }}
+                            <span class="text-text-secondary text-xs ml-2">(30 - 120)</span>
+                        </label>
+                        {{ form.low_light_threshold }}
+                        <p class="text-red-500 text-sm mt-1 hidden" data-error-for="id_low_light_threshold"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
+                        <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">{{ form.low_light_threshold.help_text }}</p>
+                        {% if form.low_light_threshold.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.low_light_threshold.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monitoring Settings -->
+            <div class="p-8 border-b-2 border-border-color dark:border-dark-border-color bg-gradient-to-br from-white to-accent-peach/30 dark:from-dark-surface dark:to-dark-background-secondary">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-warm-orange-500 to-warm-orange-400 dark:from-warm-orange-400 dark:to-warm-orange-500 flex items-center justify-center shadow-md">
+                        <i class="fas fa-sliders-h text-white text-lg"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-text-primary dark:text-dark-text-primary">Configuración de Monitoreo</h3>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Monitoring Frequency -->
+                    <div>
+                        <label class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+                            {{ form.monitoring_frequency.label }}
+                            <span class="text-text-secondary text-xs ml-2">(10 - 300)</span>
+                        </label>
+                        {{ form.monitoring_frequency }}
+                        <p class="text-red-500 text-sm mt-1 hidden" data-error-for="id_monitoring_frequency"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
+                        <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">{{ form.monitoring_frequency.help_text }}</p>
+                        {% if form.monitoring_frequency.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.monitoring_frequency.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Break Reminder -->
+                    <div>
+                        <label class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+                            {{ form.break_reminder_interval.label }}
+                            <span class="text-text-secondary text-xs ml-2">(5 - 120)</span>
+                        </label>
+                        {{ form.break_reminder_interval }}
+                        <p class="text-red-500 text-sm mt-1 hidden" data-error-for="id_break_reminder_interval"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
+                        <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">{{ form.break_reminder_interval.help_text }}</p>
+                        {% if form.break_reminder_interval.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.break_reminder_interval.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Sampling Interval -->
+                    <div>
+                        <label class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+                            {{ form.sampling_interval_seconds.label }}
+                            <span class="text-text-secondary text-xs ml-2">(1 - 60)</span>
+                        </label>
+                        {{ form.sampling_interval_seconds }}
+                        <p class="text-red-500 text-sm mt-1 hidden" data-error-for="id_sampling_interval_seconds"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
+                        <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">{{ form.sampling_interval_seconds.help_text }}</p>
+                        {% if form.sampling_interval_seconds.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.sampling_interval_seconds.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Camera Enabled -->
+                    <div class="flex items-center pt-8">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            {{ form.camera_enabled }}
+                            <span class="text-sm font-medium text-text-primary dark:text-dark-text-primary">{{ form.camera_enabled.label }}</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alert Settings -->
+            <div class="p-8 border-b-2 border-border-color dark:border-dark-border-color bg-gradient-to-br from-white to-sage-100/40 dark:from-dark-surface dark:to-dark-background-secondary">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-accent-green to-sage-200 dark:from-accent-green dark:to-sage-100 flex items-center justify-center shadow-md">
+                        <i class="fas fa-bell text-white text-lg"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-text-primary dark:text-dark-text-primary">Configuración de Alertas</h3>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Alert Repeat Interval -->
+                    <div>
+                        <label class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+                            {{ form.alert_repeat_interval.label }}
+                            <span class="text-text-secondary text-xs ml-2">(1 - 50)</span>
+                        </label>
+                        {{ form.alert_repeat_interval }}
+                        <p class="text-red-500 text-sm mt-1 hidden" data-error-for="id_alert_repeat_interval"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
+                        <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">{{ form.alert_repeat_interval.help_text }}</p>
+                        {% if form.alert_repeat_interval.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.alert_repeat_interval.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Max Repeats Per Hour -->
+                    <div>
+                        <label class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+                            {{ form.repeat_max_per_hour.label }}
+                            <span class="text-text-secondary text-xs ml-2">(1 - 60)</span>
+                        </label>
+                        {{ form.repeat_max_per_hour }}
+                        <p class="text-red-500 text-sm mt-1 hidden" data-error-for="id_repeat_max_per_hour"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
+                        <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">{{ form.repeat_max_per_hour.help_text }}</p>
+                        {% if form.repeat_max_per_hour.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.repeat_max_per_hour.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Alert Cooldown Seconds -->
+                    <div>
+                        <label class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+                            {{ form.alert_cooldown_seconds.label }}
+                            <span class="text-text-secondary text-xs ml-2">(5 - 3600)</span>
+                        </label>
+                        {{ form.alert_cooldown_seconds }}
+                        <p class="text-red-500 text-sm mt-1 hidden" data-error-for="id_alert_cooldown_seconds"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
+                        <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">{{ form.alert_cooldown_seconds.help_text }}</p>
+                        {% if form.alert_cooldown_seconds.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.alert_cooldown_seconds.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Alert Volume -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+                            {{ form.alert_volume.label }}
+                            <span class="text-text-secondary text-xs ml-2">(0.0 - 1.0)</span>
+                        </label>
+                        <div class="flex items-center gap-4 flex-wrap">
+                            {{ form.alert_volume }}
+                            <input type="range" id="alert_volume_range" min="0" max="1" step="0.01" value="{{ form.alert_volume.value|default:monitoring_config.alert_volume }}" class="volume-range">
+                            <span id="volumeValue" class="text-sm font-semibold text-warm-orange-500 min-w-12">{{ monitoring_config.alert_volume }}</span>
+                        </div>
+                        <p class="text-red-500 text-sm mt-1 hidden" data-error-for="id_alert_volume"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
+                        <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">{{ form.alert_volume.help_text }}</p>
+                        {% if form.alert_volume.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.alert_volume.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Settings -->
+            <div class="p-8 bg-gradient-to-br from-white to-peach-100/40 dark:from-dark-surface dark:to-dark-background-secondary">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-peach-200 to-peach-300 dark:from-dark-accent-peach dark:to-peach-200 flex items-center justify-center shadow-md">
+                        <i class="fas fa-envelope text-terracotta-500 dark:text-terracotta-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-text-primary dark:text-dark-text-primary">Notificaciones</h3>
+                </div>
+                <div class="space-y-4">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        {{ form.notify_inactive_tab }}
+                        <span class="text-sm font-medium text-text-primary dark:text-dark-text-primary">{{ form.notify_inactive_tab.label }}</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        {{ form.email_notifications }}
+                        <span class="text-sm font-medium text-text-primary dark:text-dark-text-primary">{{ form.email_notifications.label }}</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- General Preferences: Tema, Privacidad y Región -->
+            <div class="p-8 border-t border-border-color dark:border-dark-border-color bg-gradient-to-br from-white to-sage-100/30 dark:from-dark-surface dark:to-dark-background-secondary">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-accent-green to-sage-200 dark:from-accent-green dark:to-sage-100 flex items-center justify-center shadow-md">
+                        <i class="fas fa-user-cog text-white text-lg"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-text-primary dark:text-dark-text-primary">Preferencias Generales</h3>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Dark Mode -->
+                    <div class="flex items-center">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            {{ form.dark_mode }}
+                            <span class="text-sm font-medium text-text-primary dark:text-dark-text-primary">{{ form.dark_mode.label }}</span>
+                        </label>
+                    </div>
+                    <!-- Data Consent -->
+                    <div class="flex items-center">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            {{ form.data_collection_consent }}
+                            <span class="text-sm font-medium text-text-primary dark:text-dark-text-primary">{{ form.data_collection_consent.label }}</span>
+                        </label>
+                    </div>
+                    <!-- Anonymous Analytics -->
+                    <div class="flex items-center">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            {{ form.anonymous_analytics }}
+                            <span class="text-sm font-medium text-text-primary dark:text-dark-text-primary">{{ form.anonymous_analytics.label }}</span>
+                        </label>
+                    </div>
+                    <!-- Locale -->
+                    <div>
+                        <label class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">{{ form.locale.label }}</label>
+                        {{ form.locale }}
+                    </div>
+                    <!-- Timezone -->
+                    <div>
+                        <label class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">{{ form.timezone.label }}</label>
+                        {{ form.timezone }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="p-8 bg-gradient-to-r from-background-secondary to-peach-75 dark:from-dark-background-secondary dark:to-dark-surface">
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button type="submit" class="flex-1 sm:flex-none px-8 py-4 bg-gradient-to-r from-accent-green to-sage-200 hover:from-sage-200 hover:to-accent-green dark:from-accent-green dark:to-sage-100 text-white font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl hover:scale-105 transform">
+                        <i class="fas fa-save text-xl"></i>
+                        <span>Guardar Configuración</span>
+                    </button>
+                    <a href="{% url 'security:home' %}" class="flex-1 sm:flex-none px-8 py-4 bg-background-secondary dark:bg-dark-background-secondary text-text-primary dark:text-dark-text-primary font-bold rounded-xl hover:bg-peach-200 dark:hover:bg-dark-accent-peach transition-all duration-300 flex items-center justify-center gap-3 border-2 border-border-color dark:border-dark-border-color hover:border-accent-green">
+                        <i class="fas fa-times text-xl"></i>
+                        <span>Cancelar</span>
+                    </a>
+                    <button type="button" id="resetDefaults" class="flex-1 sm:flex-none px-8 py-4 border-2 border-border-color dark:border-dark-border-color text-text-secondary dark:text-dark-text-secondary font-bold rounded-xl hover:bg-peach-100 dark:hover:bg-dark-accent-peach hover:border-warm-orange-400 dark:hover:border-warm-orange-500 hover:text-text-primary dark:hover:text-dark-text-primary transition-all duration-300 flex items-center justify-center gap-3">
+                        <i class="fas fa-undo text-xl"></i>
+                        <span>Restaurar Defaults</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Update volume display + sync number <-> range
+    const volumeNumber = document.querySelector('input[name="alert_volume"]');
+    const volumeRange = document.getElementById('alert_volume_range');
+    const volumeValue = document.getElementById('volumeValue');
+    function clampVol(v){
+        v = parseFloat(v);
+        if (isNaN(v)) return 0.5;
+        return Math.min(1, Math.max(0, v));
+    }
+    function updateVolDisplay(v){
+        if (volumeValue) volumeValue.textContent = Number(v).toFixed(2).replace(/\.00$/, '.0');
+    }
+    if (volumeNumber && volumeRange) {
+        // Init value sync
+        const initV = clampVol(volumeNumber.value || volumeRange.value);
+        volumeNumber.value = initV;
+        volumeRange.value = initV;
+        updateVolDisplay(initV);
+
+        volumeNumber.addEventListener('input', () => {
+            const v = clampVol(volumeNumber.value);
+            volumeRange.value = v;
+            updateVolDisplay(v);
+        });
+        volumeRange.addEventListener('input', () => {
+            const v = clampVol(volumeRange.value);
+            volumeNumber.value = v;
+            updateVolDisplay(v);
+        });
+    }
+
+    // Reset to defaults
+    document.getElementById('resetDefaults').addEventListener('click', function() {
+        if (confirm('¿Estás seguro de que deseas restaurar los valores por defecto? Se perderán tus configuraciones personalizadas.')) {
+            // Set default values
+            document.querySelector('input[name="ear_threshold"]').value = '0.20';
+            document.querySelector('input[name="detection_delay_seconds"]').value = '5';
+            document.querySelector('input[name="microsleep_duration_seconds"]').value = '5.0';
+            document.querySelector('input[name="hysteresis_timeout_seconds"]').value = '30';
+            document.querySelector('input[name="low_blink_rate_threshold"]').value = '10';
+            document.querySelector('input[name="high_blink_rate_threshold"]').value = '35';
+            document.querySelector('input[name="low_light_threshold"]').value = '70';
+            document.querySelector('input[name="monitoring_frequency"]').value = '30';
+            document.querySelector('input[name="break_reminder_interval"]').value = '20';
+            document.querySelector('input[name="sampling_interval_seconds"]').value = '5';
+            document.querySelector('input[name="alert_repeat_interval"]').value = '5';
+            document.querySelector('input[name="repeat_max_per_hour"]').value = '12';
+            document.querySelector('input[name="alert_cooldown_seconds"]').value = '60';
+            document.querySelector('input[name="alert_volume"]').value = '0.5';
+            volumeValue.textContent = '0.5';
+            document.querySelector('input[name="camera_enabled"]').checked = true;
+            document.querySelector('input[name="notify_inactive_tab"]').checked = true;
+            document.querySelector('input[name="email_notifications"]').checked = true;
+        }
+    });
+
+    // Inline validation for numeric inputs
+    const form = document.getElementById('settingsForm');
+    const fieldIds = [
+        'id_ear_threshold',
+        'id_detection_delay_seconds',
+        'id_microsleep_duration_seconds',
+        'id_hysteresis_timeout_seconds',
+        'id_low_blink_rate_threshold',
+        'id_high_blink_rate_threshold',
+        'id_low_light_threshold',
+        'id_monitoring_frequency',
+        'id_break_reminder_interval',
+        'id_sampling_interval_seconds',
+        'id_alert_repeat_interval',
+        'id_repeat_max_per_hour',
+        'id_alert_cooldown_seconds',
+        'id_alert_volume'
+    ];
+
+    function showError(el, msg) {
+        const cont = document.querySelector(`[data-error-for="${el.id}"]`);
+        if (!cont) return;
+        const span = cont.querySelector('span');
+        if (msg) {
+            if (span) span.textContent = msg;
+            cont.classList.remove('hidden');
+        } else {
+            if (span) span.textContent = '';
+            cont.classList.add('hidden');
+        }
+    }
+
+    function rangeMessage(el) {
+        const min = el.getAttribute('min');
+        const max = el.getAttribute('max');
+        if (min && max) return `Valor fuera de rango (${min} - ${max}).`;
+        if (min) return `Debe ser ≥ ${min}.`;
+        if (max) return `Debe ser ≤ ${max}.`;
+        return 'Valor inválido.';
+    }
+
+    function validateField(el) {
+        if (!el) return true;
+        const valid = el.checkValidity();
+        if (!valid) {
+            if (el.validity.rangeOverflow || el.validity.rangeUnderflow) {
+                showError(el, rangeMessage(el));
+            } else if (el.validity.stepMismatch) {
+                showError(el, 'Usa un paso válido.');
+            } else if (el.validity.badInput) {
+                showError(el, 'Número inválido.');
+            } else {
+                showError(el, 'Revisa este valor.');
+            }
+        } else {
+            showError(el, '');
+        }
+        return valid;
+    }
+
+    fieldIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        ['input','change','blur'].forEach(ev => el.addEventListener(ev, () => validateField(el)));
+    });
+
+    form.addEventListener('submit', (e) => {
+        let firstInvalid = null;
+        fieldIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const ok = validateField(el);
+            if (!ok && !firstInvalid) firstInvalid = el;
+        });
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            if (firstInvalid) {
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstInvalid.focus({ preventScroll: true });
+            }
+        }
+    });
+</script>
+
+<style>
+/* Pastel, consistente con Perfil: aplica a inputs/select/textarea del Settings */
+input[type="number"],
+input[type="text"],
+select {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border-radius: 0.75rem;
+    border: 2px solid #F0D4C3; /* pastel suave */
+    background-color: #FBF7F0;
+    color: #2C2C2C;
+    transition: all 0.2s ease;
+}
+.narrow-input { max-width: 220px; }
+.dark input[type="number"],
+.dark input[type="text"],
+.dark select {
+    border-color: #3D3028;
+    background-color: #1A1A1A;
+    color: #FBF7F0;
+}
+input[type="number"]:focus,
+input[type="text"]:focus,
+select:focus {
+    outline: none;
+    border-color: #E89552;
+    box-shadow: 0 0 0 3px rgba(232, 149, 82, 0.15);
+}
+
+/* Hacer el campo de Volumen más angosto sin afectar los demás */
+input[name="alert_volume"] {
+    max-width: 160px; /* ancho cómodo, evita ocupación completa */
+}
+.volume-range {
+    width: 220px;
+    accent-color: #E89552;
+}
+/* Mejora visual del control range (WebKit) */
+.volume-range::-webkit-slider-runnable-track {
+    height: 8px; border-radius: 999px; background: linear-gradient(90deg,#E89552,#D4523F);
+}
+.volume-range::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid #D4523F; margin-top: -5px;
+}
+.dark .volume-range::-webkit-slider-runnable-track { background: linear-gradient(90deg,#F0D4C3,#E89552); }
+.dark .volume-range::-webkit-slider-thumb { background: #1A1A1A; border-color: #E89552; }
+</style>
+{% endblock %}

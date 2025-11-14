@@ -1,0 +1,907 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reportes y Estadísticas{% endblock %}
+
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex items-start justify-between gap-4 flex-wrap mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-text-primary dark:text-dark-text-primary mb-1">Reportes y Estadísticas</h1>
+            <p class="text-text-secondary dark:text-dark-text-secondary">Análisis detallado de tu salud visual</p>
+        </div>
+        <!-- Filtros de período -->
+        <div class="flex gap-2">
+            <button class="period-btn px-4 py-2 rounded-full text-sm font-semibold bg-accent-green text-white transition-colors" id="defaultPeriodBtn" data-period="week">Última semana</button>
+            <button class="period-btn px-4 py-2 rounded-full text-sm font-semibold bg-cream-100 dark:bg-dark-surface text-text-primary dark:text-dark-text-primary hover:bg-accent-green hover:text-white transition-colors" data-period="month">Último mes</button>
+            <button class="period-btn px-4 py-2 rounded-full text-sm font-semibold bg-cream-100 dark:bg-dark-surface text-text-primary dark:text-dark-text-primary hover:bg-accent-green hover:text-white transition-colors" data-period="quarter">Últimos 3 meses</button>
+        </div>
+    </div>
+        <!-- Summary Cards-->
+    <div id="summaryGrid" class="flex flex-row flex-wrap md:flex-nowrap gap-4 w-full mt-2.5">
+            <!-- Tiempo de pantalla -->
+            <div class="bg-cream-50 dark:bg-dark-surface rounded-3xl shadow p-4 flex flex-col border border-border-color dark:border-dark-border-color min-w-0 w-full md:w-1/4 transition-colors">
+                <div class="flex gap-2 items-center mb-2">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: #E89552;">
+                        <svg xmlns='http://www.w3.org/2000/svg' class='h-5 w-5 text-white' fill='none' viewBox='0 0 24 24' stroke='currentColor'><circle cx='12' cy='12' r='10' stroke-width='2' stroke='currentColor' fill='none'/><path stroke='currentColor' stroke-width='2' d='M12 6v6l4 2'/></svg>
+                    </div>
+                    <span class="text-sm text-text-primary dark:text-[#E8E8E8] font-bold transition-colors">Tiempo de Pantalla</span>
+                </div>
+                <div class="flex-1 flex items-center">
+                    <div class="text-4xl font-extrabold text-text-primary dark:text-dark-text-primary transition-colors" style="font-family: 'Montserrat', sans-serif; font-weight: 800;" id="screenTime">0h</div>
+                </div>
+                <div class="text-sm text-accent-green dark:text-[#A8D4A8] font-semibold transition-colors" id="screenTimeTrend"></div>
+            </div>
+            <!-- Alertas generadas -->
+            <div class="bg-cream-50 dark:bg-dark-surface rounded-3xl shadow p-4 flex flex-col border border-border-color dark:border-dark-border-color min-w-0 w-full md:w-1/4 transition-colors">
+                <div class="flex gap-2 items-center mb-2">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: #D4523F;">
+                        <i class="fas fa-exclamation-triangle text-white text-lg"></i>
+                    </div>
+                    <span class="text-sm text-text-primary dark:text-[#E8E8E8] font-bold transition-colors">Alertas Generadas</span>
+                </div>
+                <div class="flex-1 flex items-center">
+                    <div class="text-4xl font-extrabold text-text-primary dark:text-dark-text-primary transition-colors" style="font-family: 'Montserrat', sans-serif; font-weight: 800;" id="alertsCount">0</div>
+                </div>
+                <div class="text-sm text-accent-green dark:text-[#A8D4A8] font-semibold transition-colors" id="alertsTrend"></div>
+            </div>
+            <!-- Ejercicios completados -->
+            <div class="bg-cream-50 dark:bg-dark-surface rounded-3xl shadow p-4 flex flex-col border border-border-color dark:border-dark-border-color min-w-0 w-full md:w-1/4 transition-colors">
+                <div class="flex gap-2 items-center mb-2">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: #8FA490;">
+                        <i class="fas fa-dumbbell text-white text-lg"></i>
+                    </div>
+                    <span class="text-sm text-text-primary dark:text-[#E8E8E8] font-bold transition-colors">Ejercicios Completados</span>
+                </div>
+                <div class="flex-1 flex items-center">
+                    <div class="text-4xl font-extrabold text-text-primary dark:text-dark-text-primary transition-colors" style="font-family: 'Montserrat', sans-serif; font-weight: 800;" id="exercisesCount">0</div>
+                </div>
+                <div class="text-sm text-accent-green dark:text-[#A8D4A8] font-semibold transition-colors" id="exercisesTrend"></div>
+            </div>
+            <!-- Total de sesiones -->
+            <div class="bg-cream-50 dark:bg-dark-surface rounded-3xl shadow p-4 flex flex-col border border-border-color dark:border-dark-border-color min-w-0 w-full md:w-1/4 transition-colors">
+                <div class="flex gap-2 items-center mb-2">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: #E89F5F;">
+                        <i class="fas fa-chart-line text-white text-lg"></i>
+                    </div>
+                    <span class="text-sm text-text-primary dark:text-[#E8E8E8] font-bold transition-colors">Total de Sesiones</span>
+                </div>
+                <div class="flex-1 flex items-center">
+                    <div class="text-4xl font-extrabold text-text-primary dark:text-dark-text-primary transition-colors" style="font-family: 'Montserrat', sans-serif; font-weight: 800;" id="sessionsCount">0</div>
+                </div>
+                <div class="text-sm text-accent-green dark:text-[#A8D4A8] font-semibold transition-colors" id="sessionsTrend"></div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <div class="bg-white dark:bg-dark-surface rounded-2xl shadow p-4 border border-border-color dark:border-dark-border-color flex flex-col transition-colors">
+                <div class="font-semibold text-text-primary dark:text-dark-text-primary mb-1">Evolución de fatiga visual</div>
+                <div class="text-xs text-text-secondary dark:text-dark-text-secondary mb-2">Índice de fatiga durante la semana</div>
+                <div class="h-64 md:h-72 flex-1"><canvas id="fatigueChart"></canvas></div>
+            </div>
+            <div class="bg-white dark:bg-dark-surface rounded-2xl shadow p-4 border border-border-color dark:border-dark-border-color flex flex-col transition-colors">
+                <div class="font-semibold text-text-primary dark:text-dark-text-primary mb-1">Tiempo de Pantalla</div>
+                <div class="text-xs text-text-secondary dark:text-dark-text-secondary mb-2">Horas diarias frente a la pantalla</div>
+                <div class="h-64 md:h-72 flex-1"><canvas id="screenTimeChart"></canvas></div>
+                <div class="text-center text-xs text-text-secondary dark:text-dark-text-secondary mt-2">Promedio semanal: 6.7h</div>
+            </div>
+            <div class="bg-white dark:bg-dark-surface rounded-2xl shadow p-4 border border-border-color dark:border-dark-border-color flex flex-col transition-colors">
+                <div class="font-semibold text-text-primary dark:text-dark-text-primary mb-1">Distribución de Alertas</div>
+                <div class="text-xs text-text-secondary dark:text-dark-text-secondary mb-2">Categorización de alertas del periodo</div>
+                <div class="h-36"><canvas id="alertsChart"></canvas></div>
+                <div id="alertsLegend" class="mt-2 text-xs text-text-secondary dark:text-dark-text-secondary"></div>
+            </div>
+        </div>
+
+        <!-- Historial de Sesiones -->
+    <div class="bg-peach-100 dark:bg-dark-surface rounded-2xl shadow p-4 border border-peach-200 dark:border-dark-border-color transition-colors overflow-hidden" style="margin-top: 15px;">
+            <div class="font-semibold text-text-primary dark:text-dark-text-primary mb-1">Historial de Sesiones</div>
+            <div class="text-xs text-text-secondary dark:text-dark-text-secondary mb-3">Sesiones de monitoreo recientes</div>
+            <div class="rounded-xl overflow-hidden border-2 border-border-color dark:border-dark-border-color bg-white dark:bg-dark-surface shadow-lg dark:shadow-2xl">
+                <table class="w-full text-xs table-auto text-left">
+                    <thead class="bg-gradient-to-r from-[#F9E5D8] to-[#F5D4C1] dark:from-dark-accent-green dark:to-dark-background-secondary">
+                        <tr class="border-b-2 border-peach-300 dark:border-accent-green/40">
+                            <th class="py-4 px-4 font-bold text-left text-[#5d4037] dark:text-dark-text-primary">Fecha/Hora</th>
+                            <th class="py-4 px-4 font-bold text-left text-[#5d4037] dark:text-dark-text-primary">Duración</th>
+                            <th class="py-4 px-4 font-bold text-left text-[#5d4037] dark:text-dark-text-primary">Parpadeos/min</th>
+                            <th class="py-4 px-4 font-bold text-left text-[#5d4037] dark:text-dark-text-primary">Foco Promedio</th>
+                            <th class="py-4 px-4 font-bold text-left text-[#5d4037] dark:text-dark-text-primary">Alertas</th>
+                            <th class="py-4 px-4"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-dark-background-secondary">
+                    <tr class="border-b border-border-color dark:border-dark-border-color hover:bg-cream-50 dark:hover:bg-dark-background-primary transition-colors text-text-primary dark:text-dark-text-primary">
+                        <td class="py-3 px-4">2025-10-03 09:00</td>
+                        <td class="py-3 px-4 font-semibold">2h 15m</td>
+                        <td class="py-3 px-4"><span class="bg-warning-color text-white px-3 py-1 rounded-full">14</span></td>
+                        <td class="py-3 px-4 font-semibold">85%</td>
+                        <td class="py-3 px-4"><span class="bg-blue-200 dark:bg-dark-accent-peach text-blue-800 dark:text-dark-alert-coral px-2 py-1 rounded-full border border-blue-300 dark:border-dark-alert-coral">2</span></td>
+                        <td class="py-3 px-4"><button class="text-accent-green dark:text-accent-green hover:text-accent-green/80 dark:hover:text-accent-green/80 hover:underline transition-colors font-medium">Ver detalle</button></td>
+                    </tr>
+                    <tr class="border-b border-border-color dark:border-dark-border-color hover:bg-cream-50 dark:hover:bg-dark-background-primary transition-colors text-text-primary dark:text-dark-text-primary">
+                        <td class="py-3 px-4">2025-10-03 14:30</td>
+                        <td class="py-3 px-4 font-semibold">1h 45m</td>
+                        <td class="py-3 px-4"><span class="bg-warning-color text-white px-3 py-1 rounded-full">15</span></td>
+                        <td class="py-3 px-4 font-semibold">92%</td>
+                        <td class="py-3 px-4"><span class="bg-blue-200 dark:bg-dark-accent-peach text-blue-800 dark:text-dark-alert-coral px-2 py-1 rounded-full border border-blue-300 dark:border-dark-alert-coral">1</span></td>
+                        <td class="py-3 px-4"><button class="text-accent-green dark:text-accent-green hover:text-accent-green/80 dark:hover:text-accent-green/80 hover:underline transition-colors font-medium">Ver detalle</button></td>
+                    </tr>
+                    <tr class="border-b border-border-color dark:border-dark-border-color hover:bg-cream-50 dark:hover:bg-dark-background-primary transition-colors text-text-primary dark:text-dark-text-primary">
+                        <td class="py-3 px-4">2025-10-02 10:15</td>
+                        <td class="py-3 px-4 font-semibold">3h 20m</td>
+                        <td class="py-3 px-4"><span class="bg-danger-color text-white px-3 py-1 rounded-full">11</span></td>
+                        <td class="py-3 px-4 font-semibold">78%</td>
+                        <td class="py-3 px-4"><span class="bg-blue-200 dark:bg-dark-accent-peach text-blue-800 dark:text-dark-alert-coral px-2 py-1 rounded-full border border-blue-300 dark:border-dark-alert-coral">5</span></td>
+                        <td class="py-3 px-4"><button class="text-accent-green dark:text-accent-green hover:text-accent-green/80 dark:hover:text-accent-green/80 hover:underline transition-colors font-medium">Ver detalle</button></td>
+                    </tr>
+                    <tr class="border-b border-border-color dark:border-dark-border-color hover:bg-cream-50 dark:hover:bg-dark-background-primary transition-colors text-text-primary dark:text-dark-text-primary">
+                        <td class="py-3 px-4">2025-10-02 15:00</td>
+                        <td class="py-3 px-4 font-semibold">2h 00m</td>
+                        <td class="py-3 px-4"><span class="bg-warning-color text-white px-3 py-1 rounded-full">13</span></td>
+                        <td class="py-3 px-4 font-semibold">88%</td>
+                        <td class="py-3 px-4"><span class="bg-blue-200 dark:bg-dark-accent-peach text-blue-800 dark:text-dark-alert-coral px-2 py-1 rounded-full border border-blue-300 dark:border-dark-alert-coral">2</span></td>
+                        <td class="py-3 px-4"><button class="text-accent-green dark:text-accent-green hover:text-accent-green/80 dark:hover:text-accent-green/80 hover:underline transition-colors font-medium">Ver detalle</button></td>
+                    </tr>
+                    <tr class="hover:bg-cream-50 dark:hover:bg-dark-background-primary transition-colors text-text-primary dark:text-dark-text-primary">
+                        <td class="py-3 px-4">2025-10-01 09:30</td>
+                        <td class="py-3 px-4 font-semibold">2h 45m</td>
+                        <td class="py-3 px-4"><span class="bg-warning-color text-white px-3 py-1 rounded-full">14</span></td>
+                        <td class="py-3 px-4 font-semibold">82%</td>
+                        <td class="py-3 px-4"><span class="bg-blue-200 dark:bg-dark-accent-peach text-blue-800 dark:text-dark-alert-coral px-2 py-1 rounded-full border border-blue-300 dark:border-dark-alert-coral">1</span></td>
+                        <td class="py-3 px-4"><button class="text-accent-green dark:text-accent-green hover:text-accent-green/80 dark:hover:text-accent-green/80 hover:underline transition-colors font-medium">Ver detalle</button></td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+            <!-- Paginación de sesiones -->
+            <div id="sessionsPagination" class="mt-3 flex items-center justify-center gap-2"></div>
+        </div>
+
+    <!-- Bottom Section -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <!-- Historial de Alertas -->
+            <div class="bg-[#F9E5D8] dark:bg-dark-surface rounded-2xl shadow p-4 border border-peach-200 dark:border-dark-border-color flex flex-col gap-3 transition-colors">
+                <div class="font-semibold text-text-primary dark:text-dark-text-primary">Historial de Alertas</div>
+                <!-- Lista de alertas -->
+                <div id="alertsList" class="flex flex-col gap-3"></div>
+                <!-- Paginación de alertas -->
+                <div id="alertsPagination" class="mt-1 flex items-center justify-center gap-2"></div>
+            </div>
+            <!-- Generar Reporte -->
+            <form id="exportForm" method="post" action="{% url 'reports:export' %}" class="bg-[#F5D4C1] dark:bg-dark-surface rounded-3xl shadow-md dark:shadow-lg p-6 border border-[#E8B99A] dark:border-dark-border-color flex flex-col gap-3 transition-all">
+                {% csrf_token %}
+                <div class="font-semibold text-text-primary dark:text-dark-text-primary text-base mb-1">Generar Reporte</div>
+                <div class="text-sm text-text-secondary dark:text-dark-text-secondary mb-2">Exporta tus datos para análisis detallado</div>
+                <div class="flex flex-col gap-2.5 mb-3">
+                    <label class="flex items-center gap-2.5 text-sm text-text-primary dark:text-dark-text-primary">
+                        <input name="include_sessions" type="checkbox" checked class="w-4 h-4 rounded accent-accent-green"> 
+                        <span>Sesiones completas</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 text-sm text-text-primary dark:text-dark-text-primary">
+                        <input name="include_alerts" type="checkbox" class="w-4 h-4 rounded accent-accent-green"> 
+                        <span>Alertas generadas</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 text-sm text-text-primary dark:text-dark-text-primary">
+                        <input name="include_exercises" type="checkbox" checked class="w-4 h-4 rounded accent-accent-green"> 
+                        <span>Ejercicios realizados</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 text-sm text-text-primary dark:text-dark-text-primary">
+                        <input name="include_charts" type="checkbox" class="w-4 h-4 rounded accent-accent-green"> 
+                        <span>Gráficas estadísticas</span>
+                    </label>
+                </div>
+                <div class="mb-3">
+                    <select name="format" class="w-full rounded-xl px-4 py-2.5 border border-border-color dark:border-dark-border-color text-sm bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary shadow-sm">
+                        <option value="pdf">PDF</option>
+                        <option value="excel">Excel</option>
+                        <option value="csv">CSV</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <select name="period" class="w-full rounded-xl px-4 py-2.5 border border-border-color dark:border-dark-border-color text-sm bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary shadow-sm">
+                        <option value="week">Reporte semanal</option>
+                        <option value="month">Reporte mensual</option>
+                        <option value="quarter">Reporte trimestral</option>
+                    </select>
+                </div>
+                <button id="exportSubmitBtn" type="submit" class="w-full py-3 rounded-full bg-[#8FA490] dark:bg-dark-accent-green text-white font-semibold text-sm shadow-md hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                    <i class="fas fa-download"></i>
+                    Generar Reporte
+                </button>
+            </form>
+            
+        </div>
+    </div>
+</div>
+
+<!-- Incluir modal reutilizable de ejercicios -->
+{% include 'fragments/exercise_modal.html' %}
+<!-- Modal de carga para exportaciones -->
+{% include 'fragments/export_loading_modal.html' %}
+
+<!-- Modal de Detalle de Sesión -->
+<div id="sessionDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-80 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-dark-surface rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border-2 border-transparent dark:border-dark-border-color">
+        <!-- Header del Modal -->
+        <div class="sticky top-0 bg-[#F9E5D8] dark:bg-dark-accent-green border-b-2 border-peach-200 dark:border-dark-border-color px-6 py-4 flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-text-primary dark:text-dark-text-primary">Detalles de Sesión</h2>
+                <p class="text-sm text-text-secondary dark:text-dark-text-secondary" id="modalSessionDate"></p>
+            </div>
+            <button onclick="closeSessionModal()" class="text-text-secondary hover:text-text-primary dark:text-dark-text-secondary dark:hover:text-dark-text-primary transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- Contenido del Modal -->
+        <div class="p-6">
+            <!-- Resumen de Métricas -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-cream-50 dark:bg-dark-background-primary rounded-xl p-4 border-2 border-transparent dark:border-dark-border-color">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-8 h-8 bg-accent-green/20 dark:bg-dark-accent-green rounded-lg flex items-center justify-center">
+                            <i class="fas fa-clock text-accent-green dark:text-accent-green text-sm"></i>
+                        </div>
+                        <span class="text-xs text-text-secondary dark:text-dark-text-secondary font-semibold">Duración</span>
+                    </div>
+                    <p class="text-2xl font-bold text-text-primary dark:text-dark-text-primary" id="modalDuration">-</p>
+                </div>
+                <div class="bg-cream-50 dark:bg-dark-background-primary rounded-xl p-4 border-2 border-transparent dark:border-dark-border-color">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-8 h-8 bg-accent-green/20 dark:bg-dark-accent-green rounded-lg flex items-center justify-center">
+                            <i class="fas fa-eye text-accent-green dark:text-accent-green text-sm"></i>
+                        </div>
+                        <span class="text-xs text-text-secondary dark:text-dark-text-secondary font-semibold">Parpadeos/min</span>
+                    </div>
+                    <p class="text-2xl font-bold text-text-primary dark:text-dark-text-primary" id="modalBlinks">-</p>
+                </div>
+                <div class="bg-cream-50 dark:bg-dark-background-primary rounded-xl p-4 border-2 border-transparent dark:border-dark-border-color">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-8 h-8 bg-accent-green/20 dark:bg-dark-accent-green rounded-lg flex items-center justify-center">
+                            <i class="fas fa-bullseye text-accent-green dark:text-accent-green text-sm"></i>
+                        </div>
+                        <span class="text-xs text-text-secondary dark:text-dark-text-secondary font-semibold">Foco Promedio</span>
+                    </div>
+                    <p class="text-2xl font-bold text-text-primary dark:text-dark-text-primary" id="modalFocus">-</p>
+                </div>
+                <div class="bg-cream-50 dark:bg-dark-background-primary rounded-xl p-4 border-2 border-transparent dark:border-dark-border-color">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-8 h-8 bg-terracotta-400/20 dark:bg-dark-accent-peach rounded-lg flex items-center justify-center">
+                            <i class="fas fa-exclamation-triangle text-terracotta-400 dark:text-dark-alert-coral text-sm"></i>
+                        </div>
+                        <span class="text-xs text-text-secondary dark:text-dark-text-secondary font-semibold">Alertas</span>
+                    </div>
+                    <p class="text-2xl font-bold text-text-primary dark:text-dark-text-primary" id="modalAlerts">-</p>
+                </div>
+            </div>
+            
+            <!-- Información Adicional -->
+            <div class="bg-cream-100 dark:bg-dark-background-primary rounded-xl p-4 mb-4 border-2 border-transparent dark:border-dark-border-color">
+                <h3 class="font-semibold text-text-primary dark:text-dark-text-primary mb-3">Información de la Sesión</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-calendar-alt text-accent-green dark:text-accent-green mt-0.5"></i>
+                        <div>
+                            <span class="text-text-secondary dark:text-dark-text-secondary">Fecha:</span>
+                            <span class="text-text-primary dark:text-dark-text-primary font-medium ml-1" id="modalFullDate">-</span>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-clock text-accent-green dark:text-accent-green mt-0.5"></i>
+                        <div>
+                            <span class="text-text-secondary dark:text-dark-text-secondary">Hora de inicio:</span>
+                            <span class="text-text-primary dark:text-dark-text-primary font-medium ml-1" id="modalStartTime">-</span>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-heartbeat text-accent-green dark:text-accent-green mt-0.5"></i>
+                        <div>
+                            <span class="text-text-secondary dark:text-dark-text-secondary">Nivel de fatiga:</span>
+                            <span class="text-text-primary dark:text-dark-text-primary font-medium ml-1" id="modalFatigue">-</span>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-chart-line text-accent-green dark:text-accent-green mt-0.5"></i>
+                        <div>
+                            <span class="text-text-secondary dark:text-dark-text-secondary">Estado:</span>
+                            <span class="text-text-primary dark:text-dark-text-primary font-medium ml-1" id="modalStatus">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botón de Cierre -->
+            <div class="flex justify-end">
+                <button onclick="closeSessionModal()" class="px-6 py-2.5 rounded-full border-2 border-border-color dark:border-dark-border-color text-text-primary dark:text-dark-text-primary hover:bg-cream-50 dark:hover:bg-dark-background-primary transition-colors font-semibold">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+Chart.defaults.font.family = "'Segoe UI', sans-serif";
+Chart.defaults.font.size = 10;
+
+let fatigueChart, screenTimeChart, alertsChart;
+// Estado para paginación de sesiones
+let sessionsAll = [];
+let sessionsPage = 1;
+const SESSIONS_PER_PAGE = 5;
+// Estado para paginación de alertas
+let alertsAll = [];
+let alertsPage = 1;
+const ALERTS_PER_PAGE = 3;
+
+// Usamos únicamente clases que existen en Tailwind.config (evita nombres no válidos)
+const BLINK_BG_CLASSES = [
+    'bg-green-500',          // 1-5  (sólido verde)
+    'bg-accent-green',       // 6-10 (verde salvia de marca)
+    'bg-warm-orange-400',    // 11-15 (naranja)
+    'bg-terracotta-400',     // 16-20 (rojo terracota)
+    'bg-terracotta-400',     // 21-25
+    'bg-terracotta-500'      // 26+ (más intenso)
+];
+
+const ALERT_STROKE_TEXT_CLASSES = [
+    'border-accent-green text-accent-green',     // 1-5
+    'border-accent-green text-accent-green',     // 6-10
+    'border-warm-orange-400 text-warm-orange-400', // 11-15
+    'border-terracotta-400 text-terracotta-400', // 16-20
+    'border-terracotta-400 text-terracotta-400', // 21-25
+    'border-terracotta-500 text-terracotta-500'  // 26+
+];
+
+function rangeBucketIndex(val) {
+    if (!val || val <= 0) return -1; // tratamos 0 aparte (color neutro)
+    return Math.floor((Number(val) - 1) / 5); // 1-5 -> 0, 6-10 -> 1, etc.
+}
+
+function renderSessionsTable(page) {
+    const tbody = document.querySelector('table tbody');
+    if (!tbody) return;
+    const total = sessionsAll.length;
+    const totalPages = Math.max(1, Math.ceil(total / SESSIONS_PER_PAGE));
+    sessionsPage = Math.min(Math.max(1, page), totalPages);
+    const start = (sessionsPage - 1) * SESSIONS_PER_PAGE;
+    const end = start + SESSIONS_PER_PAGE;
+    const rows = sessionsAll.slice(start, end);
+
+    if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-text-secondary dark:text-dark-text-secondary">Sin registros</td></tr>`;
+    } else {
+        tbody.innerHTML = rows.map(item => {
+            const alertsVal = Number(item.alerts) || 0;
+            // Paso 2: Asignación de clases por bucket
+            const blinkVal = Number(item.blinks) || 0;
+            const bIdx = rangeBucketIndex(blinkVal);
+            const aIdx = rangeBucketIndex(alertsVal);
+
+            // 0 parpadeos/min: usar una pastilla neutra pero visible en ambos modos
+            const blinkBg = bIdx < 0 ? 'bg-cream-200 dark:bg-dark-border-color text-text-primary dark:text-dark-text-primary' : (BLINK_BG_CLASSES[Math.min(bIdx, BLINK_BG_CLASSES.length - 1)] + ' text-white');
+            const alertStrokeText = aIdx < 0 ? 'border-border-color dark:border-dark-border-color text-text-secondary dark:text-dark-text-secondary' : ALERT_STROKE_TEXT_CLASSES[Math.min(aIdx, ALERT_STROKE_TEXT_CLASSES.length - 1)];
+
+            const alertsBadge = `<span class="px-2 py-0.5 rounded-full border ${alertStrokeText} bg-white dark:bg-dark-background-secondary">${alertsVal}</span>`;
+            return `
+            <tr class="border-b border-border-color dark:border-dark-border-color hover:bg-cream-50 dark:hover:bg-dark-background-primary transition-colors last:border-0 text-text-primary dark:text-dark-text-primary">
+                <td class="py-3 px-4">${item.date}</td>
+                <td class="py-3 px-4 font-semibold">${item.duration}</td>
+                <td class="py-3 px-4"><span class="${blinkBg} px-2.5 py-0.5 rounded-full">${item.blinks}</span></td>
+                <td class="py-3 px-4 font-semibold">${item.focus}</td>
+                <td class="py-3 px-4">${alertsBadge}</td>
+                    <td class="py-3 px-4"><button onclick="openSessionModal(${item.id || 0}, '${item.date}', '${item.duration}', '${item.blinks}', '${item.focus}', '${alertsVal}')" class="inline-flex items-center gap-2 text-accent-green dark:text-accent-green hover:text-accent-green/80 dark:hover:text-accent-green/80 hover:underline transition-colors font-medium"><i class="fas fa-eye"></i> Ver detalle</button></td>
+            </tr>`;
+        }).join('');
+    }
+
+    renderSessionsPagination(totalPages);
+}
+
+function renderSessionsPagination(totalPages) {
+    const container = document.getElementById('sessionsPagination');
+    if (!container) return;
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+    const btn = (label, page, disabled = false, active = false) => `
+        <button
+          class="px-3 py-1 rounded-full text-xs font-semibold border border-border-color dark:border-dark-border-color ${
+            disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-accent-green/10'
+          } ${active ? 'bg-accent-green text-white border-transparent' : 'bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary'}"
+          data-page="${page}"
+          ${disabled ? 'disabled' : ''}
+        >${label}</button>`;
+
+    let html = '';
+    html += btn('«', sessionsPage - 1, sessionsPage === 1);
+    for (let p = 1; p <= totalPages; p++) {
+        html += btn(p, p, false, p === sessionsPage);
+    }
+    html += btn('»', sessionsPage + 1, sessionsPage === totalPages);
+    container.innerHTML = html;
+
+    container.querySelectorAll('button[data-page]')?.forEach(b => {
+        b.addEventListener('click', (e) => {
+            const p = parseInt(e.currentTarget.getAttribute('data-page'));
+            if (!isNaN(p)) renderSessionsTable(p);
+        });
+    });
+}
+
+// Render de Historial de Alertas (5 por página)
+function renderAlertsList(page) {
+    const container = document.getElementById('alertsList');
+    if (!container) return;
+
+    const total = alertsAll.length;
+    const totalPages = Math.max(1, Math.ceil(total / ALERTS_PER_PAGE));
+    alertsPage = Math.min(Math.max(1, page), totalPages);
+    const start = (alertsPage - 1) * ALERTS_PER_PAGE;
+    const end = start + ALERTS_PER_PAGE;
+    const rows = alertsAll.slice(start, end);
+
+    if (rows.length === 0) {
+        container.innerHTML = `<div class="text-center text-xs text-text-secondary dark:text-dark-text-secondary py-3">Sin alertas en este período</div>`;
+    } else {
+        container.innerHTML = rows.map(a => {
+            const isResolved = (a.status || '').toLowerCase().startsWith('res');
+            const statusClass = isResolved ? 'bg-accent-green text-white' : 'bg-warm-orange-400 text-white';
+            const iconBg = isResolved ? 'bg-sage-200' : 'bg-terracotta-400';
+            const icon = `<i class="fas fa-exclamation-triangle"></i>`;
+            return `
+            <div class="flex items-center gap-3 p-3 bg-cream-100 dark:bg-dark-accent-peach/30 border border-border-color dark:border-dark-border-color rounded-3xl">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center ${iconBg} text-white">${icon}</div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="font-medium text-text-primary dark:text-dark-text-primary truncate">${a.type}</div>
+                        <div class="text-[11px] text-text-secondary dark:text-dark-text-secondary whitespace-nowrap">${a.date}</div>
+                    </div>
+                    <div class="text-xs text-text-secondary dark:text-dark-text-secondary truncate">${a.description || ''}</div>
+                    <div class="mt-2"><span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusClass}">${a.status}</span></div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    renderAlertsPagination(totalPages);
+}
+
+function renderAlertsPagination(totalPages) {
+    const container = document.getElementById('alertsPagination');
+    if (!container) return;
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+    // Determinar bloque de 10 páginas (1-10, 11-20, etc.)
+    const currentBlock = Math.floor((alertsPage - 1) / 10);
+    const blockStart = currentBlock * 10 + 1;
+    const blockEnd = Math.min(blockStart + 9, totalPages);
+    const hasNextBlock = blockEnd < totalPages;
+    const hasPrevBlock = currentBlock > 0;
+
+    const btn = (label, page, disabled = false, active = false, isNav = false) => `
+        <button
+          class="px-3 py-1 rounded-full text-xs font-semibold border border-border-color dark:border-dark-border-color ${disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-accent-green/10'} ${active ? 'bg-accent-green text-white border-transparent' : 'bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary'}"
+          data-page="${page}"
+          data-nav="${isNav ? 'true' : 'false'}"
+          ${disabled ? 'disabled' : ''}
+        >${label}</button>`;
+
+    let html = '';
+    // Botón << para ir al bloque anterior
+    html += btn('<<', blockStart - 1, !hasPrevBlock, false, true);
+    
+    // Números del bloque actual (máximo 10)
+    for (let p = blockStart; p <= blockEnd; p++) {
+        html += btn(p, p, false, p === alertsPage);
+    }
+    
+    // Botón >> para ir al siguiente bloque
+    html += btn('>>', blockEnd + 1, !hasNextBlock, false, true);
+    
+    container.innerHTML = html;
+
+    container.querySelectorAll('button[data-page]')?.forEach(b => {
+        b.addEventListener('click', (e) => {
+            const p = parseInt(e.currentTarget.getAttribute('data-page'));
+            if (!isNaN(p) && p >= 1 && p <= totalPages) {
+                renderAlertsList(p);
+            }
+        });
+    });
+}
+
+function renderCharts(data) {
+    // Fatigue Chart
+    const fatigueCtx = document.getElementById('fatigueChart').getContext('2d');
+    if (fatigueChart) fatigueChart.destroy();
+    fatigueChart = new Chart(fatigueCtx, {
+        type: 'line',
+        data: {
+            labels: data.fatigue_chart.labels,
+            datasets: [{
+                data: data.fatigue_chart.data,
+                borderColor: '#e88a85',
+                backgroundColor: 'rgba(232, 138, 133, 0.1)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 3,
+                pointBackgroundColor: '#e88a85'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            layout: { padding: 0 },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: '#e8e4dc' },
+                    ticks: { color: '#666666', padding: 2 }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#666666', maxRotation: 45, minRotation: 35, autoSkip: true, maxTicksLimit: 8, padding: 2 }
+                }
+            }
+        }
+    });
+
+    // Screen Time Chart
+    const screenTimeCtx = document.getElementById('screenTimeChart').getContext('2d');
+    if (screenTimeChart) screenTimeChart.destroy();
+    screenTimeChart = new Chart(screenTimeCtx, {
+        type: 'bar',
+        data: {
+            labels: data.screen_time_chart.labels,
+            datasets: [{
+                data: data.screen_time_chart.data,
+                backgroundColor: '#a8c5a8',
+                borderRadius: 6,
+                barThickness: 20
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            layout: { padding: 0 },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 10,
+                    grid: { color: '#e8e4dc' },
+                    ticks: {
+                        color: '#666666',
+                        callback: function(value) { return value + 'h'; }
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#666666', maxRotation: 45, minRotation: 35, autoSkip: true, maxTicksLimit: 8, padding: 2 }
+                }
+            }
+        }
+    });
+
+    // Alerts Distribution Chart
+    const alertsCtx = document.getElementById('alertsChart').getContext('2d');
+    if (alertsChart) alertsChart.destroy();
+    
+    // Paleta expandida de colores únicos para cada alerta
+    const generateColors = (count) => {
+        const uniqueColors = [
+            '#f5a86b', // Naranja claro
+            '#e88a85', // Rosa coral
+            '#a8c5a8', // Verde salvia
+            '#8FA490', // Verde oscuro
+            '#E89F5F', // Naranja melocotón
+            '#D4523F', // Rojo terracota
+            '#E89552', // Naranja medio
+            '#b8a890', // Beige
+            '#9b8f7f', // Marrón claro
+            '#7a9b8e', // Verde azulado
+            '#f39c6b', // Naranja brillante
+            '#c77d7a', // Rojo suave
+            '#90b890', // Verde menta
+            '#6d8a7d', // Verde grisáceo
+            '#daa06d', // Dorado
+            '#b85c4f', // Rojo ladrillo
+            '#d4b896', // Arena
+            '#7f9d8f', // Verde militar
+            '#e8b89f', // Durazno
+            '#a67c6d'  // Marrón medio
+        ];
+        
+        // Asegurar que siempre haya suficientes colores únicos
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+            colors.push(uniqueColors[i % uniqueColors.length]);
+        }
+        return colors;
+    };
+    
+    const alertColors = generateColors(data.distribution_chart.data.length);
+    
+    alertsChart = new Chart(alertsCtx, {
+        type: 'doughnut',
+        data: {
+            labels: data.distribution_chart.labels,
+            datasets: [{
+                data: data.distribution_chart.data,
+                backgroundColor: alertColors,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            cutout: '65%'
+        }
+    });
+
+    // Build custom legend con diseño dinámico
+    const legendContainer = document.getElementById('alertsLegend');
+    if (legendContainer) {
+        const labels = data.distribution_chart.labels || [];
+        const values = data.distribution_chart.data || [];
+        const total = values.reduce((a, b) => a + b, 0) || 1;
+        const pct = (v) => Math.round((v / total) * 100);
+        
+        // Crear items de leyenda
+        let legendHTML = '<div class="grid grid-cols-2 gap-2">';
+        labels.forEach((label, i) => {
+            legendHTML += `
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-sm flex-shrink-0" style="background-color: ${alertColors[i]};"></span>
+                    <span class="text-xs truncate">${label} (${pct(values[i] || 0)}%)</span>
+                </div>
+            `;
+        });
+        legendHTML += '</div>';
+        legendContainer.innerHTML = legendHTML;
+    }
+}
+
+function updateDashboard(data) {
+    // Summary Cards
+    const summary = data.summary;
+    
+    // Mapeo de períodos para mostrar texto correcto
+    const periodLabels = {
+        'week': 'esta semana',
+        'month': 'este mes',
+        'quarter': 'últimos tres meses',
+        'today': 'hoy'
+    };
+    const periodLabel = periodLabels[summary.period] || 'esta semana';
+    
+    // Tiempo de pantalla
+    document.getElementById('screenTime').textContent = summary.screen_time;
+    const screenTrendSign = summary.screen_time_trend >= 0 ? '↑' : '↓';
+    const screenTrendValue = Math.abs(summary.screen_time_trend);
+    document.getElementById('screenTimeTrend').textContent = `${screenTrendSign} ${screenTrendValue}% ${periodLabel}`;
+    
+    // Alertas generadas
+    document.getElementById('alertsCount').textContent = summary.alerts;
+    const alertsTrendSign = summary.alerts_trend >= 0 ? '↑' : '↓';
+    const alertsTrendValue = Math.abs(summary.alerts_trend);
+    document.getElementById('alertsTrend').textContent = `${alertsTrendSign} ${alertsTrendValue}% ${periodLabel}`;
+    
+    document.getElementById('exercisesCount').textContent = summary.exercises;
+    const exercisesTrendSign = summary.exercises_trend >= 0 ? '↑' : '↓';
+    const exercisesTrendValue = Math.abs(summary.exercises_trend);
+    document.getElementById('exercisesTrend').textContent = `${exercisesTrendSign} ${exercisesTrendValue}% ${periodLabel}`;
+    
+    // Total de sesiones
+    document.getElementById('sessionsCount').textContent = summary.sessions;
+    const sessionsTrendSign = summary.sessions_trend >= 0 ? '↑' : '↓';
+    const sessionsTrendValue = Math.abs(summary.sessions_trend);
+    document.getElementById('sessionsTrend').textContent = `${sessionsTrendSign} ${sessionsTrendValue}% ${periodLabel}`;
+    
+    // Promedio semanal pantalla
+    document.querySelector('.text-center.text-xs.text-text-secondary.mt-2').textContent = 'Promedio semanal: ' + data.screen_time_chart.average + 'h';
+
+    // Historial de sesiones con paginación 5x página
+    sessionsAll = Array.isArray(data.sessions) ? data.sessions : [];
+    sessionsPage = 1;
+    renderSessionsTable(sessionsPage);
+    // Historial de alertas (lista + paginación 5x página)
+    alertsAll = Array.isArray(data.alerts) ? data.alerts : [];
+    alertsPage = 1;
+    renderAlertsList(alertsPage);
+    renderCharts(data);
+}
+
+function fetchDashboard(period) {
+    fetch(`/reports/api/data/?period=${period}`)
+        .then(res => res.json())
+        .then(json => {
+            if (json.status === 'success') {
+                updateDashboard(json.data);
+            }
+        });
+}
+
+    // Funciones para el modal de detalle de sesión
+    function openSessionModal(sessionId, date, duration, blinks, focus, alerts) {
+        const modal = document.getElementById('sessionDetailModal');
+        if (!modal) return;
+    
+        // Actualizar contenido del modal
+        document.getElementById('modalSessionDate').textContent = date;
+        document.getElementById('modalFullDate').textContent = date;
+        document.getElementById('modalDuration').textContent = duration;
+        document.getElementById('modalBlinks').textContent = blinks;
+        document.getElementById('modalFocus').textContent = focus;
+        document.getElementById('modalAlerts').textContent = alerts;
+    
+        // Información adicional (valores de ejemplo, se pueden obtener del backend)
+        const startTimeParts = date.split(' ');
+        document.getElementById('modalStartTime').textContent = startTimeParts.length > 1 ? startTimeParts[1] : '-';
+    
+        // Calcular nivel de fatiga basado en parpadeos
+        const blinkNum = Number(blinks) || 0;
+        let fatigueLevel = 'Bajo';
+        if (blinkNum < 10) fatigueLevel = 'Alto';
+        else if (blinkNum < 15) fatigueLevel = 'Moderado';
+        document.getElementById('modalFatigue').textContent = fatigueLevel;
+    
+        // Estado de la sesión
+        document.getElementById('modalStatus').textContent = 'Completada';
+    
+        // (Botón de detalle completo removido a solicitud del usuario)
+    
+        // Mostrar modal
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSessionModal() {
+        const modal = document.getElementById('sessionDetailModal');
+        if (!modal) return;
+    
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+
+    // Cerrar modal al hacer clic fuera de él
+    document.addEventListener('click', function(e) {
+        const modal = document.getElementById('sessionDetailModal');
+        if (e.target === modal) {
+            closeSessionModal();
+        }
+    });
+
+    // Cerrar modal con tecla Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeSessionModal();
+        }
+    });
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Filtros de período
+    const ACTIVE_CLASSES = 'bg-accent-green text-white';
+    const INACTIVE_CLASSES = 'bg-cream-100 dark:bg-dark-surface text-text-primary dark:text-dark-text-primary hover:bg-accent-green hover:text-white';
+
+    const setInactive = (el) => {
+        // Limpia cualquier bg/text previo y aplica los inactivos estándar
+        el.classList.remove('bg-accent-green','text-white','active');
+        el.classList.remove('bg-cream-100','dark:bg-dark-surface','text-text-primary','dark:text-dark-text-primary');
+        INACTIVE_CLASSES.split(' ').forEach(c => c && el.classList.add(c));
+    };
+    const setActive = (el) => {
+        // Limpia clases que puedan colisionar y aplica activas
+        el.classList.remove('bg-cream-100','dark:bg-dark-surface','text-text-primary','dark:text-dark-text-primary');
+        ACTIVE_CLASSES.split(' ').forEach(c => c && el.classList.add(c));
+        el.classList.add('active');
+    };
+
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.period-btn').forEach(b => setInactive(b));
+            setActive(this);
+            fetchDashboard(this.dataset.period);
+        });
+    });
+    
+    // Selecciona y simula click en el filtro por defecto
+    const defaultBtn = document.getElementById('defaultPeriodBtn');
+    if (defaultBtn) {
+        // Forzamos estado visual correcto antes de disparar la carga
+        document.querySelectorAll('.period-btn').forEach(b => setInactive(b));
+        setActive(defaultBtn);
+        fetchDashboard(defaultBtn.dataset.period || 'week');
+    } else {
+        fetchDashboard('week');
+    }
+
+    // Mostrar modal durante la exportación
+    const exportForm = document.getElementById('exportForm');
+    const exportBtn = document.getElementById('exportSubmitBtn');
+    const loadingModal = document.getElementById('exportLoadingModal');
+    
+    function resetExportButton() {
+        if (exportBtn) {
+            exportBtn.disabled = false;
+            exportBtn.innerHTML = '<i class="fas fa-download"></i> Generar Reporte';
+        }
+    }
+    
+    if (exportForm && loadingModal && exportBtn) {
+        exportForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Mostrar modal (el modal maneja su propia lógica de progreso)
+            loadingModal.classList.remove('hidden');
+            exportBtn.disabled = true;
+            exportBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparando…';
+
+            try {
+                const formData = new FormData(exportForm);
+                const response = await fetch(exportForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al generar el archivo');
+                }
+
+                // Obtener el blob del archivo
+                const blob = await response.blob();
+                
+                // Crear URL y descargar
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                // Extraer nombre del archivo del header Content-Disposition
+                const disposition = response.headers.get('Content-Disposition');
+                let filename = 'reporte.pdf';
+                if (disposition) {
+                    const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+                    if (matches && matches[1]) {
+                        filename = matches[1].replace(/['"]/g, '');
+                        // Decodificar si está en UTF-8
+                        try {
+                            filename = decodeURIComponent(filename);
+                        } catch (e) {
+                            // Si falla, usar el nombre tal cual
+                        }
+                    }
+                }
+                
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                // Resetear botón inmediatamente después de iniciar descarga
+                resetExportButton();
+                
+                // El modal se cerrará automáticamente cuando complete su progreso
+            } catch (err) {
+                console.error('Error en descarga:', err);
+                // Ocultar modal y resetear botón en caso de error
+                loadingModal.classList.add('hidden');
+                resetExportButton();
+                alert('Error al generar el reporte: ' + err.message);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

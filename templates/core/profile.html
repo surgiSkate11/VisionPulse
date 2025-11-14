@@ -1,0 +1,964 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mi Perfil - VisionPulse{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-6">
+    <!-- Header elegante con gradiente sutil -->
+    <div class="mb-8 relative overflow-hidden bg-gradient-to-br from-[#FBF7F0] via-[#F0D4C3] to-[#FBF7F0] dark:from-[#2C2C2C] dark:via-[#3D3028] dark:to-[#2C2C2C] rounded-3xl p-10 shadow-xl border border-[#F0D4C3]/30 dark:border-[#3D3028]">
+        <!-- Decoración de fondo -->
+        <div class="absolute top-0 right-0 w-64 h-64 bg-[#E89552]/10 dark:bg-[#E89552]/5 rounded-full blur-3xl -z-10"></div>
+        <div class="absolute bottom-0 left-0 w-48 h-48 bg-[#D4523F]/10 dark:bg-[#D4523F]/5 rounded-full blur-3xl -z-10"></div>
+        
+        <div class="flex items-center gap-5 relative z-10">
+            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#E89552] to-[#D4523F] flex items-center justify-center shadow-2xl ring-4 ring-white/50 dark:ring-[#1A1A1A]/50">
+                <i class="fas fa-user text-white text-3xl"></i>
+            </div>
+            <div>
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-[#D4523F] to-[#E89552] dark:from-[#E89552] dark:to-[#F0D4C3] bg-clip-text text-transparent mb-2">Mi Perfil</h1>
+                <p class="text-[#4A4A4A] dark:text-[#B8B8B8] text-lg">Administra tu información personal y profesional</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages mejorados -->
+    {% if messages %}
+        <div class="mb-8 space-y-3">
+            {% for message in messages %}
+                <div class="{% if message.tags == 'success' %}bg-[#8FA490]/10 border-[#8FA490] dark:bg-[#8FA490]/20{% else %}bg-[#D4523F]/10 border-[#D4523F] dark:bg-[#D4523F]/20{% endif %} border-l-4 p-5 rounded-2xl shadow-lg backdrop-blur-sm flex items-center gap-4 animate-slideIn">
+                    <div class="w-10 h-10 rounded-full {% if message.tags == 'success' %}bg-[#8FA490]{% else %}bg-[#D4523F]{% endif %} flex items-center justify-center shadow-md">
+                        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} text-white text-lg"></i>
+                    </div>
+                    <p class="font-medium text-[#2C2C2C] dark:text-[#FBF7F0]">{{ message }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Profile Card principal -->
+    <div class="bg-white dark:bg-[#2C2C2C] rounded-3xl shadow-2xl border border-[#F0D4C3]/20 dark:border-[#3D3028] overflow-hidden">
+        
+        <!-- Avatar Section rediseñado -->
+        <div class="relative bg-gradient-to-br from-[#FBF7F0] via-[#F0D4C3]/50 to-[#FBF7F0] dark:from-[#1A1A1A] dark:via-[#3D3028] dark:to-[#2C2C2C] p-10 border-b-2 border-[#F0D4C3] dark:border-[#3D3028]">
+            <!-- Patrón decorativo -->
+            <div class="absolute inset-0 opacity-5 dark:opacity-10" style="background-image: radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0); background-size: 32px 32px;"></div>
+            
+            <div class="relative z-10 flex flex-col lg:flex-row items-center lg:items-start gap-8">
+                <!-- Avatar con efecto 3D -->
+                <div class="relative group">
+                    <div class="absolute inset-0 bg-gradient-to-br from-[#E89552] to-[#D4523F] rounded-full blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-300"></div>
+                    <div id="headerAvatarContainer" class="relative w-36 h-36 rounded-full overflow-hidden shadow-2xl ring-8 ring-white dark:ring-[#2C2C2C] transform group-hover:scale-105 transition-transform duration-300 bg-gradient-to-br from-[#E89552] via-[#D4523F] to-[#D4523F] flex items-center justify-center text-6xl font-bold text-white">
+                        {% if user.image %}
+                            <img src="{{ user.image.url }}" alt="Foto de perfil" class="w-full h-full object-cover" id="headerAvatarPreview">
+                        {% else %}
+                            <span id="headerAvatarFallback">{{ user.username|first|upper }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="absolute -bottom-3 -right-3 w-12 h-12 bg-gradient-to-br from-[#8FA490] to-[#8FA490]/80 rounded-full border-4 border-white dark:border-[#2C2C2C] flex items-center justify-center shadow-lg">
+                        <i class="fas fa-check text-white"></i>
+                    </div>
+                </div>
+                
+                <!-- Info del usuario -->
+                <div class="flex-1 text-center lg:text-left max-w-2xl">
+                    <h2 class="text-4xl font-bold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">{{ user.get_full_name|default:user.username }}</h2>
+                    <p class="text-[#4A4A4A] dark:text-[#B8B8B8] mb-6 flex items-center gap-3 justify-center lg:justify-start text-lg">
+                        <span class="w-10 h-10 rounded-full bg-[#E89552]/20 dark:bg-[#E89552]/30 flex items-center justify-center">
+                            <i class="fas fa-envelope text-[#E89552]"></i>
+                        </span>
+                        {{ user.email }}
+                    </p>
+                    
+                    <!-- Stats cards mejoradas -->
+                    <div class="grid grid-cols-3 gap-4 max-w-lg mx-auto lg:mx-0">
+                        <div class="bg-white dark:bg-[#1A1A1A] rounded-2xl p-5 shadow-lg border border-[#F0D4C3]/30 dark:border-[#3D3028] hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                            <div class="text-3xl font-bold bg-gradient-to-br from-[#E89552] to-[#D4523F] bg-clip-text text-transparent mb-1">{{ user.total_sessions }}</div>
+                            <div class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] font-medium uppercase tracking-wide">Sesiones</div>
+                        </div>
+                        <div class="bg-white dark:bg-[#1A1A1A] rounded-2xl p-5 shadow-lg border border-[#F0D4C3]/30 dark:border-[#3D3028] hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                            <div class="text-3xl font-bold text-[#8FA490] mb-1">{{ user.exercises_completed }}</div>
+                            <div class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] font-medium uppercase tracking-wide">Ejercicios</div>
+                        </div>
+                        <div class="bg-white dark:bg-[#1A1A1A] rounded-2xl p-5 shadow-lg border border-[#F0D4C3]/30 dark:border-[#3D3028] hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                            <div class="text-3xl font-bold text-[#D4523F] mb-1">{{ user.current_streak }}</div>
+                            <div class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] font-medium uppercase tracking-wide">Racha</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="p-10" novalidate>
+            {% csrf_token %}
+            
+            <!-- Personal Information -->
+            <div class="mb-12">
+                <div class="flex items-center gap-4 mb-8 pb-6 border-b-2 border-[#F0D4C3]/50 dark:border-[#3D3028]">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#E89552] to-[#D4523F] flex items-center justify-center shadow-lg">
+                        <i class="fas fa-user text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-[#2C2C2C] dark:text-[#FBF7F0]">Información Personal</h3>
+                        <p class="text-sm text-[#4A4A4A] dark:text-[#B8B8B8] mt-1">Actualiza tus datos básicos</p>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Avatar/Imagen -->
+                    <div class="md:col-span-2">
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">
+                            <i class="fas fa-image text-[#E89552]"></i>
+                            {{ form.image.label }}
+                        </label>
+                        <div class="flex items-center gap-5">
+                            <div id="fieldAvatarContainer" class="w-16 h-16 rounded-full overflow-hidden border-2 border-[#F0D4C3] dark:border-[#3D3028] bg-[#FBF7F0] dark:bg-[#1A1A1A]">
+                                {% if user.image %}
+                                    <img src="{{ user.image.url }}" alt="Foto actual" class="w-full h-full object-cover" id="fieldAvatarPreview">
+                                {% else %}
+                                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#E89552] via-[#D4523F] to-[#D4523F] text-white font-bold" id="fieldAvatarFallback">{{ user.username|first|upper }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <input type="file" id="id_image" name="image" accept="image/*" class="hidden">
+                                <button type="button" id="btnPickImage" class="px-4 py-2 rounded-xl bg-[#FBF7F0] dark:bg-[#1A1A1A] text-[#2C2C2C] dark:text-[#FBF7F0] border-2 border-[#F0D4C3] dark:border-[#3D3028] hover:border-[#E89552] transition">
+                                    <i class="fas fa-upload mr-2"></i>Seleccionar foto
+                                </button>
+                                {% if user.image %}
+                                    <label for="id_image_clear" class="px-4 py-2 rounded-xl bg-[#FBF7F0] dark:bg-[#1A1A1A] text-[#2C2C2C] dark:text-[#FBF7F0] border-2 border-[#F0D4C3] dark:border-[#3D3028] hover:border-[#E89552] transition cursor-pointer">
+                                        <input type="checkbox" id="id_image_clear" name="image-clear" class="hidden">
+                                        <i class="fas fa-trash mr-2"></i>Quitar foto
+                                    </label>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <p class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] mt-2 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-[#E89552]"></i>
+                            <span>{{ form.image.help_text }}</span>
+                        </p>
+                        {% if form.image.errors %}
+                            <p class="text-[#D4523F] text-sm mt-2 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>{{ form.image.errors.0 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    <!-- First Name -->
+                    <div class="group">
+                        <label class="flex items-center justify-between text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">
+                            <span class="flex items-center gap-2">
+                                <i class="fas fa-user-circle text-[#E89552]"></i>
+                                {{ form.first_name.label }}
+                            </span>
+                            <span class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] font-normal" id="first-name-counter">
+                                <span id="first-name-count">{{ form.first_name.value|length|default:0 }}</span>/30
+                            </span>
+                        </label>
+                        {{ form.first_name }}
+                        <p class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] mt-2 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-[#E89552]"></i>
+                            <span>{{ form.first_name.help_text }}</span>
+                        </p>
+                        <p class="text-[#D4523F] text-sm mt-2 gap-2 hidden" data-error-for="id_first_name">
+                            <i class="fas fa-exclamation-circle"></i><span></span>
+                        </p>
+                        {% if form.first_name.errors %}
+                            <p class="text-[#D4523F] text-sm mt-2 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>{{ form.first_name.errors.0 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Last Name -->
+                    <div class="group">
+                        <label class="flex items-center justify-between text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">
+                            <span class="flex items-center gap-2">
+                                <i class="fas fa-user-circle text-[#E89552]"></i>
+                                {{ form.last_name.label }}
+                            </span>
+                            <span class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] font-normal" id="last-name-counter">
+                                <span id="last-name-count">{{ form.last_name.value|length|default:0 }}</span>/30
+                            </span>
+                        </label>
+                        {{ form.last_name }}
+                        <p class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] mt-2 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-[#E89552]"></i>
+                            <span>{{ form.last_name.help_text }}</span>
+                        </p>
+                        <p class="text-[#D4523F] text-sm mt-2 gap-2 hidden" data-error-for="id_last_name">
+                            <i class="fas fa-exclamation-circle"></i><span></span>
+                        </p>
+                        {% if form.last_name.errors %}
+                            <p class="text-[#D4523F] text-sm mt-2 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>{{ form.last_name.errors.0 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Email -->
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">
+                            <i class="fas fa-envelope text-[#E89552]"></i>
+                            {{ form.email.label }}
+                        </label>
+                        {{ form.email }}
+                        <p class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] mt-2 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-[#E89552]"></i>
+                            <span>{{ form.email.help_text }}</span>
+                        </p>
+                        <p class="text-[#D4523F] text-sm mt-2 gap-2 hidden" data-error-for="id_email">
+                            <i class="fas fa-exclamation-circle"></i><span></span>
+                        </p>
+                        {% if form.email.errors %}
+                            <p class="text-[#D4523F] text-sm mt-2 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>{{ form.email.errors.0 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Phone -->
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">
+                            <i class="fas fa-phone text-[#E89552]"></i>
+                            {{ form.phone.label }}
+                        </label>
+                        {{ form.phone }}
+                        <p class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] mt-2 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-[#E89552]"></i>
+                            <span>{{ form.phone.help_text }}</span>
+                        </p>
+                        <p class="text-[#D4523F] text-sm mt-2 gap-2 hidden" data-error-for="id_phone">
+                            <i class="fas fa-exclamation-circle"></i><span></span>
+                        </p>
+                        {% if form.phone.errors %}
+                            <p class="text-[#D4523F] text-sm mt-2 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>{{ form.phone.errors.0 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Birth Date -->
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">
+                            <i class="fas fa-calendar text-[#E89552]"></i>
+                            {{ form.birth_date.label }}
+                        </label>
+                        {{ form.birth_date }}
+                        <p class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] mt-2 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-[#E89552]"></i>
+                            <span>{{ form.birth_date.help_text }}</span>
+                        </p>
+                        <p class="text-[#D4523F] text-sm mt-2 gap-2 hidden" data-error-for="id_birth_date">
+                            <i class="fas fa-exclamation-circle"></i><span></span>
+                        </p>
+                        {% if form.birth_date.errors %}
+                            <p class="text-[#D4523F] text-sm mt-2 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>{{ form.birth_date.errors.0 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- City -->
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">
+                            <i class="fas fa-city text-[#E89552]"></i>
+                            {{ form.city.label }}
+                        </label>
+                        {{ form.city }}
+                        <p class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] mt-2 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-[#E89552]"></i>
+                            <span>{{ form.city.help_text }}</span>
+                        </p>
+                        <p class="text-[#D4523F] text-sm mt-2 gap-2 hidden" data-error-for="id_city">
+                            <i class="fas fa-exclamation-circle"></i><span></span>
+                        </p>
+                        {% if form.city.errors %}
+                            <p class="text-[#D4523F] text-sm mt-2 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>{{ form.city.errors.0 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Country -->
+                    <div class="md:col-span-2">
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">
+                            <i class="fas fa-globe text-[#E89552]"></i>
+                            {{ form.country.label }}
+                        </label>
+                        {{ form.country }}
+                        <p class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] mt-2 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-[#E89552]"></i>
+                            <span>{{ form.country.help_text }}</span>
+                        </p>
+                        <p class="text-[#D4523F] text-sm mt-2 gap-2 hidden" data-error-for="id_country">
+                            <i class="fas fa-exclamation-circle"></i><span></span>
+                        </p>
+                        {% if form.country.errors %}
+                            <p class="text-[#D4523F] text-sm mt-2 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>{{ form.country.errors.0 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Bio -->
+                    <div class="md:col-span-2">
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">
+                            <i class="fas fa-comment-dots text-[#E89552]"></i>
+                            {{ form.bio.label }}
+                        </label>
+                        {{ form.bio }}
+                        <p class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] mt-2 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-[#E89552]"></i>
+                            <span>{{ form.bio.help_text }}</span>
+                        </p>
+                        {% if form.bio.errors %}
+                            <p class="text-[#D4523F] text-sm mt-2 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>{{ form.bio.errors.0 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Professional Information -->
+            <div class="mb-12">
+                <div class="flex items-center gap-4 mb-8 pb-6 border-b-2 border-[#F0D4C3]/50 dark:border-[#3D3028]">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#8FA490] to-[#8FA490]/80 flex items-center justify-center shadow-lg">
+                        <i class="fas fa-briefcase text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-[#2C2C2C] dark:text-[#FBF7F0]">Información Profesional</h3>
+                        <p class="text-sm text-[#4A4A4A] dark:text-[#B8B8B8] mt-1">Detalles de tu actividad laboral</p>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Company -->
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">
+                            <i class="fas fa-building text-[#8FA490]"></i>
+                            {{ form.company.label }}
+                        </label>
+                        {{ form.company }}
+                        <p class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] mt-2 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-[#8FA490]"></i>
+                            <span>{{ form.company.help_text }}</span>
+                        </p>
+                        <p class="text-[#D4523F] text-sm mt-2 gap-2 hidden" data-error-for="id_company">
+                            <i class="fas fa-exclamation-circle"></i><span></span>
+                        </p>
+                        {% if form.company.errors %}
+                            <p class="text-[#D4523F] text-sm mt-2 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>{{ form.company.errors.0 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Job Title -->
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">
+                            <i class="fas fa-id-badge text-[#8FA490]"></i>
+                            {{ form.job_title.label }}
+                        </label>
+                        {{ form.job_title }}
+                        <p class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] mt-2 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-[#8FA490]"></i>
+                            <span>{{ form.job_title.help_text }}</span>
+                        </p>
+                        <p class="text-[#D4523F] text-sm mt-2 gap-2 hidden" data-error-for="id_job_title">
+                            <i class="fas fa-exclamation-circle"></i><span></span>
+                        </p>
+                        {% if form.job_title.errors %}
+                            <p class="text-[#D4523F] text-sm mt-2 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>{{ form.job_title.errors.0 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- User Type -->
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">
+                            <i class="fas fa-user-tag text-[#8FA490]"></i>
+                            {{ form.user_type.label }}
+                        </label>
+                        {{ form.user_type }}
+                        <p class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] mt-2 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-[#8FA490]"></i>
+                            <span>{{ form.user_type.help_text }}</span>
+                        </p>
+                        {% if form.user_type.errors %}
+                            <p class="text-[#D4523F] text-sm mt-2 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>{{ form.user_type.errors.0 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Work Environment -->
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">
+                            <i class="fas fa-laptop-house text-[#8FA490]"></i>
+                            {{ form.work_environment.label }}
+                        </label>
+                        {{ form.work_environment }}
+                        <p class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] mt-2 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-[#8FA490]"></i>
+                            <span>{{ form.work_environment.help_text }}</span>
+                        </p>
+                        {% if form.work_environment.errors %}
+                            <p class="text-[#D4523F] text-sm mt-2 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>{{ form.work_environment.errors.0 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Screen Size -->
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">
+                            <i class="fas fa-desktop text-[#8FA490]"></i>
+                            {{ form.screen_size.label }}
+                        </label>
+                        {{ form.screen_size }}
+                        <p class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] mt-2 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-[#8FA490]"></i>
+                            <span>{{ form.screen_size.help_text }}</span>
+                        </p>
+                        {% if form.screen_size.errors %}
+                            <p class="text-[#D4523F] text-sm mt-2 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>{{ form.screen_size.errors.0 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Preferred Work Time -->
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">
+                            <i class="fas fa-clock text-[#8FA490]"></i>
+                            {{ form.preferred_work_time.label }}
+                        </label>
+                        {{ form.preferred_work_time }}
+                        <p class="text-xs text-[#4A4A4A] dark:text-[#B8B8B8] mt-2 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-[#8FA490]"></i>
+                            <span>{{ form.preferred_work_time.help_text }}</span>
+                        </p>
+                        {% if form.preferred_work_time.errors %}
+                            <p class="text-[#D4523F] text-sm mt-2 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>{{ form.preferred_work_time.errors.0 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preferencias de notificación -->
+            <div class="mb-12">
+                <div class="flex items-center gap-4 mb-8 pb-6 border-b-2 border-[#F0D4C3]/50 dark:border-[#3D3028]">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#D4523F] to-[#E89552] flex items-center justify-center shadow-lg">
+                        <i class="fas fa-bell text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-[#2C2C2C] dark:text-[#FBF7F0]">Notificaciones</h3>
+                        <p class="text-sm text-[#4A4A4A] dark:text-[#B8B8B8] mt-1">Personaliza el sonido de notificaciones</p>
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0] mb-3">
+                            <i class="fas fa-music text-[#D4523F]"></i>
+                            Sonido de notificación
+                        </label>
+                        {{ form.notification_sound }}
+                        {% if form.notification_sound.errors %}
+                            <p class="text-[#D4523F] text-sm mt-2 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>{{ form.notification_sound.errors.0 }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-end">
+                        <label class="inline-flex items-center gap-3 text-sm font-semibold text-[#2C2C2C] dark:text-[#FBF7F0]">
+                            {{ form.notification_sound_enabled }}
+                            <span>Habilitar sonido</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons rediseñados -->
+            <div class="flex flex-col sm:flex-row gap-4 pt-10 border-t-2 border-[#F0D4C3]/50 dark:border-[#3D3028] justify-center">
+                <button type="submit" class="flex-1 sm:flex-none relative px-10 py-5 bg-gradient-to-r from-[#E89552] via-[#D4523F] to-[#E89552] bg-size-200 bg-pos-0 hover:bg-pos-100 text-white font-bold rounded-2xl transition-all duration-500 flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl hover:scale-105 transform overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700"></div>
+                    <i class="fas fa-save text-xl relative z-10"></i>
+                    <span class="relative z-10">Guardar Cambios</span>
+                </button>
+                <a href="{% url 'security:home' %}" class="flex-1 sm:flex-none px-10 py-5 bg-[#FBF7F0] dark:bg-[#1A1A1A] text-[#2C2C2C] dark:text-[#FBF7F0] font-bold rounded-2xl hover:bg-[#F0D4C3] dark:hover:bg-[#3D3028] transition-all duration-300 flex items-center justify-center gap-3 border-2 border-[#F0D4C3] dark:border-[#3D3028] hover:border-[#E89552] dark:hover:border-[#E89552] shadow-lg hover:shadow-xl hover:scale-105 transform">
+                    <i class="fas fa-times text-xl"></i>
+                    <span>Cancelar</span>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-slideIn {
+    animation: slideIn 0.3s ease-out;
+}
+
+.bg-size-200 {
+    background-size: 200% 100%;
+}
+
+.bg-pos-0 {
+    background-position: 0% 0%;
+}
+
+.bg-pos-100 {
+    background-position: 100% 0%;
+}
+
+/* Estilos para inputs generados por Django */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="date"],
+select,
+textarea {
+    width: 100%;
+    padding: 0.875rem 1.25rem;
+    border-radius: 0.75rem;
+    border: 2px solid #F0D4C3;
+    background-color: #FBF7F0;
+    color: #2C2C2C;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="tel"],
+.dark input[type="date"],
+.dark select,
+.dark textarea {
+    border-color: #3D3028;
+    background-color: #1A1A1A;
+    color: #FBF7F0;
+}
+
+input[type="text"]:hover,
+input[type="email"]:hover,
+input[type="tel"]:hover,
+input[type="date"]:hover,
+select:hover,
+textarea:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: #E89552;
+    box-shadow: 0 0 0 3px rgba(232, 149, 82, 0.2);
+}
+
+textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23E89552'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.5rem;
+    padding-right: 3rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Character counter for first name
+    const firstNameInput = document.getElementById('id_first_name');
+    const firstNameCount = document.getElementById('first-name-count');
+    
+    if (firstNameInput && firstNameCount) {
+        firstNameInput.addEventListener('input', function() {
+            const length = this.value.length;
+            firstNameCount.textContent = length;
+            
+            const counter = document.getElementById('first-name-counter');
+            if (length > 25) {
+                counter.classList.add('text-[#D4523F]', 'font-bold');
+                counter.classList.remove('text-[#4A4A4A]', 'dark:text-[#B8B8B8]', 'text-[#E89552]');
+            } else if (length > 20) {
+                counter.classList.add('text-[#E89552]', 'font-semibold');
+                counter.classList.remove('text-[#4A4A4A]', 'dark:text-[#B8B8B8]', 'text-[#D4523F]', 'font-bold');
+            } else {
+                counter.classList.remove('text-[#D4523F]', 'text-[#E89552]', 'font-bold', 'font-semibold');
+                counter.classList.add('text-[#4A4A4A]', 'dark:text-[#B8B8B8]');
+            }
+        });
+    }
+    
+    // Character counter for last name
+    const lastNameInput = document.getElementById('id_last_name');
+    const lastNameCount = document.getElementById('last-name-count');
+    
+    if (lastNameInput && lastNameCount) {
+        lastNameInput.addEventListener('input', function() {
+            const length = this.value.length;
+            lastNameCount.textContent = length;
+            
+            const counter = document.getElementById('last-name-counter');
+            if (length > 25) {
+                counter.classList.add('text-[#D4523F]', 'font-bold');
+                counter.classList.remove('text-[#4A4A4A]', 'dark:text-[#B8B8B8]', 'text-[#E89552]');
+            } else if (length > 20) {
+                counter.classList.add('text-[#E89552]', 'font-semibold');
+                counter.classList.remove('text-[#4A4A4A]', 'dark:text-[#B8B8B8]', 'text-[#D4523F]', 'font-bold');
+            } else {
+                counter.classList.remove('text-[#D4523F]', 'text-[#E89552]', 'font-bold', 'font-semibold');
+                counter.classList.add('text-[#4A4A4A]', 'dark:text-[#B8B8B8]');
+            }
+        });
+    }
+    
+    // Inline validation helpers
+    const getErrorMessage = (el) => {
+        if (el.validity.valueMissing) {
+            if (el.id === 'id_first_name') return 'El nombre es obligatorio.';
+            if (el.id === 'id_last_name') return 'El apellido es obligatorio.';
+            if (el.id === 'id_email') return 'El email es obligatorio.';
+            return 'Este campo es obligatorio.';
+        }
+        if (el.validity.typeMismatch) {
+            if (el.type === 'email' || el.id === 'id_email') return 'Ingresa un email válido.';
+        }
+        if (el.validity.patternMismatch) {
+            return el.getAttribute('title') || 'Formato inválido.';
+        }
+        if (el.validity.tooLong) return 'El texto es demasiado largo.';
+        if (el.validity.rangeOverflow || el.validity.rangeUnderflow) return 'Valor fuera de rango.';
+        if (el.validity.badInput) return 'Valor inválido.';
+        return 'Revisa este campo.';
+    };
+
+    const showFieldError = (el, message) => {
+        const cont = document.querySelector(`[data-error-for="${el.id}"]`);
+        if (!cont) return;
+        const span = cont.querySelector('span');
+        if (message) {
+            if (span) span.textContent = message;
+            cont.classList.remove('hidden');
+            cont.classList.add('flex');
+            el.setAttribute('aria-invalid', 'true');
+        } else {
+            if (span) span.textContent = '';
+            cont.classList.add('hidden');
+            cont.classList.remove('flex');
+            el.removeAttribute('aria-invalid');
+        }
+    };
+
+    const validateField = (el) => {
+        if (!el) return true;
+        
+        // Validación especial para email
+        if (el.id === 'id_email' || el.type === 'email') {
+            const email = el.value.trim();
+            if (!email) {
+                showFieldError(el, 'El email es obligatorio.');
+                return false;
+            }
+            // Regex para validar email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showFieldError(el, 'Ingresa un email válido (ej: usuario@ejemplo.com).');
+                return false;
+            }
+            showFieldError(el, '');
+            return true;
+        }
+        
+        const ok = el.checkValidity();
+        showFieldError(el, ok ? '' : getErrorMessage(el));
+        return ok;
+    };
+
+    const watchIds = ['id_first_name','id_last_name','id_email','id_phone','id_birth_date','id_city','id_country','id_company','id_job_title'];
+    watchIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        ['input','change','blur'].forEach(ev => el.addEventListener(ev, () => validateField(el)));
+    });
+
+    // Image picker + live preview
+    const imageInput = document.getElementById('id_image');
+    const pickBtn = document.getElementById('btnPickImage');
+    const fieldAvatarPreview = document.getElementById('fieldAvatarPreview');
+    const fieldAvatarFallback = document.getElementById('fieldAvatarFallback');
+    const headerAvatarPreview = document.getElementById('headerAvatarPreview');
+    const headerAvatarFallback = document.getElementById('headerAvatarFallback');
+    const clearChk = document.getElementById('id_image_clear');
+    const navAvatarImg = document.getElementById('navUserAvatarImg');
+    const navAvatarInitial = document.getElementById('navUserAvatarInitial');
+
+    if (pickBtn && imageInput) {
+        pickBtn.addEventListener('click', () => imageInput.click());
+    }
+    if (imageInput) {
+        imageInput.addEventListener('change', () => {
+            const file = imageInput.files && imageInput.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                // Field preview
+                if (!fieldAvatarPreview) {
+                    const container = document.getElementById('fieldAvatarContainer');
+                    if (container) {
+                        const img = document.createElement('img');
+                        img.id = 'fieldAvatarPreview';
+                        img.alt = 'Foto actual';
+                        img.className = 'w-full h-full object-cover';
+                        img.src = url;
+                        container.innerHTML = '';
+                        container.appendChild(img);
+                    }
+                } else {
+                    fieldAvatarPreview.src = url;
+                }
+                // Header preview
+                if (!headerAvatarPreview) {
+                    const container = document.getElementById('headerAvatarContainer');
+                    if (container) {
+                        const img = document.createElement('img');
+                        img.id = 'headerAvatarPreview';
+                        img.alt = 'Foto de perfil';
+                        img.className = 'w-full h-full object-cover';
+                        img.src = url;
+                        container.innerHTML = '';
+                        container.appendChild(img);
+                    }
+                } else {
+                    headerAvatarPreview.src = url;
+                }
+                if (fieldAvatarFallback) fieldAvatarFallback.classList.add('hidden');
+                if (headerAvatarFallback) headerAvatarFallback.classList.add('hidden');
+                // Nav header preview
+                if (!navAvatarImg) {
+                    const navContainer = document.querySelector('.user-menu .user-avatar');
+                    if (navContainer) {
+                        const img = document.createElement('img');
+                        img.id = 'navUserAvatarImg';
+                        img.alt = 'Avatar';
+                        img.className = 'w-full h-full object-cover';
+                        img.src = url;
+                        navContainer.innerHTML = '';
+                        navContainer.appendChild(img);
+                    }
+                } else {
+                    navAvatarImg.src = url;
+                }
+                if (navAvatarInitial) navAvatarInitial.classList.add('hidden');
+            }
+        });
+    }
+    if (clearChk) {
+        clearChk.addEventListener('change', () => {
+            if (clearChk.checked) {
+                if (fieldAvatarPreview) fieldAvatarPreview.src = '';
+                if (headerAvatarPreview) headerAvatarPreview.src = '';
+                if (fieldAvatarFallback) fieldAvatarFallback.classList.remove('hidden');
+                if (headerAvatarFallback) headerAvatarFallback.classList.remove('hidden');
+                // Nav header clear
+                const navImg = document.getElementById('navUserAvatarImg');
+                const navInitial = document.getElementById('navUserAvatarInitial');
+                const navContainer = document.querySelector('.user-menu .user-avatar');
+                if (navImg && navContainer) {
+                    navContainer.innerHTML = '';
+                    const span = document.createElement('span');
+                    span.id = 'navUserAvatarInitial';
+                    span.className = 'text-2xl text-[#F0E491] dark:text-accent-green font-semibold';
+                    span.textContent = (document.getElementById('headerAvatarFallback')?.textContent || '{{ user.username|first|upper }}');
+                    navContainer.appendChild(span);
+                } else if (navInitial) {
+                    navInitial.classList.remove('hidden');
+                }
+            }
+        });
+    }
+});
+
+// Validación ligera en el cliente: desplazar al primer campo inválido
+document.addEventListener('submit', function(e) {
+    const form = e.target;
+    if (form && form.matches('form[novalidate]') === false) return;
+    const fields = Array.from(form.querySelectorAll('input, select, textarea'));
+    let firstInvalid = null;
+    
+    fields.forEach(el => {
+        let isOk = true;
+        let errorMsg = '';
+        
+        // Validación especial para email
+        if (el.id === 'id_email' || el.type === 'email') {
+            const email = el.value.trim();
+            if (!email) {
+                isOk = false;
+                errorMsg = 'El email es obligatorio.';
+            } else {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    isOk = false;
+                    errorMsg = 'Ingresa un email válido (ej: usuario@ejemplo.com).';
+                }
+            }
+        } else {
+            isOk = el.checkValidity();
+            if (!isOk) {
+                errorMsg = (el.type === 'email') ? 'Ingresa un email válido.' : el.getAttribute('title') || 'Revisa este campo.';
+            }
+        }
+        
+        const cont = document.querySelector(`[data-error-for="${el.id}"]`);
+        if (cont) {
+            const span = cont.querySelector('span');
+            if (!isOk) {
+                span && (span.textContent = errorMsg);
+                cont.classList.remove('hidden');
+                cont.classList.add('flex');
+            } else {
+                cont.classList.add('hidden');
+                cont.classList.remove('flex');
+            }
+        }
+        if (!isOk && !firstInvalid) firstInvalid = el;
+    });
+    
+    if (firstInvalid) {
+        e.preventDefault();
+        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstInvalid.focus({ preventScroll: true });
+    }
+}, true);
+
+// Interceptar el submit del formulario de perfil para actualizar audio en tiempo real
+const profileForm = document.querySelector('form[method="post"][enctype="multipart/form-data"]');
+if (profileForm) {
+    // Guardar el handler original de submit
+    const originalSubmit = profileForm.onsubmit;
+    
+    profileForm.addEventListener('submit', async function(e) {
+        // Solo interceptamos si el formulario es válido
+        if (!this.checkValidity()) {
+            return; // Dejar que la validación normal funcione
+        }
+        
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+        
+        try {
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
+            }
+            
+            const response = await fetch(this.action || window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Actualizar configuración de audio en todos los gestores
+                if (data.audio_config) {
+                    // Actualizar window.userConfig global
+                    if (window.userConfig) {
+                        window.userConfig.notification_sound = data.audio_config.notification_sound;
+                        window.userConfig.notification_sound_enabled = data.audio_config.notification_sound_enabled;
+                        window.userConfig.alert_volume = data.audio_config.alert_volume;
+                    }
+                    
+                    // Actualizar NotificationManager (notificaciones UI)
+                    if (window.notificationManager && typeof window.notificationManager.updateSoundSettings === 'function') {
+                        window.notificationManager.updateSoundSettings(
+                            data.audio_config.notification_sound,
+                            data.audio_config.notification_sound_enabled
+                        );
+                    }
+                    
+                    // Actualizar AlertAudioManager (alertas de monitoreo)
+                    if (window.alertAudioManager) {
+                        if (typeof window.alertAudioManager.setSoundEnabled === 'function') {
+                            window.alertAudioManager.setSoundEnabled(data.audio_config.notification_sound_enabled);
+                        }
+                        if (typeof window.alertAudioManager.setVolume === 'function') {
+                            window.alertAudioManager.setVolume(data.audio_config.alert_volume);
+                        }
+                    }
+                    
+                    console.log('[PROFILE] Configuración de audio actualizada en tiempo real');
+                }
+                
+                // Mostrar mensaje de éxito
+                if (window.notificationManager) {
+                    window.notificationManager.addNotification({
+                        title: 'Perfil actualizado',
+                        message: data.message,
+                        type: 'success'
+                    });
+                } else {
+                    alert(data.message);
+                }
+                
+                // Recargar la página después de 1 segundo
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                // Mostrar errores
+                if (data.errors) {
+                    let errorMsg = 'Errores:\n';
+                    for (const [field, errors] of Object.entries(data.errors)) {
+                        errorMsg += `- ${field}: ${errors.join(', ')}\n`;
+                    }
+                    alert(errorMsg);
+                } else {
+                    alert(data.message || 'Error al guardar el perfil');
+                }
+            }
+        } catch (error) {
+            console.error('[PROFILE] Error:', error);
+            alert('Error al guardar el perfil. Por favor intenta de nuevo.');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+        }
+    });
+}
+
+</script>
+
+{% endblock %}

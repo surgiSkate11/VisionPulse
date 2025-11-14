@@ -1,0 +1,302 @@
+<div id="exportLoadingModal" class="hidden fixed inset-0 z-[1000] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+  <div class="absolute inset-0" id="exportModalOverlayArea"></div>
+  <div class="relative z-10 w-full max-w-md rounded-2xl bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border-color shadow-xl p-6 text-center">
+    
+    <!-- Botón cerrar -->
+    <button id="exportCancelBtn" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-background text-gray-600 dark:text-dark-text-secondary hover:text-gray-900 dark:hover:text-dark-text-primary flex items-center justify-center transition-colors" title="Cancelar">
+      <i class="fas fa-times text-sm"></i>
+    </button>
+    
+    <!-- Icono simple -->
+    <div class="mx-auto w-14 h-14 rounded-xl flex items-center justify-center bg-gray-200 dark:bg-dark-background text-gray-600 dark:text-dark-text-secondary mb-4">
+      <svg class="spinner w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <circle cx="12" cy="12" r="9" stroke-width="2" stroke-opacity="0.2" />
+        <path d="M21 12a9 9 0 0 1-9 9" stroke-width="2" stroke-linecap="round" />
+      </svg>
+    </div>
+    
+    <h3 class="text-base font-bold text-gray-800 dark:text-dark-text-primary" style="font-family:'Montserrat',sans-serif;">
+      Generando reporte...
+    </h3>
+    <p id="exportProgressStatus" class="mt-2 text-sm text-gray-600 dark:text-dark-text-secondary">
+      Iniciando...
+    </p>
+
+    <!-- Barra de progreso -->
+    <div class="mt-5 w-full">
+      <div id="exportProgressContainer" class="h-4 w-full bg-gray-200 dark:bg-dark-background rounded-full overflow-hidden relative shadow-inner">
+        <div id="exportProgressBar" class="h-full w-0 rounded-full transition-all duration-300 ease-out" 
+             style="background: linear-gradient(90deg, #86efac 0%, #4ade80 50%, #22c55e 100%); box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);"></div>
+      </div>
+      <div id="exportProgressPercent" class="mt-2.5 text-sm font-bold text-green-600 dark:text-green-400">0%</div>
+    </div>
+
+    <!-- Info -->
+    <div class="mt-4 text-xs text-gray-500 dark:text-dark-text-secondary">
+      Puedes cerrar esta ventana sin cancelar la descarga
+    </div>
+  </div>
+</div>
+
+<style>
+/* Animación del spinner */
+@keyframes spin { 
+  from { transform: rotate(0deg); } 
+  to { transform: rotate(360deg); } 
+}
+.spinner { 
+  animation: spin 0.8s linear infinite; 
+}
+</style>
+
+<script>
+/**
+ * Sistema de progreso REAL para exportación de reportes
+ * Monitorea el estado de la descarga del navegador
+ */
+
+let exportProgressInterval = null;
+let exportStartTime = null;
+let exportAborted = false;
+
+// Estimaciones de tiempo basadas en el formato y opciones (en ms)
+const ESTIMATED_TIMES = {
+  'csv': 1500,    // CSV es muy rápido (1.5s)
+  'excel': 3000,  // Excel es rápido (3s)
+  'pdf_no_charts': 8000,   // PDF sin gráficas ~8s
+  'pdf_with_charts': 18000 // PDF con gráficas ~18s
+};
+
+function getEstimatedTime() {
+  // Intentar leer desde el formulario de exportación
+  const exportForm = document.getElementById('exportForm');
+  if (!exportForm) {
+    console.warn('Formulario de exportación no encontrado');
+    return ESTIMATED_TIMES.pdf_with_charts;
+  }
+  
+  // Buscar el select de formato
+  const formatSelect = exportForm.querySelector('select[name="format"]');
+  const format = formatSelect ? formatSelect.value : 'pdf';
+  
+  // Buscar checkbox de gráficas
+  const chartsCheckbox = exportForm.querySelector('input[name="include_charts"]');
+  const hasCharts = chartsCheckbox ? chartsCheckbox.checked : false;
+  
+  console.log('Formato detectado:', format, '| Incluye gráficas:', hasCharts);
+  
+  if (format === 'csv') return ESTIMATED_TIMES.csv;
+  if (format === 'excel') return ESTIMATED_TIMES.excel;
+  if (format === 'pdf') {
+    return hasCharts ? ESTIMATED_TIMES.pdf_with_charts : ESTIMATED_TIMES.pdf_no_charts;
+  }
+  return ESTIMATED_TIMES.pdf_with_charts;
+}
+
+function updateProgressUI(percent, statusText) {
+  const progressBar = document.getElementById('exportProgressBar');
+  const progressPercent = document.getElementById('exportProgressPercent');
+  const statusTextEl = document.getElementById('exportProgressStatus');
+  
+  const finalPercent = Math.min(Math.max(percent, 0), 100);
+  
+  if (progressBar) {
+    progressBar.style.width = finalPercent + '%';
+    console.log('Barra actualizada:', finalPercent + '%');
+  } else {
+    console.error('Barra de progreso no encontrada');
+  }
+  
+  if (progressPercent) {
+    progressPercent.textContent = Math.round(finalPercent) + '%';
+  } else {
+    console.error('Elemento de porcentaje no encontrado');
+  }
+  
+  if (statusTextEl && statusText) {
+    statusTextEl.textContent = statusText;
+  } else if (statusText) {
+    console.error('Elemento de estado no encontrado');
+  }
+}
+
+function simulateRealisticProgress() {
+  exportAborted = false;
+  exportStartTime = Date.now();
+  const estimatedDuration = getEstimatedTime();
+  
+  // Detectar formato desde el formulario
+  const exportForm = document.getElementById('exportForm');
+  const formatSelect = exportForm?.querySelector('select[name="format"]');
+  const format = formatSelect ? formatSelect.value : 'pdf';
+  
+  console.log('Iniciando progreso para formato:', format, 'Duración estimada:', estimatedDuration, 'ms');
+  
+  // Fases diferentes según el formato
+  let phases;
+  if (format === 'csv') {
+    phases = [
+      { percent: 30, text: 'Recopilando datos...', timeRatio: 0.3 },
+      { percent: 70, text: 'Generando archivo CSV...', timeRatio: 0.4 },
+      { percent: 100, text: '¡Descarga completa!', timeRatio: 0.3 }
+    ];
+  } else if (format === 'excel') {
+    phases = [
+      { percent: 25, text: 'Recopilando datos...', timeRatio: 0.25 },
+      { percent: 60, text: 'Generando hojas Excel...', timeRatio: 0.35 },
+      { percent: 90, text: 'Aplicando formato...', timeRatio: 0.25 },
+      { percent: 100, text: '¡Descarga completa!', timeRatio: 0.15 }
+    ];
+  } else {
+    // PDF (normal o con gráficas)
+    phases = [
+      { percent: 15, text: 'Recopilando datos...', timeRatio: 0.1 },
+      { percent: 30, text: 'Procesando información...', timeRatio: 0.15 },
+      { percent: 50, text: 'Generando gráficas...', timeRatio: 0.25 },
+      { percent: 70, text: 'Creando documento...', timeRatio: 0.2 },
+      { percent: 85, text: 'Optimizando archivo...', timeRatio: 0.15 },
+      { percent: 95, text: 'Finalizando...', timeRatio: 0.1 },
+      { percent: 100, text: '¡Descarga completa!', timeRatio: 0.05 }
+    ];
+  }
+  
+  let currentPhase = 0;
+  let currentPercent = 0;
+  
+  // Inicializar progreso en 0%
+  updateProgressUI(0, phases[0]?.text || 'Iniciando...');
+  
+  function updatePhase() {
+    if (exportAborted) {
+      clearInterval(exportProgressInterval);
+      return;
+    }
+    
+    const elapsed = Date.now() - exportStartTime;
+    const progress = Math.min((elapsed / estimatedDuration) * 100, 100);
+    
+    console.log('Progreso:', progress.toFixed(1) + '% | Fase:', currentPhase, '/', phases.length);
+    
+    // Actualizar fase actual
+    while (currentPhase < phases.length && progress >= phases[currentPhase].percent) {
+      console.log('Cambiando a fase', currentPhase + 1, ':', phases[currentPhase].text);
+      updateProgressUI(phases[currentPhase].percent, phases[currentPhase].text);
+      currentPhase++;
+    }
+    
+    // Interpolación suave entre fases
+    if (currentPhase < phases.length) {
+      const prevPercent = currentPhase > 0 ? phases[currentPhase - 1].percent : 0;
+      const nextPercent = phases[currentPhase].percent;
+      const phaseProgress = (progress - prevPercent) / (nextPercent - prevPercent);
+      currentPercent = prevPercent + (phaseProgress * (nextPercent - prevPercent));
+      updateProgressUI(currentPercent);
+    } else {
+      updateProgressUI(progress);
+    }
+    
+    // Si ya pasó el tiempo estimado, ir al 100%
+    if (elapsed >= estimatedDuration) {
+      updateProgressUI(100, '¡Descarga completa!');
+    }
+  }
+  
+  // Actualizar cada 60ms para animación más fluida
+  console.log('Iniciando interval con duración:', estimatedDuration + 'ms');
+  exportProgressInterval = setInterval(updatePhase, 60);
+  
+  // Ejecutar primera actualización inmediatamente
+  setTimeout(updatePhase, 10);
+  
+  // Cerrar modal automáticamente cuando termine
+  setTimeout(() => {
+    if (!exportAborted) {
+      console.log('Finalizando descarga - 100%');
+      updateProgressUI(100, '¡Descarga completa!');
+      setTimeout(() => {
+        closeExportModal();
+      }, 500);
+    }
+  }, estimatedDuration + 500);
+}
+
+function closeExportModal() {
+  console.log('Cerrando modal de exportación');
+  exportAborted = true;
+  
+  if (exportProgressInterval) {
+    clearInterval(exportProgressInterval);
+    exportProgressInterval = null;
+  }
+  
+  const modal = document.getElementById('exportLoadingModal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+  
+  // Reset UI después de cerrar
+  setTimeout(() => {
+    updateProgressUI(0, 'Iniciando...');
+    exportAborted = false;
+  }, 300);
+}
+
+// Botón de cancelar
+document.getElementById('exportCancelBtn')?.addEventListener('click', closeExportModal);
+document.getElementById('exportModalOverlayArea')?.addEventListener('click', closeExportModal);
+
+// Observer para auto-iniciar cuando se muestre el modal
+let modalObserver = null;
+
+function setupModalObserver() {
+  const modal = document.getElementById('exportLoadingModal');
+  if (!modal) {
+    console.warn('Modal de exportación no encontrado');
+    return;
+  }
+  
+  // Limpiar observer anterior si existe
+  if (modalObserver) {
+    modalObserver.disconnect();
+  }
+  
+  modalObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+        const modal = mutation.target;
+        const isVisible = !modal.classList.contains('hidden');
+        
+        if (isVisible && !exportProgressInterval) {
+          console.log('Modal visible - iniciando progreso');
+          // Esperar un frame para que el modal se renderice completamente
+          setTimeout(() => {
+            simulateRealisticProgress();
+          }, 100);
+        }
+      }
+    });
+  });
+  
+  modalObserver.observe(modal, {
+    attributes: true,
+    attributeFilter: ['class']
+  });
+  
+  console.log('Observer del modal configurado');
+}
+
+// Configurar observer cuando el DOM esté listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupModalObserver);
+} else {
+  setupModalObserver();
+}
+
+// Cleanup al salir de la página
+window.addEventListener('beforeunload', () => {
+  exportAborted = true;
+  if (exportProgressInterval) {
+    clearInterval(exportProgressInterval);
+  }
+});
+</script>

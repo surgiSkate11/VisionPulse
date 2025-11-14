@@ -1,0 +1,1638 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load json_filters %}
+
+{% block title %}Monitoreo en Vivo | VisionPulse{% endblock %}
+
+{% block extra_head %}
+<script>
+    // Configuración de monitoreo del usuario
+    try {
+        window.MONITORING_CONFIG = JSON.parse('{{ monitoring_config|escapejs }}');
+    } catch (e) {
+        console.error('Error parsing monitoring config:', e);
+        window.MONITORING_CONFIG = {};
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<!-- Header en esquina superior -->
+<div class="mb-4">
+    <h1 class="text-2xl font-semibold text-primary dark:text-dark-primary mb-1">Monitoreo en vivo</h1>
+    <p class="text-secondary dark:text-dark-secondary text-sm">Rutinas guiadas para el cuidado de tu visión</p>
+</div>
+
+<div class="max-w-2xl mx-auto">
+
+    <!-- Contenedor Principal -->
+    <div class="bg-surface dark:bg-dark-surface rounded-2xl shadow-lg dark:shadow-xl dark:shadow-black/20 p-5">
+        <!-- Título -->
+        <h2 class="text-base font-medium text-primary dark:text-dark-primary mb-3">Captura en tiempo real</h2>
+
+        <!-- Métricas superiores -->
+        <div class="grid grid-cols-3 gap-2 mb-3 text-center w-full">
+            <div class="flex justify-start">
+                <span class="bg-gray-700 text-white text-xs px-4 py-1.5 rounded-full mx-auto min-w-[110px]">
+                    Parpadeos: <span id="metric-blinks" class="font-medium">--</span>
+                </span>
+            </div>
+            <div class="flex justify-center">
+                <span class="bg-gray-700 text-white text-xs px-4 py-1.5 rounded-full mx-auto min-w-[140px] inline-flex items-center min-h-[28px] gap-1">
+                    <span>Enfoque:</span>
+                    <span id="metric-focus" class="font-medium whitespace-nowrap">--</span>
+                </span>
+            </div>
+            <div class="flex justify-end">
+                <span class="bg-gray-700 text-white text-xs px-4 py-1.5 rounded-full mx-auto min-w-[90px]">
+                    Alertas: <span id="metric-alerts" class="font-medium">--</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Contenedor de Video -->
+        <div id="video-container" class="bg-gray-100 dark:bg-dark-background-primary rounded-2xl flex flex-col items-center justify-center text-center border border-border-color dark:border-dark-border relative overflow-hidden" style="height: 340px;">
+            <img id="video-feed" src="" class="absolute top-0 left-0 w-full h-full rounded-2xl object-cover hidden transition-opacity duration-300">
+            <div id="placeholder" class="flex flex-col items-center px-4">
+                <div class="w-20 h-20 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center mb-4 relative border-4 border-gray-400 dark:border-gray-500">
+                    <i class="fas fa-video-slash text-3xl text-gray-500 dark:text-gray-400"></i>
+                </div>
+                <p class="text-primary dark:text-dark-primary font-medium text-sm mb-1">Cámara Desactivada</p>
+                <p class="text-secondary dark:text-dark-secondary text-xs max-w-xs leading-relaxed">Activa la cámara para comenzar a monitorear tu salud visual en tiempo real</p>
+            </div>
+            <!-- 🆕 Contenedor de estado de descanso -->
+            <div id="break-content" class="hidden flex-col items-center px-4">
+                <div class="w-20 h-20 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center mb-4 relative border-4 border-indigo-300 dark:border-indigo-700">
+                    <span class="text-5xl">😴</span>
+                </div>
+                <p class="text-primary dark:text-dark-primary font-medium text-sm mb-1">Tiempo de Descanso</p>
+                <p class="text-secondary dark:text-dark-secondary text-xs max-w-xs leading-relaxed">Aprovecha para relajar tu vista. El monitoreo se reanudará cuando estés listo</p>
+            </div>
+        </div>
+
+        <!-- Timer Pomodoro -->
+        <div id="pomodoro-timer" class="hidden mt-3 items-center justify-center gap-3">
+            <img id="pomodoro-icon" src="" alt="Pomodoro icon" class="w-8 h-8">
+            <span id="pomodoro-time" class="text-lg font-semibold text-primary dark:text-dark-primary">--:--</span>
+        </div>
+        <!-- Estados de detección -->
+        <div class="flex justify-center gap-8 mt-3">
+            <div id="metric-face-status" class="bg-gray-700 text-white text-sm px-8 py-1.5 rounded-full transition-colors duration-300">Rostro: No detectado</div>
+            <div id="metric-eyes-status" class="bg-gray-700 text-white text-sm px-8 py-1.5 rounded-full transition-colors duration-300">Ojos: No detectados</div>
+        </div>
+    </div>
+
+    <!-- Botones de control -->
+    <div class="flex justify-center gap-3 mt-4">
+        <button id="show-privacy-modal-button" class="flex-1 max-w-[160px] flex items-center justify-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-3 px-4 rounded-full shadow-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-play w-4 h-4"></i>
+            Iniciar
+        </button>
+        <button id="pause-button" disabled class="flex-1 max-w-[115px] flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-medium py-3 px-4 rounded-full transition-all duration-300 cursor-not-allowed">
+            <i class="fas fa-pause w-4 h-4"></i>
+            Pausar
+        </button>
+        <button id="stop-button" disabled class="flex-1 max-w-[115px] flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-medium py-3 px-4 rounded-full transition-all duration-300 cursor-not-allowed">
+            <i class="fas fa-stop w-4 h-4"></i>
+            Detener
+        </button>
+    </div>
+</div>
+
+<!-- Modal de Privacidad -->
+<div id="privacy-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 items-center justify-center p-4 hidden transition-opacity duration-300 opacity-0">
+    <div id="privacy-modal" class="bg-surface dark:bg-dark-surface max-w-lg w-full rounded-2xl p-6 md:p-8 shadow-2xl relative transform transition-all duration-300 scale-95 opacity-0">
+        <button id="close-modal-button" class="absolute top-4 right-4 text-secondary dark:text-dark-secondary hover:text-primary dark:hover:text-dark-primary text-2xl leading-none">&times;</button>
+        <h1 class="text-xl font-semibold text-primary dark:text-dark-primary mb-1">Aviso de Privacidad</h1>
+        <p class="text-sm text-secondary dark:text-dark-secondary mb-4">Antes de comenzar, revisa estos puntos:</p>
+        <div class="bg-accent-peach/10 dark:bg-dark-accent-peach/5 border border-accent-peach/30 dark:border-dark-accent-peach/20 rounded-lg p-4 mb-5">
+            <h2 class="text-base font-semibold text-primary dark:text-dark-primary mb-2">Tu Privacidad</h2>
+            <ul class="list-disc list-inside space-y-1 text-xs text-secondary dark:text-dark-secondary">
+                <li>La cámara solo se activa con tu consentimiento explícito al iniciar.</li>
+                <li>No guardamos ni transmitimos video, solo métricas anónimas.</li>
+                <li>El procesamiento ocurre localmente en tu dispositivo.</li>
+                <li>Puedes detener el monitoreo en cualquier momento.</li>
+            </ul>
+            <div class="flex items-center gap-2 mt-3">
+                <input type="checkbox" id="consent-checkbox" checked class="h-4 w-4 rounded border-gray-300 text-accent-green focus:ring-accent-green cursor-pointer">
+                <label for="consent-checkbox" class="text-xs text-secondary dark:text-dark-secondary cursor-pointer select-none">Entiendo y acepto activar la cámara.</label>
+            </div>
+        </div>
+        <div>
+            <h2 class="text-base font-semibold text-primary dark:text-dark-primary mb-3">Checklist</h2>
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 text-sm text-secondary dark:text-dark-secondary">
+                    <div class="w-5 h-5 bg-accent-green rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-check text-xs text-white"></i>
+                    </div>
+                    <span>Buena iluminación.</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-secondary dark:text-dark-secondary">
+                    <div class="w-5 h-5 bg-accent-green rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-check text-xs text-white"></i>
+                    </div>
+                    <span>Cámara funcionando.</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-secondary dark:text-dark-secondary">
+                    <div class="w-5 h-5 bg-accent-green rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-check text-xs text-white"></i>
+                    </div>
+                    <span>Posición cómoda.</span>
+                </div>
+            </div>
+        </div>
+        <button id="start-monitoring-button" disabled class="mt-6 w-full flex items-center justify-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-3 px-5 rounded-full shadow-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-check w-4 h-4"></i>
+            Confirmar e Iniciar
+        </button>
+    </div>
+</div>
+
+<!-- Incluir fragmentos reutilizables -->
+{% include 'fragments/alert_notification.html' %}
+{% include 'fragments/exercise_modal.html' %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // La función resumeSession se define más abajo para asegurar que pauseBtn/videoFeedEl estén disponibles
+        // --- Elementos del DOM ---
+        const showModalBtn = document.getElementById('show-privacy-modal-button');
+    const startBtn = document.getElementById('start-monitoring-button');
+    const pauseBtn = document.getElementById('pause-button');
+    const stopBtn = document.getElementById('stop-button');
+    const pauseBtnBaseHtml = pauseBtn ? pauseBtn.innerHTML : '';
+    const stopBtnBaseHtml = stopBtn ? stopBtn.innerHTML : '<i class="fas fa-stop w-4 h-4"></i> Detener';
+        const videoFeedEl = document.getElementById('video-feed');
+        const placeholderEl = document.getElementById('placeholder');
+        const breakContentEl = document.getElementById('break-content');  // 🆕 Contenedor de descanso
+        const pomodoroDiv = document.getElementById('pomodoro-timer');
+        const pomodoroIcon = document.getElementById('pomodoro-icon');
+        const pomodoroTime = document.getElementById('pomodoro-time');
+        const modalOverlay = document.getElementById('privacy-modal-overlay');
+        const modal = document.getElementById('privacy-modal');
+        const closeModalBtn = document.getElementById('close-modal-button');
+        const consentCheckbox = document.getElementById('consent-checkbox');
+        
+        // Métricas UI
+    const metricAlertsEl = document.getElementById('metric-alerts');
+        const metricFocusEl = document.getElementById('metric-focus');
+        const metricFaceEl = document.getElementById('metric-face-status');
+        const metricEyesEl = document.getElementById('metric-eyes-status');
+        
+        // 🆕 Variable global para trackear si estamos en estado de descanso
+        window.isOnBreak = false;
+        
+        // Función global para reanudar la sesión (definida tras declarar elementos)
+        window.resumeSession = async function() {
+            if (!pauseBtn) return;
+            pauseBtn.disabled = true;
+            pauseBtn.classList.add('opacity-80');
+            const previousHtml = pauseBtn.innerHTML;
+            pauseBtn.innerHTML = '<i class="fas fa-spinner fa-spin w-4 h-4"></i> Reanudando';
+
+            try {
+                console.log('[RESUME] Intentando reanudar monitoreo...');
+                const response = await fetch("{% url 'monitoring:api_resume' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                if (!response.ok || data.status === 'error') {
+                    throw new Error(data.message || 'Error al reanudar');
+                }
+
+                console.log('[RESUME] Reanudación exitosa, actualizando estado...');
+                isPaused = false;
+                window.isPaused = false;  // Sincronizar global
+                // 🆕 Limpiar flag de descanso al reanudar manualmente
+                if (window.isOnBreak) {
+                    console.log('[RESUME] ✅ Limpiando estado de descanso (isOnBreak)');
+                    window.isOnBreak = false;
+                }
+                updateUI('RUNNING');
+
+                // Limpiar estados del AlertManager para que no reaparezcan alertas antiguas
+                try {
+                    if (window.alertManager && typeof window.alertManager.handleResume === 'function') {
+                        await window.alertManager.handleResume();
+                    }
+                } catch (e) { console.warn('[RESUME] Error limpiando AlertManager tras reanudar:', e); }
+
+                if (videoFeedEl && !videoFeedEl.getAttribute('src')) {
+                    videoFeedEl.src = "{% url 'monitoring:video_feed' %}?t=" + Date.now();
+                }
+            } catch (error) {
+                console.error('[RESUME] Error:', error);
+                alert('No se pudo reanudar: ' + (error.message || error));
+                pauseBtn.innerHTML = previousHtml || pauseBtnBaseHtml;
+            } finally {
+                pauseBtn.disabled = false;
+                stopBtn.disabled = false;
+                pauseBtn.classList.remove('opacity-80');
+            }
+        };
+    const metricBlinksEl = document.getElementById('metric-blinks');
+
+        const csrfToken = '{{ csrf_token }}';
+        let metricsInterval = null;
+        window.isMonitoringActive = false;  // 🔥 GLOBAL: Exponer para alert_notifications.js
+        let isMonitoringActive = window.isMonitoringActive;  // Alias local (mantener compatibilidad)
+        window.isPaused = false;  // Exponer como global para pauseMonitoringAutomatically
+        let isPaused = window.isPaused;  // Alias local (mantener compatibilidad)
+        let consecutiveErrors = 0;
+        const MAX_ERRORS = 5;
+        let sessionStarting = false;
+
+        // Utilidad: saber si el modal de ejercicio está abierto para suprimir alertas
+        function isExerciseModalOpen() {
+            try {
+                const overlay = document.getElementById('exercise-modal-overlay');
+                if (!overlay) return false;
+                const hiddenByClass = overlay.classList.contains('hidden');
+                const hiddenByStyle = (overlay.style && overlay.style.display === 'none');
+                return !hiddenByClass && !hiddenByStyle;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        // --- Configuración Pomodoro ---
+        const config = {
+            workIntervalMinutes: Number('{{ request.user.work_interval_minutes|default:"25" }}'),
+            breakDurationMinutes: Number('{{ request.user.break_duration_minutes|default:"5" }}')
+        };
+
+        // --- State Machine ---
+        let currentAppState = 'STOPPED';
+        let pomodoroWorkTimer = null;
+        let pomodoroBreakTimerInterval = null;
+
+        // --- Función para verificar permisos de cámara ---
+        async function checkCameraPermissions() {
+            try {
+                console.log('[PERMISSIONS] Verificando permisos de cámara...');
+                
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                
+                if (videoDevices.length === 0) {
+                    throw new Error('No se encontró ninguna cámara conectada');
+                }
+                
+                console.log(`[PERMISSIONS] ${videoDevices.length} cámara(s) detectada(s)`);
+                
+                let stream = null;
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: {
+                            width: { ideal: 640 },
+                            height: { ideal: 480 }
+                        }
+                    });
+                    
+                    console.log('[PERMISSIONS] Permisos de cámara concedidos');
+                    
+                    stream.getTracks().forEach(track => {
+                        track.stop();
+                        console.log('[PERMISSIONS] Track detenido:', track.label);
+                    });
+                    
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    return true;
+                    
+                } catch (streamError) {
+                    if (stream) {
+                        stream.getTracks().forEach(track => track.stop());
+                    }
+                    throw streamError;
+                }
+                
+            } catch (error) {
+                console.error('[PERMISSIONS] Error al verificar permisos:', error);
+                
+                let errorMessage = 'Error al acceder a la cámara:\n\n';
+                
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    errorMessage += '• Permisos denegados\n';
+                    errorMessage += '• Habilita los permisos de cámara en tu navegador\n';
+                    errorMessage += '• Recarga la página e intenta de nuevo';
+                } else if (error.name === 'NotFoundError' || error.message.includes('ninguna cámara')) {
+                    errorMessage += '• No se encontró ninguna cámara\n';
+                    errorMessage += '• Conecta una cámara y vuelve a intentar';
+                } else if (error.name === 'NotReadableError') {
+                    errorMessage += '• La cámara está en uso por otra aplicación\n';
+                    errorMessage += '• Cierra otras aplicaciones que puedan usar la cámara\n';
+                    errorMessage += '• Ejemplos: Zoom, Teams, Skype, Discord\n';
+                    errorMessage += '• También verifica otras pestañas del navegador';
+                } else if (error.name === 'OverconstrainedError') {
+                    errorMessage += '• La cámara no soporta la configuración solicitada\n';
+                    errorMessage += '• Intenta con una cámara diferente';
+                } else {
+                    errorMessage += '• ' + error.message;
+                }
+                
+                alert(errorMessage);
+                return false;
+            }
+        }
+
+        // --- Lógica del Modal ---
+        const showModal = () => { 
+            modalOverlay.classList.remove('hidden'); 
+            modalOverlay.classList.add('flex');
+            setTimeout(() => { 
+                modalOverlay.classList.remove('opacity-0'); 
+                modal.classList.remove('scale-95', 'opacity-0'); 
+                modal.classList.add('scale-100', 'opacity-100'); 
+            }, 10); 
+            updateModalStartButtonState(); 
+        };
+        
+        const hideModal = () => { 
+            modal.classList.remove('scale-100', 'opacity-100'); 
+            modal.classList.add('scale-95', 'opacity-0'); 
+            modalOverlay.classList.add('opacity-0'); 
+            setTimeout(() => { 
+                modalOverlay.classList.add('hidden');
+                modalOverlay.classList.remove('flex');
+            }, 300); 
+        };
+        
+        const updateModalStartButtonState = () => { 
+            startBtn.disabled = !consentCheckbox.checked; 
+        };
+
+        showModalBtn.addEventListener('click', (e) => {
+            if (currentAppState === 'BREAK_REMINDER') {
+                e.preventDefault();
+                startBreak();
+                return;
+            }
+            showModal();
+        });
+        closeModalBtn.addEventListener('click', hideModal);
+        modalOverlay.addEventListener('click', (e) => { 
+            if (e.target === modalOverlay) hideModal(); 
+        });
+        consentCheckbox.addEventListener('change', updateModalStartButtonState);
+
+        // --- Estado Visual y Lógica Principal ---
+        function setMonitoringState(isActive, paused = false) {
+            isMonitoringActive = isActive;
+            window.isMonitoringActive = isActive;  // 🔥 Sincronizar variable global
+            isPaused = paused;
+            window.isPaused = paused;  // Sincronizar variable global
+
+            console.log('[STATE] setMonitoringState INICIADO:', { isActive, paused, previousPaused: window.previousState?.isPaused });
+
+            // Actualizar botón de inicio/modal
+            if (showModalBtn) {
+                showModalBtn.disabled = isActive;
+                showModalBtn.className = isActive 
+                    ? 'flex-1 max-w-[160px] flex items-center justify-center gap-2 bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-medium py-3 px-4 rounded-full cursor-not-allowed transition-all duration-300'
+                    : 'flex-1 max-w-[160px] flex items-center justify-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-3 px-4 rounded-full shadow-sm transition-all duration-300';
+            }
+
+            // Actualizar botón de pausa - CON VALIDACIÓN EXPLÍCITA
+            if (pauseBtn) {
+                pauseBtn.disabled = !isActive;
+                
+                // Configurar clases base
+                let baseClasses = 'flex-1 max-w-[115px] flex items-center justify-center gap-2 font-medium py-3 px-4 rounded-full transition-all duration-300';
+                
+                if (!isActive) {
+                    // Estado inactivo
+                    pauseBtn.className = `${baseClasses} bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed`;
+                    pauseBtn.innerHTML = '<i class="fas fa-pause w-4 h-4"></i> Pausar';
+                    console.log('[STATE] ✓ Botón DESHABILITADO (isActive=false)');
+                } else if (paused === true) {
+                    // Estado pausado - MOSTRAR REANUDAR (validación explícita del parámetro)
+                    pauseBtn.className = `${baseClasses} bg-yellow-500 hover:bg-yellow-600 text-white`;
+                    pauseBtn.innerHTML = '<i class="fas fa-play w-4 h-4"></i> Reanudar';
+                    console.log('[STATE] ✓✓ Botón REANUDAR (paused=true, isActive=true)');
+                } else if (paused === false) {
+                    // Estado activo - MOSTRAR PAUSAR (validación explícita)
+                    pauseBtn.className = `${baseClasses} bg-gray-300 hover:bg-gray-400 text-gray-600`;
+                    pauseBtn.innerHTML = '<i class="fas fa-pause w-4 h-4"></i> Pausar';
+                    console.log('[STATE] ✓✓ Botón PAUSAR (paused=false, isActive=true)');
+                }
+            } else {
+                console.warn('[STATE] ⚠️ pauseBtn no existe en el DOM!');
+            }
+
+            // Actualizar botón de detener
+            if (stopBtn) {
+                stopBtn.disabled = !isActive;
+                stopBtn.className = isActive
+                    ? 'flex-1 max-w-[115px] flex items-center justify-center gap-2 bg-alert-coral hover:bg-red-700 text-white font-medium py-3 px-4 rounded-full transition-all duration-300'
+                    : 'flex-1 max-w-[115px] flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-medium py-3 px-4 rounded-full cursor-not-allowed transition-all duration-300';
+            }
+
+            // Lógica de visualización del video y placeholder
+            if (!isActive) {
+                // Estado DETENIDO: ocultar video, mostrar placeholder, limpiar contenidos de pausa/descanso
+                videoFeedEl.classList.add('hidden');
+                videoFeedEl.style.opacity = '0';
+                videoFeedEl.style.display = '';
+                
+                placeholderEl.classList.remove('hidden');
+                placeholderEl.style.display = '';
+                
+                // Ocultar contenedor de descanso
+                if (breakContentEl) {
+                    breakContentEl.classList.add('hidden');
+                    breakContentEl.style.display = 'none';
+                }
+                
+                // Limpiar el contenido de pausa si existe (porque está DETENIDO, no pausado)
+                const pausedContent = document.getElementById('paused-content');
+                if (pausedContent) {
+                    pausedContent.style.display = 'none';
+                    pausedContent.remove();
+                    console.log('[STATE] ✓ Contenido de pausa removido (estado detenido)');
+                }
+                
+                console.log('[STATE] Mostrar PLACEHOLDER (estado detenido)');
+            } else if (paused) {
+                // Estado PAUSADO: verificar si es pausa normal o descanso
+                videoFeedEl.classList.add('hidden');
+                videoFeedEl.style.opacity = '0';
+                videoFeedEl.style.display = '';
+                
+                // Ocultar placeholder
+                placeholderEl.classList.add('hidden');
+                placeholderEl.style.display = 'none';
+                
+                // Mostrar contenedor apropiado según tipo de pausa
+                if (window.isOnBreak) {
+                    // ESTADO DE DESCANSO: mostrar contenedor de descanso
+                    if (breakContentEl) {
+                        breakContentEl.classList.remove('hidden');
+                        breakContentEl.classList.add('flex');
+                        breakContentEl.style.display = 'flex';
+                        console.log('[STATE] ✓ Contenedor de descanso visible');
+                    }
+                    // Ocultar contenido de pausa normal si existe
+                    const pausedContent = document.getElementById('paused-content');
+                    if (pausedContent) {
+                        pausedContent.style.display = 'none';
+                    }
+                } else {
+                    // PAUSA NORMAL: mostrar contenido de pausa (creado por showPausedState)
+                    if (breakContentEl) {
+                        breakContentEl.classList.add('hidden');
+                        breakContentEl.style.display = 'none';
+                    }
+                    const pausedContent = document.getElementById('paused-content');
+                    if (pausedContent) {
+                        pausedContent.style.display = 'flex';
+                        console.log('[STATE] ✓ Contenido de pausa mantenido visible');
+                    } else {
+                        console.warn('[STATE] ⚠️ paused-content no encontrado (debería haber sido creado por showPausedState)');
+                    }
+                }
+                
+                console.log('[STATE] Mostrar CONTENIDO DE PAUSA/DESCANSO (estado pausado, isOnBreak=' + window.isOnBreak + ')');
+            } else {
+                // Estado ACTIVO: mostrar video, ocultar placeholder, contenido de pausa y descanso
+                videoFeedEl.classList.remove('hidden');
+                videoFeedEl.style.opacity = '1';
+                videoFeedEl.style.display = '';
+                
+                placeholderEl.classList.add('hidden');
+                placeholderEl.style.display = 'none';
+                
+                // Ocultar contenedor de descanso
+                if (breakContentEl) {
+                    breakContentEl.classList.add('hidden');
+                    breakContentEl.style.display = 'none';
+                }
+                
+                // Limpiar el contenido de pausa si existe (porque está ACTIVO)
+                const pausedContent = document.getElementById('paused-content');
+                if (pausedContent) {
+                    pausedContent.style.display = 'none';
+                    pausedContent.remove();
+                    console.log('[STATE] ✓ Contenido de pausa removido (estado activo)');
+                }
+                
+                console.log('[STATE] Mostrar VIDEO FEED (estado activo)');
+            }
+
+            if (isActive && !paused) {
+                // Solo cargar video cuando está activo Y NO pausado
+                if (!videoFeedEl.getAttribute('src') || !videoFeedEl.src.includes('video_feed')) {
+                    console.log('[VIDEO] Iniciando/reiniciando stream de video');
+                    // Limpiar y reiniciar el feed
+                    videoFeedEl.src = '';
+                    // Agregar timestamp para evitar cache
+                    videoFeedEl.src = "{% url 'monitoring:video_feed' %}?t=" + Date.now();
+                    
+                    // Manejar errores de carga
+                    videoFeedEl.onerror = () => {
+                        console.error('[VIDEO] Error al cargar el stream');
+                        if (isMonitoringActive) {
+                            // Intentar recargar después de un breve retraso
+                            setTimeout(() => {
+                                if (isMonitoringActive && !isPaused) {
+                                    videoFeedEl.src = "{% url 'monitoring:video_feed' %}?t=" + Date.now();
+                                }
+                            }, 1000);
+                        }
+                    };
+                }
+            } else {
+                // Detener video cuando está pausado o detenido
+                if (videoFeedEl.getAttribute('src') || videoFeedEl.src) {
+                    console.log('[VIDEO] Deteniendo stream de video - limpiando src');
+                    videoFeedEl.src = '';
+                    videoFeedEl.removeAttribute('src');  // Forzar limpieza completa del atributo
+                    console.log('[VIDEO] ✓ Stream de video detenido');
+                }
+            }
+
+            // 🔥 CRÍTICO: Solo iniciar el poller si está ACTIVO Y NO PAUSADO
+            // El poller no debe ejecutarse durante pausas (ejercicios, breaks, etc.)
+            if (isActive && !paused) {
+                startMetricsPoller();
+            } else {
+                stopMetricsPoller();
+                if (!isActive) {
+                    resetMetrics();
+                }
+            }
+            
+            pauseBtn.setAttribute('aria-label', isPaused ? 'Reanudar monitoreo' : 'Pausar monitoreo');
+            stopBtn.setAttribute('aria-label', 'Detener monitoreo');
+            
+            window.previousState = { isActive: isMonitoringActive, isPaused: isPaused };
+        }
+
+        // --- Gestor de Estados (UI) ---
+        function updateUI(newState) {
+            console.log(`[UI] updateUI('${newState}') - isPaused=${isPaused}, previousState=${currentAppState}`);
+            
+            // PROTECCIÓN: Si se intenta activar RUNNING pero isPaused es true (pausa del servidor),
+            // NO sobrescribir. Mantener el estado de pausa sincronizado.
+            if (newState === 'RUNNING' && isPaused === true) {
+                console.log('[UI] 🛡️ PROTECCIÓN: Se intentó RUNNING pero isPaused=true (pausa del servidor). Manteniendo PAUSED.');
+                return;
+            }
+
+            currentAppState = newState;
+            pomodoroDiv.classList.add('hidden');
+            pomodoroDiv.classList.remove('flex');
+
+            switch (newState) {
+                case 'STOPPED':
+                    setMonitoringState(false, false);
+                    clearTimeout(pomodoroWorkTimer);
+                    clearInterval(pomodoroBreakTimerInterval);
+                    pomodoroTime.textContent = '--:--';
+                    break;
+
+                case 'RUNNING':
+                    setMonitoringState(true, false);
+                    startPomodoroWorkTimer();
+                    break;
+
+                case 'PAUSED':
+                    setMonitoringState(true, true);
+                    clearTimeout(pomodoroWorkTimer);
+                    break;
+
+                case 'BREAK_REMINDER':
+                    setMonitoringState(true, false);
+                    pauseBtn.disabled = false;
+                    pauseBtn.className = 'flex-1 flex items-center justify-center gap-2 bg-gray-300 hover:bg-gray-400 text-gray-600 font-medium py-3 px-5 rounded-full transition-all duration-300';
+                    pauseBtn.innerHTML = '<i class="fas fa-forward w-4 h-4"></i> Posponer';
+
+                    showModalBtn.disabled = false;
+                    showModalBtn.className = 'flex-1 flex items-center justify-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-3 px-5 rounded-full shadow-sm transition-all duration-300';
+                    showModalBtn.innerHTML = '<i class="fas fa-play w-4 h-4"></i> Iniciar Descanso';
+
+                    pomodoroDiv.classList.remove('hidden');
+                    pomodoroDiv.classList.add('flex');
+                    pomodoroIcon.src = '{% static "img/iconos/descanso.png" %}';
+                    pomodoroTime.textContent = `${config.breakDurationMinutes}:00`;
+                    break;
+
+                case 'ON_BREAK':
+                    setMonitoringState(true, true);
+
+                    pauseBtn.disabled = false;
+                    pauseBtn.className = 'flex-1 flex items-center justify-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-3 px-5 rounded-full transition-all duration-300';
+                    pauseBtn.innerHTML = '<i class="fas fa-play w-4 h-4"></i> Reanudar';
+                    pauseBtn.dataset.action = 'resume';
+
+                    pomodoroDiv.classList.remove('hidden');
+                    pomodoroDiv.classList.add('flex');
+                    pomodoroIcon.src = '{% static "img/iconos/pausa.png" %}';
+                    startBreakTimerVisuals();
+                    break;
+            }
+        }
+
+        // --- Lógica Pomodoro ---
+        function startPomodoroWorkTimer() {
+            clearTimeout(pomodoroWorkTimer);
+            if (currentAppState !== 'RUNNING') return;
+            pomodoroWorkTimer = setTimeout(() => {
+                if (currentAppState === 'RUNNING') {
+                    updateUI('BREAK_REMINDER');
+                }
+            }, config.workIntervalMinutes * 60 * 1000);
+        }
+
+        async function startBreak() {
+            try {
+                if (!isPaused) {
+                    const resp = await fetch("{% url 'monitoring:api_pause' %}", {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok || data.status === 'error') throw new Error(data.message || 'Error al pausar');
+                }
+                await fetch("{% url 'monitoring:api_break_taken' %}", {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+                });
+
+                clearTimeout(pomodoroWorkTimer);
+                updateUI('ON_BREAK');
+            } catch (e) {
+                console.error('[BREAK] Error al iniciar descanso:', e);
+                alert('No se pudo iniciar el descanso: ' + e.message);
+            }
+        }
+
+        async function snoozeBreak() {
+            try {
+                const minutes = 5;
+                const resp = await fetch("{% url 'monitoring:api_snooze_break' %}", {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ minutes })
+                });
+                const data = await resp.json();
+                if (!resp.ok || data.status === 'error') throw new Error(data.message || 'Error al posponer');
+                updateUI('RUNNING');
+            } catch (e) {
+                console.error('[BREAK] Error al posponer:', e);
+                alert('No se pudo posponer el descanso: ' + e.message);
+            }
+        }
+
+        function startBreakTimerVisuals() {
+            clearInterval(pomodoroBreakTimerInterval);
+            let duration = config.breakDurationMinutes * 60;
+
+            const updateTimer = () => {
+                let minutes = parseInt(duration / 60, 10);
+                let seconds = parseInt(duration % 60, 10);
+                minutes = minutes < 10 ? '0' + minutes : minutes;
+                seconds = seconds < 10 ? '0' + seconds : seconds;
+                pomodoroTime.textContent = `${minutes}:${seconds}`;
+                if (duration <= 0) {
+                    clearInterval(pomodoroBreakTimerInterval);
+                    pomodoroTime.textContent = '¡Listo!';
+                    return;
+                }
+                duration--;
+            };
+
+            updateTimer();
+            pomodoroBreakTimerInterval = setInterval(updateTimer, 1000);
+        }
+        
+        window.previousState = { isActive: false, isPaused: false };
+
+        // --- Event Listeners ---
+        startBtn.addEventListener('click', async () => {
+            if (sessionStarting) {
+                console.log('[START] Ya hay una sesión iniciándose...');
+                return;
+            }
+            
+            if (!consentCheckbox.checked) {
+                alert('Debes aceptar los términos para continuar');
+                return;
+            }
+            
+            sessionStarting = true;
+            const originalBtnContent = startBtn.innerHTML;
+            
+            try {
+                startBtn.disabled = true;
+                startBtn.innerHTML = '<i class="fas fa-spinner fa-spin w-4 h-4"></i> Verificando cámara...';
+                
+                console.log('[START] Verificando permisos de cámara...');
+                
+                const hasPermissions = await checkCameraPermissions();
+                
+                if (!hasPermissions) {
+                    console.log('[START] Verificación de cámara falló, abortando inicio');
+                    return;
+                }
+                
+                startBtn.innerHTML = '<i class="fas fa-spinner fa-spin w-4 h-4"></i> Iniciando sesión...';
+                
+                console.log('[START] Iniciando sesión en el servidor...');
+                const response = await fetch("{% url 'monitoring:api_start' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                console.log('[START] Respuesta del servidor:', data);
+                
+                if (!response.ok || data.status === 'error') {
+                    throw new Error(data.message || 'Error al iniciar sesión');
+                }
+                
+                if (!data.session_id) {
+                    throw new Error('No se recibió ID de sesión válido');
+                }
+                
+                console.log('[START] Sesión iniciada exitosamente, ID:', data.session_id);
+                
+                hideModal();
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                videoFeedEl.onerror = () => {
+                    // Evitar errores cuando se pausa o detiene (src se limpia deliberadamente)
+                    if (!isMonitoringActive || isPaused) {
+                        console.log('[VIDEO] ℹ️ Error ignorado (monitoreo inactivo o pausado)');
+                        return;
+                    }
+                    console.error('[VIDEO] Error al cargar el stream');
+                    // Intentar recargar antes de mostrar alerta
+                    setTimeout(() => {
+                        if (isMonitoringActive && !isPaused) {
+                            console.log('[VIDEO] 🔄 Reintentando cargar stream...');
+                            videoFeedEl.src = "{% url 'monitoring:video_feed' %}?t=" + Date.now();
+                        } else if (isMonitoringActive && isPaused) {
+                            console.log('[VIDEO] ℹ️ Sesión pausada, no reintentando');
+                        }
+                    }, 500);
+                };
+                
+                videoFeedEl.onloadstart = () => {
+                    console.log('[VIDEO] Iniciando carga del stream...');
+                };
+                
+                videoFeedEl.onloadeddata = () => {
+                    console.log('[VIDEO] Stream cargado correctamente');
+                };
+                
+                updateUI('RUNNING');
+                console.log('[START] Monitoreo iniciado correctamente');
+                
+                // 🔥 RECONECTAR EventSource para nueva sesión
+                if (window.alertManager) {
+                    console.log('[START] 🔌 Reconectando EventSource para nueva sesión...');
+                    window.alertManager.setupEventSource();
+                } else {
+                    console.log('[START] 🆕 Creando AlertNotificationManager para nueva sesión...');
+                    window.alertManager = new AlertNotificationManager();
+                }
+                
+            } catch (error) {
+                console.error('[START] Error durante el inicio:', error);
+                
+                let errorMessage = 'Error al iniciar el monitoreo:\n\n';
+                
+                if (error.message.includes('No hay acceso')) {
+                    errorMessage += '• No se pudo acceder a la cámara\n';
+                    errorMessage += '• Verifica los permisos en tu navegador\n';
+                } else if (error.message.includes('no está disponible') || error.message.includes('cámara está en uso')) {
+                    errorMessage += '• La cámara no está disponible\n';
+                    errorMessage += '• Asegúrate de que esté conectada\n';
+                    errorMessage += '• Verifica que no esté en uso por otro programa\n';
+                    errorMessage += '• Cierra otras pestañas que puedan usar la cámara\n';
+                } else if (error.message.includes('sesión activa')) {
+                    errorMessage += '• Ya hay una sesión activa\n';
+                    errorMessage += '• Recarga la página e intenta de nuevo\n';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                alert(errorMessage);
+                updateUI('STOPPED');
+                
+                try {
+                    await fetch("{% url 'monitoring:api_stop' %}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                } catch (stopError) {
+                    console.error('[START] Error al limpiar sesión fallida:', stopError);
+                }
+                
+            } finally {
+                sessionStarting = false;
+                startBtn.disabled = false;
+                startBtn.innerHTML = '<i class="fas fa-check w-4 h-4"></i> Confirmar e Iniciar';
+            }
+        });
+
+        pauseBtn.addEventListener('click', async () => {
+            if (!isMonitoringActive || pauseBtn.disabled) return;
+
+            if (currentAppState === 'BREAK_REMINDER') {
+                await snoozeBreak();
+                return;
+            }
+
+            const nextPauseState = !isPaused;
+            const apiUrl = nextPauseState ? "{% url 'monitoring:api_pause' %}" : "{% url 'monitoring:api_resume' %}";
+            const actionText = nextPauseState ? "Pausando" : "Reanudando";
+
+            // Deshabilitar botones y actualizar UI inmediatamente
+            pauseBtn.disabled = true;
+            stopBtn.disabled = true;
+            pauseBtn.innerHTML = `<i class="fas fa-spinner fa-spin w-4 h-4"></i> ${actionText}`;
+
+            try {
+                console.log(`[PAUSE] ${actionText} monitoreo...`);
+
+                // Cerrar todas las alertas visibles si se está pausando
+                if (nextPauseState && window.alertManager) {
+                    console.log('[PAUSE] ⏸ Cerrando alertas antes de pausar...');
+                    await window.alertManager.pauseAllAlerts();
+                    console.log('[PAUSE] ✓ Alertas cerradas');
+                }
+
+                // Llamar al backend PRIMERO para pausar/reanudar (esto libera la cámara en el backend)
+                console.log(`[PAUSE] Llamando al backend: ${apiUrl}`);
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                if (!response.ok || data.status === 'error') {
+                    throw new Error(data.message || `Error al ${actionText.toLowerCase()}`);
+                }
+                
+                console.log(`[PAUSE] ✓ Backend respondió correctamente`);
+
+                // DESPUÉS de que el backend confirme, actualizar el video feed del frontend
+                if (videoFeedEl) {
+                    if (nextPauseState) {
+                        // Pausar: detener el stream limpiando el src (backend ya liberó la cámara)
+                        console.log('[PAUSE] Limpiando videoFeedEl.src...');
+                        videoFeedEl.src = '';
+                        videoFeedEl.removeAttribute('src');  // Forzar limpieza completa
+                        console.log('[PAUSE] ✓ Video feed limpiado');
+                    } else {
+                        // Reanudar: actualizar el video feed
+                        console.log('[PAUSE] Reiniciando video feed...');
+                        videoFeedEl.src = `{% url 'monitoring:video_feed' %}?t=${Date.now()}`;
+                    }
+                }
+
+                // Actualizar estado y UI
+                isPaused = nextPauseState;
+                window.isPaused = nextPauseState;  // Sincronizar global
+                console.log('[PAUSE] Actualizando UI a estado:', nextPauseState ? 'PAUSED' : 'RUNNING');
+                console.log('[PAUSE] 🔄 Sincronizando isPaused:', { isPaused, nextPauseState });
+                
+                // Llamar directamente a setMonitoringState para actualizar el botón inmediatamente
+                setMonitoringState(true, nextPauseState);
+                
+                updateUI(nextPauseState ? 'PAUSED' : 'RUNNING');
+
+                // Si pausamos manualmente, mostrar el estado pausado
+                if (nextPauseState) {
+                    try {
+                        if (window.alertManager && typeof window.alertManager.showPausedState === 'function') {
+                            window.alertManager.showPausedState('manual');  // Pausa manual
+                            console.log('[PAUSE] ✓ Estado pausado mostrado');
+                        }
+                    } catch (e) { console.warn('[PAUSE] Error mostrando estado pausado:', e); }
+                }
+
+                // Si reanudamos (nextPauseState === false), pedir al AlertManager que limpie estados
+                if (!nextPauseState) {
+                    try {
+                        if (window.alertManager && typeof window.alertManager.handleResume === 'function') {
+                            await window.alertManager.handleResume();
+                        }
+                    } catch (e) { console.warn('[PAUSE] Error limpiando AlertManager tras reanudar manualmente:', e); }
+                }
+
+                if (data.blink_count !== undefined) {
+                    metricBlinksEl.textContent = data.blink_count;
+                }
+
+                console.log(`[PAUSE] ${actionText} completado exitosamente`);
+
+            } catch (error) {
+                console.error(`[PAUSE] Error:`, error);
+                alert(`Error: ${error.message}`);
+                // Restaurar estado anterior en caso de error
+                updateUI(isPaused ? 'PAUSED' : 'RUNNING');
+            } finally {
+                // Re-habilitar los botones
+                pauseBtn.disabled = false;
+                stopBtn.disabled = false;
+            }
+        });
+
+        stopBtn.addEventListener('click', async () => {
+            if (!isMonitoringActive || stopBtn.disabled) return;
+
+            console.log('[STOP] Iniciando detención inmediata...');
+
+            // Deshabilitar botones y actualizar UI inmediatamente
+            showModalBtn.disabled = true;
+            pauseBtn.disabled = true;
+            stopBtn.disabled = true;
+            stopBtn.innerHTML = '<i class="fas fa-spinner fa-spin w-4 h-4"></i> Deteniendo';
+            stopBtn.classList.add('opacity-80');
+
+            // Actualizar estado inmediatamente para evitar la transición por pausa
+            isMonitoringActive = false;
+            window.isMonitoringActive = false;  // 🔥 Sincronizar variable global
+            isPaused = false;
+            window.isPaused = false;  // Sincronizar global
+
+            // 🔥 CRÍTICO: Detener polling INMEDIATAMENTE para evitar requests durante el cierre
+            console.log('[STOP] Deteniendo polling de métricas...');
+            stopMetricsPoller();
+
+            try {
+                // 1. Cerrar todas las alertas visibles
+                if (window.alertManager) {
+                    await window.alertManager.pauseAllAlerts();
+                }
+
+                // 2. Cerrar modal de ejercicio si está abierto
+                if (isExerciseModalOpen() && window.exerciseModalManager) {
+                    console.log('[STOP] Cerrando modal de ejercicio...');
+                    window.exerciseModalManager.close(false);
+                }
+
+                // 3. Detener el monitoreo en el backend PRIMERO (esto libera la cámara)
+                console.log('[STOP] Deteniendo monitoreo en el servidor...');
+                const abortController = new AbortController();
+                const timeoutId = setTimeout(() => abortController.abort(), 5000);
+
+                try {
+                    const response = await fetch("{% url 'monitoring:api_stop' %}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'Content-Type': 'application/json'
+                        },
+                        signal: abortController.signal
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok || data.status === 'error') {
+                        throw new Error(data.message || 'Error al detener la sesión');
+                    }
+                    console.log('[STOP] ✓ Backend confirmó detención, cámara liberada');
+                } catch (e) {
+                    if (e.name === 'AbortError') {
+                        console.warn('[STOP] Timeout en la petición al servidor');
+                    } else {
+                        console.error('[STOP] Error en la petición:', e);
+                    }
+                    // Continuar con la limpieza local aunque haya error en el backend
+                } finally {
+                    clearTimeout(timeoutId);
+                }
+
+                // 4. DESPUÉS de que el backend libere la cámara, actualizar UI del frontend
+                console.log('[STOP] Limpiando UI del frontend...');
+                updateUI('STOPPED');
+                console.log('[STOP] UI actualizada a estado STOPPED');
+
+                // 5. Forzar limpieza del video feed
+                if (videoFeedEl) {
+                    videoFeedEl.src = '';
+                    videoFeedEl.removeAttribute('src');
+                    console.log('[STOP] ✓ Video feed limpiado completamente');
+                }
+
+                // 6. Limpiar recursos
+                if (window.alertManager) {
+                    window.alertManager.clear();
+                }
+                // stopMetricsPoller(); ya llamado al inicio
+
+                console.log('[STOP] Sesión detenida exitosamente');
+
+            } catch (error) {
+                console.error('[STOP] Error fatal:', error);
+                alert('Error al detener la sesión: ' + error.message);
+                
+                // Forzar estado detenido incluso si hay error
+                isMonitoringActive = false;
+                window.isMonitoringActive = false;  // 🔥 Sincronizar variable global
+                isPaused = false;
+                updateUI('STOPPED');
+            } finally {
+                // Restaurar estado de los botones
+                stopBtn.innerHTML = stopBtnBaseHtml;
+                stopBtn.classList.remove('opacity-80');
+                stopBtn.disabled = true;  // permanece deshabilitado hasta nuevo inicio
+                pauseBtn.disabled = true;
+                showModalBtn.disabled = false;
+            }
+        });
+
+        // --- Métricas Polling ---
+        function startMetricsPoller() {
+            if (metricsInterval) {
+                console.log('[METRICS] Poller ya está activo, omitiendo');
+                return;
+            }
+            consecutiveErrors = 0;
+            
+            // Debug: Estado inicial del polling
+            console.log('[METRICS] Iniciando polling de métricas...');
+            
+            metricsInterval = setInterval(async function() {
+                if (!isMonitoringActive) { 
+                    console.log('[METRICS] Monitoreo inactivo, deteniendo polling');
+                    stopMetricsPoller(); 
+                    return; 
+                }
+                
+                try {
+                    console.log('[METRICS] Solicitando métricas desde el servidor...');
+                    const response = await fetch("{% url 'monitoring:api_session_metrics' %}", {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': csrfToken
+                        },
+                        credentials: 'same-origin'
+                    });
+                    
+                    if (response.ok) {
+                        consecutiveErrors = 0;
+                        const data = await response.json();
+                        
+                        console.log('[METRICS] 📨 Datos crudos recibidos del servidor:', {
+                            status: data.status,
+                            is_paused: data.is_paused,
+                            alertCount: data.metrics?.alert_count,
+                            faces: data.metrics?.faces,
+                            alerts: data.alerts?.length || 0,
+                            responseKeys: Object.keys(data)
+                        });
+                        
+                        if (isMonitoringActive) {
+                            updateMetricsUI(data);
+                        }
+                    } else {
+                        consecutiveErrors++;
+                        console.error('[METRICS] Error en respuesta:', response.status, response.statusText);
+                        if (consecutiveErrors >= MAX_ERRORS) {
+                            throw new Error(`Polling falló ${MAX_ERRORS} veces. Último estado: ${response.status}`);
+                        }
+                    }
+                } catch (error) {
+                    console.error('[METRICS] Error fatal en polling:', error);
+                    // Intentar detener la sesión en el servidor antes de actualizar UI
+                    try {
+                        await fetch("{% url 'monitoring:api_stop' %}", {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': csrfToken,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                    } catch (_) {}
+                    
+                    alert('Se perdió la conexión con el servidor. Deteniendo monitoreo.');
+                    isMonitoringActive = false;
+                    window.isMonitoringActive = false;  // 🔥 Sincronizar variable global
+                    isPaused = false;
+                    stopMetricsPoller();
+                    updateUI('STOPPED');
+                }
+            }, 1000);
+        }
+
+        function stopMetricsPoller() {
+            if (metricsInterval) { 
+                clearInterval(metricsInterval); 
+                metricsInterval = null;
+                console.log('[METRICS] ✓ Poller detenido');
+            }
+        }
+        
+        // 🔥 Exponer como función global para que el modal de ejercicio pueda llamarla
+        window.stopMetricsPoller = stopMetricsPoller;
+
+        function updateMetricsUI(data) {
+            if (!data || !data.metrics) return;
+            
+            try {
+                // Sincronizar estado de pausa con el servidor (auto-pausa por ejercicio)
+                const serverPaused = !!data.is_paused;
+                console.log('[METRICS] 📊 Datos completos recibidos:', { 
+                    is_paused: data.is_paused, 
+                    serverPaused, 
+                    isPaused, 
+                    isMonitoringActive, 
+                    activeState: currentAppState,
+                    dataKeys: Object.keys(data)
+                });
+                console.log('[METRICS] Sincronizando estado de pausa:', { serverPaused, isPaused, isMonitoringActive, activeState: currentAppState });
+                
+                if (serverPaused && isMonitoringActive && !isPaused) {
+                    console.log('[METRICS] 🔄 Detectada pausa automática desde servidor, sincronizando...');
+                    isPaused = true; // ← IMPORTANTE: Actualizar variable local
+                    window.isPaused = true;  // Sincronizar global
+                    // Actualizar el botón PRIMERO con setMonitoringState
+                    setMonitoringState(true, true);
+                    updateUI('PAUSED');
+                    console.log('[METRICS] ✓ Pausa sincronizada, estado actual:', { isPaused, paused: isPaused });
+                } else if (!serverPaused && isMonitoringActive && isPaused) {
+                    console.log('[METRICS] 🔄 Detectado reanude automático desde servidor, sincronizando...');
+                    isPaused = false; // ← IMPORTANTE: Actualizar variable local
+                    window.isPaused = false;  // Sincronizar global
+                    // 🆕 Limpiar flag de descanso al reanudar
+                    if (window.isOnBreak) {
+                        console.log('[METRICS] ✅ Limpiando estado de descanso (isOnBreak)');
+                        window.isOnBreak = false;
+                    }
+                    // Actualizar el botón PRIMERO con setMonitoringState
+                    setMonitoringState(true, false);
+                    updateUI('RUNNING');
+                    // Intentar limpiar estados del AlertManager tras reanudar automáticamente
+                    try {
+                        if (window.alertManager && typeof window.alertManager.handleResume === 'function') {
+                            window.alertManager.handleResume().catch(e => console.warn('[METRICS] Error en handleResume():', e));
+                        }
+                    } catch (e) { console.warn('[METRICS] Error invocando handleResume tras reanudar:', e); }
+                    console.log('[METRICS] ✓ Reanude sincronizado, estado actual:', { isPaused, paused: isPaused });
+                }
+
+                const metrics = data.metrics;
+                // Contador de alertas: usar alert_count (backend) y fallback a total_alerts si existiera
+                let alertCount = 0;
+                if (metrics.alert_count !== undefined) {
+                    alertCount = Number(metrics.alert_count) || 0;
+                } else if (metrics.total_alerts !== undefined) {
+                    alertCount = Number(metrics.total_alerts) || 0;
+                }
+                const faceDetected = metrics.faces !== undefined && metrics.faces > 0;
+                // Fallback estricto: cuando no hay rostro, mostrar 'Fuera de rango'
+                const focusText = metrics.focus || (faceDetected ? 'Atento' : 'Fuera de rango');
+                const eyesDetected = (metrics.occluded === true) ? false : (metrics.eyes_detected || false);
+                const blinkCount = metrics.total_blinks !== undefined ? metrics.total_blinks : 
+                                 (metrics.blink_count !== undefined ? metrics.blink_count : 0);
+
+                try {
+                    // Debug detallado de métricas
+                    console.debug('[METRICS] Estado actual:', {
+                        alerts: alertCount,
+                        focus: focusText,
+                        blinks: blinkCount,
+                        face: faceDetected,
+                        eyes: eyesDetected,
+                        occluded: metrics.occluded,
+                        eyes_raw: metrics.eyes_detected,
+                        ear: metrics.ear,
+                        microsleep: metrics.microsleep_active,
+                        blink_rate: metrics.blink_rate,
+                        session_time: metrics.session_time,
+                        fps: metrics.fps,
+                        detection_rate: metrics.detection_rate,
+                        paused: serverPaused,
+                        paused_reason: metrics.paused_reason,
+                        paused_exercise: metrics.paused_exercise
+                    });
+
+                    // Sistema de histéresis para alertas específicas
+                    const now = Date.now();
+                    
+                    // 1. Usuario Ausente (2.0s sustain + 5.0s histéresis)
+                    if (!faceDetected) {
+                        if (!this._driverAbsentStart) {
+                            this._driverAbsentStart = now;
+                        } else if ((now - this._driverAbsentStart) >= 2000) {
+                            console.log('[ALERT-HIST] ⚠️ Usuario ausente confirmado');
+                        }
+                    } else {
+                        if (this._driverAbsentAlert) {
+                            if (!this._driverAbsentResolveStart) {
+                                this._driverAbsentResolveStart = now;
+                            } else if ((now - this._driverAbsentResolveStart) >= 5000) {
+                                console.log('[ALERT-HIST] ✓ Usuario ausente resuelto por histéresis');
+                                this._driverAbsentAlert = false;
+                                this._driverAbsentResolveStart = null;
+                            }
+                        }
+                        this._driverAbsentStart = null;
+                    }
+
+                    // 2. Múltiples Personas (1.5s sustain + 5.0s histéresis)
+                    if (metrics.faces > 1) {
+                        if (!this._multiplePeopleStart) {
+                            this._multiplePeopleStart = now;
+                        } else if ((now - this._multiplePeopleStart) >= 1500) {
+                            console.log('[ALERT-HIST] ⚠️ Múltiples personas confirmado');
+                        }
+                    } else {
+                        if (this._multiplePeopleAlert) {
+                            if (!this._multiplePeopleResolveStart) {
+                                this._multiplePeopleResolveStart = now;
+                            } else if ((now - this._multiplePeopleResolveStart) >= 5000) {
+                                console.log('[ALERT-HIST] ✓ Múltiples personas resuelto por histéresis');
+                                this._multiplePeopleAlert = false;
+                                this._multiplePeopleResolveStart = null;
+                            }
+                        }
+                        this._multiplePeopleStart = null;
+                    }
+
+                    // 3. Cámara Obstruida (2.5s sustain + 5.0s histéresis)
+                    if (metrics.occluded) {
+                        if (!this._cameraOccludedStart) {
+                            this._cameraOccludedStart = now;
+                        } else if ((now - this._cameraOccludedStart) >= 2500) {
+                            console.log('[ALERT-HIST] ⚠️ Cámara obstruida confirmado');
+                        }
+                    } else {
+                        if (this._cameraOccludedAlert) {
+                            if (!this._cameraOccludedResolveStart) {
+                                this._cameraOccludedResolveStart = now;
+                            } else if ((now - this._cameraOccludedResolveStart) >= 5000) {
+                                console.log('[ALERT-HIST] ✓ Cámara obstruida resuelto por histéresis');
+                                this._cameraOccludedAlert = false;
+                                this._cameraOccludedResolveStart = null;
+                            }
+                        }
+                        this._cameraOccludedStart = null;
+                    }
+
+                } catch (e) { 
+                    console.error('[METRICS] Error procesando métricas:', e);
+                }
+
+                if (metricAlertsEl) metricAlertsEl.textContent = alertCount;
+                if (metricFocusEl) metricFocusEl.textContent = focusText;
+                if (metricBlinksEl) metricBlinksEl.textContent = blinkCount;
+                
+                // 🔥 CAMBIO CRÍTICO: NO procesar alertas desde polling
+                // Las alertas se manejan exclusivamente por EventSource (/monitoring/api/alerts/stream/)
+                // El polling SOLO actualiza métricas visuales, no alertas
+                
+                // Sistema sin cola, SOLO controlar audio si hay modal abierto
+                if (isExerciseModalOpen()) {
+                    // Si el modal está abierto, pausar audio
+                    try {
+                        window.alertAudioManager?.clearAllRepeats?.();
+                        window.alertAudioManager?.stop?.();
+                    } catch (_) {}
+                }
+                
+                // 🆕 MANTENER: Procesar alertas resueltas por histéresis desde el backend
+                if (data.resolved_alerts && Array.isArray(data.resolved_alerts) && data.resolved_alerts.length > 0) {
+                    console.log('[METRICS] 📤 Procesando alertas resueltas:', data.resolved_alerts);
+                    if (window.alertManager) {
+                        (async () => {
+                            for (const resolvedAlert of data.resolved_alerts) {
+                                try {
+                                    // Buscar la alerta activa por tipo y cerrarla
+                                    const activeAlerts = Array.from(window.alertManager.activeAlerts.entries());
+                                    for (const [alertId, alertInfo] of activeAlerts) {
+                                        if (alertInfo.type === resolvedAlert.type) {
+                                            console.log(`[METRICS] ✅ Cerrando alerta ${resolvedAlert.type} resuelta por histéresis`);
+                                            await window.alertManager.closeAlert(alertId);
+                                            break;
+                                        }
+                                    }
+                                } catch (error) {
+                                    console.error('[METRICS] Error cerrando alerta resuelta:', error);
+                                }
+                            }
+                        })();
+                    }
+                }
+                
+                if (metricFaceEl) {
+                    metricFaceEl.textContent = `Rostro: ${faceDetected ? 'Detectado' : 'No detectado'}`;
+                    metricFaceEl.classList.toggle('bg-gray-700', !faceDetected);
+                    metricFaceEl.classList.toggle('bg-accent-green', faceDetected);
+
+                        // La histéresis se maneja ahora completamente en AlertManager
+                    const now = Date.now();
+                    // Solo actualizar el estado visual del indicador
+                    metricFaceEl.textContent = `Rostro: ${faceDetected ? 'Detectado' : 'No detectado'}`;
+                    metricFaceEl.classList.toggle('bg-gray-700', !faceDetected);
+                    metricFaceEl.classList.toggle('bg-accent-green', faceDetected);
+                }
+                
+                if (metricEyesEl) {
+                    metricEyesEl.textContent = `Ojos: ${eyesDetected ? 'Detectados' : 'No detectados'}`;
+                    metricEyesEl.classList.toggle('bg-gray-700', !eyesDetected);
+                    metricEyesEl.classList.toggle('bg-accent-green', eyesDetected);
+
+                    // Sistema de histéresis para cámara obstruida (2.5s sustain + 5s histéresis)
+                    const now = Date.now();
+                    const isOccluded = metrics.occluded || (!eyesDetected && faceDetected);
+                    
+                    if (isOccluded) {
+                        if (!window._cameraOccludedStart) {
+                            window._cameraOccludedStart = now;
+                            console.log('[HIST] Iniciando detección de cámara obstruida');
+                        } else if ((now - window._cameraOccludedStart) >= 2500 && !window._cameraOccludedAlert) {
+                            window._cameraOccludedAlert = true;
+                            console.log('[HIST] ⚠️ Cámara obstruida confirmada');
+                            // Aquí se dispararía la alerta
+                        }
+                    } else if (window._cameraOccludedAlert) {
+                        if (!window._cameraOccludedResolveStart) {
+                            window._cameraOccludedResolveStart = now;
+                            console.log('[HIST] Iniciando histéresis de resolución para cámara obstruida');
+                        } else if ((now - window._cameraOccludedResolveStart) >= 5000) {
+                            window._cameraOccludedAlert = false;
+                            window._cameraOccludedStart = null;
+                            window._cameraOccludedResolveStart = null;
+                            console.log('[HIST] ✓ Cámara obstruida resuelta por histéresis');
+                        }
+                    } else {
+                        window._cameraOccludedStart = null;
+                        window._cameraOccludedResolveStart = null;
+                    }
+                }
+
+                // Auto-resolución en frontend de alertas con histéresis
+                try {
+                    if (window.alertManager && window.alertManager.currentAlertId && window.alertManager.currentAlertType) {
+                        const t = String(window.alertManager.currentAlertType);
+                        const faces = (typeof data.faces === 'number') ? data.faces : (typeof data.faces_count === 'number' ? data.faces_count : (data.multiple_faces ? 2 : (faceDetected ? 1 : 0)));
+                        const multipleFaces = faces > 1;
+                        const occluded = metrics.occluded || (!eyesDetected && faceDetected);
+
+                        // Sistema de histéresis para múltiples personas (1.5s sustain + 5s histéresis)
+                        const now = Date.now();
+                        if (multipleFaces) {
+                            if (!window._multiplePeopleStart) {
+                                window._multiplePeopleStart = now;
+                                console.log('[HIST] Iniciando detección de múltiples personas');
+                            } else if ((now - window._multiplePeopleStart) >= 1500 && !window._multiplePeopleAlert) {
+                                window._multiplePeopleAlert = true;
+                                console.log('[HIST] ⚠️ Múltiples personas confirmado');
+                                // Aquí se dispararía la alerta
+                            }
+                        } else if (window._multiplePeopleAlert) {
+                            if (!window._multiplePeopleResolveStart) {
+                                window._multiplePeopleResolveStart = now;
+                                console.log('[HIST] Iniciando histéresis de resolución para múltiples personas');
+                            } else if ((now - window._multiplePeopleResolveStart) >= 5000) {
+                                window._multiplePeopleAlert = false;
+                                window._multiplePeopleStart = null;
+                                window._multiplePeopleResolveStart = null;
+                                console.log('[HIST] ✓ Múltiples personas resuelto por histéresis');
+                            }
+                        } else {
+                            window._multiplePeopleStart = null;
+                            window._multiplePeopleResolveStart = null;
+                        }
+
+                        // Verificar si la alerta debe ser resuelta por histéresis
+                        let shouldDismiss = false;
+                        if (t === 'driver_absent' && window._driverAbsentResolveStart && 
+                            (now - window._driverAbsentResolveStart) >= 5000) {
+                            shouldDismiss = true; // Usuario volvió y pasó el tiempo de histéresis
+                            console.log('[HIST] Resolviendo alerta de usuario ausente por histéresis');
+                        }
+                        if (t === 'camera_occluded' && window._cameraOccludedResolveStart && 
+                            (now - window._cameraOccludedResolveStart) >= 5000) {
+                            shouldDismiss = true; // Cámara despejada y pasó el tiempo de histéresis
+                            console.log('[HIST] Resolviendo alerta de cámara obstruida por histéresis');
+                        }
+                        if (t === 'multiple_people' && window._multiplePeopleResolveStart && 
+                            (now - window._multiplePeopleResolveStart) >= 5000) {
+                            shouldDismiss = true; // Solo una persona y pasó el tiempo de histéresis
+                            console.log('[HIST] Resolviendo alerta de múltiples personas por histéresis');
+                        }
+
+                        if (shouldDismiss) {
+                            // Suprimir reaparición de este tipo unos segundos para evitar flicker
+                            try { window.alertManager.suppressType(t, 5000); } catch(_) {}
+                            const currentId = String(window.alertManager.currentAlertId);
+                            const alertEl = Array.from(document.querySelectorAll('.alert-card')).find(el => el.dataset.alertId === currentId);
+                            try {
+                                window.alertAudioManager?.clearRepeat?.(currentId);
+                                window.alertAudioManager?.stop?.();
+                            } catch (_) {}
+                            if (alertEl) {
+                                window.alertManager.dismissAlert(alertEl, currentId);
+                            } else {
+                                // Fallback: limpiar estado aunque no encontremos el nodo (evitar quedar enganchados)
+                                window.alertManager.currentAlertId = null;
+                                window.alertManager.currentAlertType = null;
+                                window.alertManager.activeAlerts?.clear?.();
+                            }
+                        }
+                    }
+                } catch (e) { /* no-op */ }
+
+            } catch (e) {
+                console.error("[METRICS] Error en updateMetricsUI:", e);
+            }
+        }
+
+        function resetMetrics() {
+            try {
+                if (metricAlertsEl) metricAlertsEl.textContent = '0';
+                if (metricFocusEl) metricFocusEl.textContent = '--';
+                if (metricBlinksEl) metricBlinksEl.textContent = '0';
+                
+                if (metricFaceEl) {
+                    metricFaceEl.textContent = 'Rostro: --';
+                    metricFaceEl.classList.add('bg-gray-700');
+                    metricFaceEl.classList.remove('bg-accent-green');
+                }
+                
+                if (metricEyesEl) {
+                    metricEyesEl.textContent = 'Ojos: --';
+                    metricEyesEl.classList.add('bg-gray-700');
+                    metricEyesEl.classList.remove('bg-accent-green');
+                }
+            } catch (e) {
+                console.error("[METRICS] Error al resetear métricas:", e);
+            }
+        }
+
+
+            try {
+                if (!window.alertAudioManager) {
+                    console.log('[AUDIO] Inicializando nuevo AlertAudioManager...');
+                    // Usar configuración global del usuario
+                    const audioConfig = window.userConfig || {
+                        alert_volume: 0.7,
+                        notification_sound_enabled: true
+                    };
+                    window.alertAudioManager = new AlertAudioManager(audioConfig);
+                }
+            } catch (e) {
+                console.error('[AUDIO] Error inicializando AlertAudioManager:', e);
+            }
+
+            // AlertNotificationManager ya está inicializado en alert_notifications.js
+            // Solo aseguramos que esté disponible y configurado correctamente
+            try {
+                if (!window.alertManager) {
+                    console.log('[ALERT] Esperando a que AlertNotificationManager se inicialice desde alert_notifications.js...');
+                    // Esperar a que esté disponible
+                    const waitForAlertManager = setInterval(() => {
+                        if (window.alertManager) {
+                            clearInterval(waitForAlertManager);
+                            console.log('[ALERT] AlertNotificationManager disponible');
+                        }
+                    }, 100);
+                }
+            } catch (e) {
+                console.error('[ALERT] Error verificando AlertManager:', e);
+            }
+            
+            // Fallback a BD para recuperar la siguiente alerta si el array viene vacío
+            let _lastNextAlertFetch = 0;
+            let _lastFetchedAlertId = null; // Cachear ID de la última alerta recuperada por BD
+            async function maybeFetchNextAlert(allowClear = false) {
+                // No consultar siguiente alerta si el sistema no está inicializado o el modal está abierto
+                if (!window.alertManager || !window.exerciseModalManager) {
+                    return;
+                }
+                try {
+                    if (isExerciseModalOpen()) {
+                        try {
+                            window.alertAudioManager?.clearAllRepeats?.();
+                            window.alertAudioManager?.stop?.();
+                        } catch (_) {}
+                        return;
+                    }
+                } catch (_) { /* no-op */ }
+                const now = Date.now();
+                if (now - _lastNextAlertFetch < 1500) return; // throttling
+                _lastNextAlertFetch = now;
+                try {
+                    const res = await fetch('/monitoring/api/alerts/next/');
+                    if (!res.ok) return;
+                    const json = await res.json();
+                    if (json && json.status === 'success' && json.alert) {
+                        const fetchedId = String(json.alert.id ?? `type:${json.alert.type || 'unknown'}`);
+                        
+                        // TRIPLE VERIFICACIÓN para evitar doble aparición:
+                        // 1. Ya fue mostrada desde BD anteriormente
+                        if (_lastFetchedAlertId === fetchedId) {
+                            console.log('[ALERT-FALLBACK] Skip: alerta ya mostrada desde BD -', fetchedId);
+                            return;
+                        }
+                        
+                        // 2. Ya está visible actualmente (mostrada desde data.alerts o BD)
+                        if (alertManager.currentAlertId === fetchedId) {
+                            console.log('[ALERT-FALLBACK] Skip: alerta ya visible en pantalla -', fetchedId);
+                            _lastFetchedAlertId = fetchedId; // actualizar cache
+                            return;
+                        }
+                        
+                        // 2.5. Tipo suprimido temporalmente tras resolución
+                        try {
+                            const typeKey = String(json.alert.type || 'unknown');
+                            const supUntil = alertManager.suppressUntilByType?.get?.(typeKey) || 0;
+                            if (Date.now() < supUntil) {
+                                console.log('[ALERT-FALLBACK] Skip: tipo suprimido -', typeKey);
+                                return;
+                            }
+                        } catch(_) {}
+
+                        // 3. Verificar contra lastShownKey (type+message) para duplicados con distinto ID
+                        const typeKey = String(json.alert.type || 'unknown');
+                        const msgKey = String((json.alert.message || json.alert.description || '')).slice(0, 120);
+                        const dedupKey = `${typeKey}:${msgKey}`;
+                        if (alertManager.lastShownKey === dedupKey && (now - alertManager.lastShownAt) < 3000) {
+                            console.log('[ALERT-FALLBACK] Skip: mismo tipo+mensaje recientemente -', dedupKey);
+                            return;
+                        }
+                        
+                        _lastFetchedAlertId = fetchedId;
+                        // Usar processAlert (singular) para procesar una alerta
+                        alertManager.processAlert(json.alert);
+                    } else if (allowClear) {
+                        // Nada pendiente -> limpiar UI y audio si había algo
+                        _lastFetchedAlertId = null; // resetear cache
+                        alertManager.clear();
+                        try {
+                            window.alertAudioManager?.clearAllRepeats?.();
+                            window.alertAudioManager?.stop?.();
+                        } catch (_) {}
+                    }
+                } catch (_) { /* silent */ }
+            }
+
+            // Helper para obtener CSRF token
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+        // --- Listener para actualizar UI cuando se cierra el modal de ejercicio ---
+        window.addEventListener('exerciseModalClosed', function(event) {
+            console.log('[EXERCISE-EVENT] Modal cerrado, actualizando UI del botón Pausar/Reanudar');
+            // Forzar estado pausado y actualizar UI
+            isPaused = true;
+            window.isPaused = true;  // 🔥 Sincronizar global
+            isMonitoringActive = true;  // La sesión sigue activa
+            window.isMonitoringActive = true;  // 🔥 Sincronizar global
+            
+            // Actualizar UI para mostrar botón "Reanudar"
+            setMonitoringState(true, true);  // isActive=true, paused=true
+            updateUI('PAUSED');
+            
+            pauseBtn.disabled = false;
+            delete pauseBtn.dataset.action;
+            
+            console.log('[EXERCISE-EVENT] ✓ Estado sincronizado tras cerrar modal de ejercicio:', {
+                isPaused,
+                isMonitoringActive,
+                pollerActive: metricsInterval !== null
+            });
+        });
+
+        // --- Inicialización ---
+        updateUI('STOPPED');
+        console.log('[INIT] Sistema de monitoreo con Pomodoro inicializado');
+    });
+</script>
+{% endblock %}

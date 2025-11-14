@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reportes | VisionPulse{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Encabezado -->
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">Reportes de Salud Visual</h1>
+        <div class="flex gap-3">
+            <button class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 period-btn" data-period="week">Última semana</button>
+            <button class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 period-btn" data-period="month">Último mes</button>
+            <button class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 period-btn" data-period="quarter">Últimos 3 meses</button>
+            <button id="exportBtn" class="inline-flex items-center px-4 py-2 bg-primary-health text-white rounded-lg text-sm font-medium hover:bg-primary-health/90">
+                <i class="fas fa-download mr-2"></i>
+                Exportar CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- Grid de Reportes -->
+    <div id="reportsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Las tarjetas de reportes se renderizan dinámicamente -->
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function renderReports(reports) {
+    const grid = document.getElementById('reportsGrid');
+    grid.innerHTML = '';
+    reports.forEach(r => {
+        grid.innerHTML += `
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+            <div class="p-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 bg-primary-health/10 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-line text-primary-health text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">${r.title}</h3>
+                        <p class="text-sm text-gray-500">${r.period}</p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600">Tiempo de pantalla</span>
+                        <span class="font-medium text-gray-900">${r.screen_time}h</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600">Ejercicios completados</span>
+                        <span class="font-medium text-gray-900">${r.exercises_completed}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600">Pausas realizadas</span>
+                        <span class="font-medium text-gray-900">${r.pauses_pct}%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                <a href="#" class="text-primary-health hover:text-primary-health/80 text-sm font-medium">
+                    Ver detalles
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+        `;
+    });
+}
+
+function fetchReports(period) {
+    fetch(`/reports/list/data/?period=${period}`)
+        .then(res => res.json())
+        .then(json => {
+            if (json.status === 'success') {
+                renderReports(json.reports);
+            }
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('bg-primary-health', 'text-white'));
+            this.classList.add('bg-primary-health', 'text-white');
+            fetchReports(this.dataset.period);
+        });
+    });
+    // Cargar datos iniciales
+    fetchReports('month');
+
+    // Exportar CSV
+    document.getElementById('exportBtn').addEventListener('click', function() {
+        const activeBtn = document.querySelector('.period-btn.bg-primary-health');
+        const period = activeBtn ? activeBtn.dataset.period : 'month';
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/reports/list/data/';
+        form.style.display = 'none';
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = 'csrfmiddlewaretoken';
+        csrf.value = '{{ csrf_token }}';
+        form.appendChild(csrf);
+        const format = document.createElement('input');
+        format.type = 'hidden';
+        format.name = 'format';
+        format.value = 'csv';
+        form.appendChild(format);
+        const periodInput = document.createElement('input');
+        periodInput.type = 'hidden';
+        periodInput.name = 'period';
+        periodInput.value = period;
+        form.appendChild(periodInput);
+        document.body.appendChild(form);
+        form.submit();
+        setTimeout(() => form.remove(), 1000);
+    });
+});
+</script>
+{% endblock %}

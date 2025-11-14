@@ -1,0 +1,380 @@
+{% load static %}
+
+<!-- CSRF Token para peticiones POST -->
+{% csrf_token %}
+
+<!-- Fragment: Alert Notification -->
+<!-- Este fragmento se usa para mostrar notificaciones de alerta -->
+<!-- No es un modal, es un toast/banner que aparece en la esquina -->
+
+<style>
+    @keyframes slide-in-right {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slide-out-right {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+
+    @keyframes pulse-border {
+        0%, 100% {
+            border-color: currentColor;
+        }
+        50% {
+            border-color: transparent;
+        }
+    }
+
+    @keyframes fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .alert-card {
+        animation: slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                   fade-in 0.3s ease-out;
+        border-radius: 1rem;
+        box-shadow: 0 10px 32px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.08);
+        background: var(--alert-bg, #FEF3E8);
+        border-left: 5px solid var(--alert-border, #FB923C);
+        /* Ancho completamente adaptativo al contenido */
+        width: fit-content;
+        min-width: auto;
+        max-width: min(92vw, 520px);
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .alert-card.closing {
+        animation: slide-out-right 0.3s cubic-bezier(0.4, 0, 1, 1);
+    }
+
+    .alert-card.pulse {
+        animation: slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                   pulse-border 2s ease-in-out infinite;
+        border-left-color: #ef4444 !important;
+    }
+
+    /* Contenedor de alertas */
+    #alert-container {
+        position: fixed;
+        top: 5rem;
+        right: 1.5rem;
+        z-index: 150;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.875rem;
+        pointer-events: none;
+        max-width: none;
+        overflow: visible;
+    }
+
+    /* Cada alerta individual debe permitir interacción */
+    .alert-card {
+        pointer-events: auto;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .alert-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 36px rgba(0,0,0,0.15), 0 3px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Botón cerrar visible y clickeable */
+    .close-alert-btn {
+        position: absolute;
+        top: 0.625rem;
+        right: 0.625rem;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9999px;
+        background: rgba(0,0,0,0.06);
+        color: #6b7280;
+        z-index: 20;
+        border: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        padding: 0;
+        font-size: 0.875rem;
+        opacity: 0.7;
+    }
+
+    .close-alert-btn:hover { 
+        background: rgba(0,0,0,0.18); 
+        color: #111827;
+        transform: rotate(90deg) scale(1.2);
+        opacity: 1;
+    }
+
+    .close-alert-btn:active {
+        transform: rotate(90deg) scale(0.95);
+    }
+
+    .alert-card:hover .close-alert-btn {
+        opacity: 1;
+    }
+
+    /* Header con icono a la izquierda del título */
+    .alert-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.875rem;
+        padding: 0.875rem 2.5rem 0.625rem 0.875rem;
+        min-height: auto;
+    }
+
+    .alert-icon-wrapper {
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: var(--alert-icon-bg, #FFF8F3);
+        box-shadow: 0 3px 8px rgba(0,0,0,0.09);
+        font-size: 1.25rem;
+    }
+
+    .alert-content {
+        flex: 1;
+        min-width: 0;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .alert-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        line-height: 1.2;
+        color: var(--alert-title-color, #7C2D12);
+        margin: 0;
+        text-align: left;
+        letter-spacing: 0.3px;
+        display: block;
+    }
+
+    .alert-message {
+        font-size: 0.8125rem;
+        line-height: 1.4;
+        color: var(--alert-message-color, #92400E);
+        margin: 0.2rem 0 0 0;
+        text-align: left;
+        opacity: 0.95;
+        display: block;
+    }
+
+    /* Botón de ejercicio - FLEXIBLE */
+    .alert-action {
+        padding: 0.125rem 0.875rem 0.625rem 0.875rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        min-height: auto;
+    }
+
+    .exercise-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+        background: var(--exercise-bg, #A1A97E);
+        color: white;
+        font-weight: 700;
+        font-size: 0.8125rem;
+        padding: 0.625rem 1rem;
+        border-radius: 0.625rem;
+        border: 1px solid rgba(0,0,0,0.08);
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+        white-space: normal;
+        text-align: center;
+        flex: 0 1 auto;
+        max-width: 100%;
+    }
+
+    .exercise-btn:hover {
+        background: var(--exercise-hover-bg, #8A9268);
+        border-color: rgba(0,0,0,0.12);
+        box-shadow: 0 5px 14px rgba(0,0,0,0.18);
+        transform: translateY(-2px);
+    }
+
+    .exercise-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+
+    .exercise-btn:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(161, 169, 126, 0.3);
+    }
+
+    .exercise-icon {
+        font-size: 1rem;
+        display: inline-flex;
+        flex-shrink: 0;
+    }
+
+    .exercise-text {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.15rem;
+    }
+
+    .exercise-title {
+        font-weight: 700;
+        font-size: 0.8125rem;
+        display: block;
+    }
+
+    .exercise-duration {
+        font-size: 0.7rem;
+        opacity: 0.85;
+        font-weight: 500;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .alert-card {
+            min-width: auto;
+            max-width: calc(100vw - 1rem);
+        }
+    }
+
+    @media (max-width: 640px) {
+        #alert-container {
+            right: 0.75rem;
+            left: auto;
+            top: 4.5rem;
+        }
+        .alert-card {
+            min-width: auto;
+            max-width: calc(100vw - 1.5rem);
+        }
+        .alert-header {
+            padding: 0.75rem 2.25rem 0.5rem 0.75rem;
+        }
+        .alert-action {
+            padding: 0.125rem 0.75rem 0.5rem 0.75rem;
+        }
+        .exercise-btn {
+            font-size: 0.75rem;
+            padding: 0.5rem 0.75rem;
+        }
+    }
+
+    /* Dark mode */
+    .dark .alert-card {
+        background: var(--alert-bg-dark, #1F1815);
+        border-left-color: var(--alert-border-dark, #FB923C);
+    }
+
+    .dark .alert-title {
+        color: var(--alert-title-color-dark, #FEF3E8);
+    }
+
+    .dark .alert-message {
+        color: var(--alert-message-color-dark, #E8D4C0);
+    }
+
+    .dark .alert-icon-wrapper {
+        background: var(--alert-icon-bg-dark, #2A2117);
+        box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    }
+
+    .dark .exercise-btn {
+        background: var(--exercise-bg-dark, #4B5144);
+        border-color: rgba(255,255,255,0.1);
+    }
+
+    .dark .exercise-btn:hover {
+        background: var(--exercise-hover-bg-dark, #5A6253);
+        border-color: rgba(255,255,255,0.15);
+    }
+
+    .dark .exercise-btn:focus-visible {
+        box-shadow: 0 0 0 4px rgba(74, 81, 68, 0.4);
+    }
+
+    .dark .close-alert-btn {
+        background: rgba(255,255,255,0.08);
+        color: #D1D5DB;
+        opacity: 0.6;
+    }
+
+    .dark .close-alert-btn:hover {
+        background: rgba(255,255,255,0.18);
+        color: #F9FAFB;
+        opacity: 1;
+    }
+
+    .dark .alert-card:hover .close-alert-btn {
+        opacity: 1;
+    }
+</style>
+
+<!-- Contenedor donde se insertarán las alertas -->
+<div id="alert-container"></div>
+
+<!-- Template de alerta (se clona con JavaScript) -->
+<template id="alert-template">
+    <div class="alert-card relative" role="alert">
+        <!-- Cabecera: icono a la izquierda, título y mensaje a la derecha -->
+        <div class="alert-header">
+            <div class="alert-icon-wrapper">
+                <i class="alert-icon fas fa-exclamation-circle" style="font-size:1.125rem;color:var(--alert-icon-color,#FB923C);"></i>
+            </div>
+            <div class="alert-content">
+                <h4 class="alert-title"></h4>
+                <p class="alert-message"></p>
+            </div>
+        </div>
+        
+        <!-- Acción (botón de ejercicio) -->
+        <div class="alert-action">
+            <button class="exercise-btn" style="display:none;">
+                <i class="exercise-icon fas fa-dumbbell"></i>
+                <span class="exercise-text">
+                    <span class="exercise-title"></span>
+                    <span class="exercise-duration"></span>
+                </span>
+            </button>
+        </div>
+        
+        <!-- Botón de cerrar (X) -->
+        <button class="close-alert-btn" type="button" title="Cerrar alerta" aria-label="Cerrar alerta">
+            <i class="fas fa-times" style="font-size:0.875rem;"></i>
+        </button>
+    </div>
+</template>
+
+<!-- Scripts -->
+<script src="{% static 'js/alert_notifications.js' %}"></script>
+

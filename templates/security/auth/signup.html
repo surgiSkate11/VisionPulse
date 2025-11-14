@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Pulse - Únete a la Revolución de la Salud Visual</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            --dark-bg: #0A0A0B;
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A0A3;
+            --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .cosmic-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background: radial-gradient(ellipse at center, #1e2761 0%, #0A0A0B 70%);
+        }
+
+        .main-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .content-wrapper {
+            max-width: 1200px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .hero-section {
+            padding: 20px 0;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 0%, #667eea 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .form-container {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 40px 30px;
+            backdrop-filter: blur(20px);
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff 0%, #667eea 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            font-size: 1rem;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px 24px;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+
+        .field-error-premium {
+            color: #ef4444;
+            font-size: 0.9rem;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-secondary);
+        }
+
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        @media (max-width: 1024px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+                max-width: 500px;
+                gap: 40px;
+            }
+
+            .hero-section {
+                text-align: center;
+                order: 2;
+            }
+
+            .form-container {
+                order: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cosmic-background"></div>
+
+    {% if cuenta_creada %}
+        <div id="signup-success-premium" style="display:flex;flex-direction:column;align-items:center;justify-content:center;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;background:rgba(10,10,11,0.82);backdrop-filter:blur(6px);">
+            <div style="background:rgba(30,39,97,0.98);border:2px solid #764ba2;border-radius:20px;max-width:400px;width:90vw;padding:30px;text-align:center;">
+                <div style="font-size:2.4em;color:#4ade80;margin-bottom:10px;"><i class="fas fa-check-circle"></i></div>
+                <div style="font-size:1.4em;font-weight:800;background:linear-gradient(135deg,#fff,#667eea);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">¡Cuenta creada con éxito!</div>
+                <div style="color:#A0A0A3;font-size:1rem;margin:15px 0;">Serás redirigido al inicio en unos segundos...</div>
+            </div>
+        </div>
+        <script>
+            setTimeout(() => {
+                window.location.href = "{% url 'security:home' %}";
+            }, 2000);
+        </script>
+    {% endif %}
+
+    <div class="main-container">
+        <div class="content-wrapper">
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <h1 class="hero-title">Cuida tu salud visual mientras trabajas</h1>
+                <p class="hero-subtitle">
+                    Únete a VisionPulse y protege tus ojos del cansancio digital. Monitoreo inteligente, 
+                    ejercicios oculares personalizados y alertas preventivas para mantener tu bienestar visual.
+                </p>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number">80%</span>
+                        <span class="stat-label">Reducción de fatiga visual</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">50K+</span>
+                        <span class="stat-label">Usuarios activos</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">20+</span>
+                        <span class="stat-label">Ejercicios oculares</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Container -->
+            <div class="form-container">
+                <div class="form-header">
+                    <h2 class="form-title">Comienza tu bienestar visual</h2>
+                    <p class="form-subtitle">Crea tu cuenta en VisionPulse</p>
+                </div>
+
+                <div class="form-step active" id="step1">
+
+                    <form id="signupForm" method="post">
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                            {% for error in form.non_field_errors %}
+                                <div class="field-error-premium" style="margin-bottom: 18px;">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <!-- Campos esenciales -->
+                        <div class="input-group">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label">Nombres *</label>
+                            {{ form.first_name }}
+                            {% for error in form.first_name.errors %}
+                                <div class="field-error-premium"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="input-group">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label">Apellidos *</label>
+                            {{ form.last_name }}
+                            {% for error in form.last_name.errors %}
+                                <div class="field-error-premium"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="input-group">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">Correo *</label>
+                            {{ form.email }}
+                            {% for error in form.email.errors %}
+                                <div class="field-error-premium"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="input-group">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">Nombre de usuario *</label>
+                            {{ form.username }}
+                            {% for error in form.username.errors %}
+                                <div class="field-error-premium"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="input-group">
+                            <label for="{{ form.password.id_for_label }}" class="form-label">Contraseña *</label>
+                            {{ form.password }}
+                            {% for error in form.password.errors %}
+                                <div class="field-error-premium"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            Crear Cuenta 
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+
+                        <div class="checkbox-group" style="justify-content: center; margin-top: 18px; margin-bottom: 0;">
+                            <div style="background: rgba(102,126,234,0.08); border: 1.5px solid #667eea33; border-radius: 12px; padding: 14px 22px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 8px 0 rgba(102,126,234,0.08); max-width: 480px; margin: 0 auto;">
+                                <span style="color: #667eea; font-size: 1.5em; display: flex; align-items: center;"><i class="fas fa-shield-alt"></i></span>
+                                <span style="font-size: 1.04rem; color: #A0A0A3; font-weight: 500;">
+                                    Al crear una cuenta, aceptas los <a href="{% url 'security:terms' %}" target="_blank" style="color: #667eea; font-weight: 600; text-decoration: underline dotted;">Términos y Condiciones</a> y la <a href="{% url 'security:privacy' %}" target="_blank" style="color: #667eea; font-weight: 600; text-decoration: underline dotted;">Política de Privacidad</a>.
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="login-link" style="margin-top: 25px;">
+                        ¿Tienes cuenta? <a href="{% url 'security:signin' %}">Iniciar sesión</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

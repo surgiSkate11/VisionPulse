@@ -1,0 +1,119 @@
+# (tensorflow~=2.16.0 below)
+# Django y extensiones principales
+Django==5.2.1
+djangorestframework==3.15.1
+django-tailwind==4.2.0
+django-browser-reload==1.18.0
+django-cors-headers==4.7.0
+django-simple-history==3.5.0
+django-environ==0.11.2
+
+# Base de datos y ORM
+psycopg2-binary==2.9.9  # Versión binaria precompilada
+
+# Procesamiento de imágenes y multimedia
+# (versiones gestionadas en la sección corregida más abajo)
+mediapipe==0.10.11
+# dlib==19.24.2
+imutils==0.5.4  # Utilidades de procesamiento de imágenes
+
+# Autenticación y seguridad
+channels==4.0.0
+channels-redis==4.1.0  # Para Channels con Redis
+social-auth-app-django==5.4.1
+social-auth-core==4.5.0
+python3-openid==3.2.0
+oauthlib==3.2.2
+requests-oauthlib==2.0.0
+PyJWT==2.8.0
+defusedxml==0.7.1
+
+# Generación de reportes y PDFs
+pytz # Zona horaria
+weasyprint==62.3
+reportlab==4.2.0
+requests==2.32.3
+python-docx==1.0.1  # Para generar documentos Word
+XlsxWriter==3.1.9  # Para generar Excel
+
+# Texto a voz (TTS)
+# gTTS ya no se usa para generar audios automáticamente.
+# gTTS==2.5.3
+
+# Frontend y herramientas de desarrollo
+whitenoise==6.6.0     # Para servir archivos estáticos
+python-dotenv==1.0.0  # Para manejar variables de entorno
+django-debug-toolbar==4.2.0  # Para debugging
+ipython==8.12.0  # Shell mejorada
+black==23.10.0  # Formateador de código
+flake8==6.1.0  # Linter
+
+# Testing y desarrollo
+pytest==7.4.3
+pytest-django==4.7.0
+coverage==7.3.2
+
+# Websockets y tiempo real
+websockets==12.0
+django-eventstream==4.5.1
+
+# === PILA DE IA Y ML ===
+# Sistema de visión por computadora usando MediaPipe + OpenCV
+mediapipe==0.10.11
+opencv-python==4.8.1.78
+imutils==0.5.4
+
+# Dependencias científicas
+numpy~=1.26.0
+pillow~=10.1.0
+scipy
+pandas
+matplotlib
+
+# === Django y extensiones principales ===
+Django==5.2.1
+djangorestframework==3.15.1
+django-tailwind==4.2.0
+django-browser-reload==1.18.0
+django-cors-headers==4.7.0
+django-simple-history==3.5.0
+django-environ==0.11.2
+
+# === Base de datos y ORM ===
+psycopg2-binary==2.9.9
+
+# === Autenticación y seguridad ===
+channels==4.0.0
+channels-redis==4.1.0
+social-auth-app-django==5.4.1
+social-auth-core==4.5.0
+python3-openid==3.2.0
+oauthlib==3.2.2
+requests-oauthlib==2.0.0
+PyJWT==2.8.0
+defusedxml==0.7.1
+
+# === Generación de reportes y PDFs ===
+pytz
+weasyprint==62.3
+reportlab==4.2.0
+requests==2.32.3
+python-docx==1.0.1
+XlsxWriter==3.1.9
+
+# === Frontend y herramientas de desarrollo ===
+whitenoise==6.6.0
+python-dotenv==1.0.0
+django-debug-toolbar==4.2.0
+ipython==8.12.0
+black==23.10.0
+flake8==6.1.0
+
+# === Testing y desarrollo ===
+pytest==7.4.3
+pytest-django==4.7.0
+coverage==7.3.2
+
+# === Websockets y tiempo real ===
+websockets==12.0
+django-eventstream==4.5.1

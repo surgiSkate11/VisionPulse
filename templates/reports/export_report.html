@@ -1,0 +1,332 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reporte VisionPulse</title>
+  <style>
+    @page { 
+      size: A4; 
+      margin: 20mm 15mm 25mm 15mm;
+      @bottom-center {
+        content: "Pág. " counter(page) " · " "{{ generated_at }}" " · VisionPulse";
+        font-size: 7px;
+        color: #888;
+      }
+    }
+    
+    body { 
+      font-family: 'Segoe UI', Arial, sans-serif; 
+      color: #333; 
+      line-height: 1.4;
+      font-size: 9px;
+    }
+    
+    /* Header minimalista */
+    .header {
+      border-bottom: 2px solid #999;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .header-top {
+      display: table;
+      width: 100%;
+    }
+    
+    .logo-section {
+      display: table-cell;
+      vertical-align: middle;
+      width: 60%;
+    }
+    
+    .logo {
+      width: 28px;
+      height: 28px;
+      float: left;
+      margin-right: 8px;
+    }
+    
+    .brand {
+      font-size: 18px;
+      font-weight: 600;
+      color: #444;
+      margin: 0;
+      line-height: 28px;
+    }
+    
+    .period-badge {
+      display: table-cell;
+      vertical-align: middle;
+      text-align: right;
+      width: 40%;
+      font-size: 8px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+    }
+    
+    .header-info {
+      margin-top: 8px;
+      padding: 6px;
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      font-size: 8px;
+    }
+    
+    .header-info span {
+      margin-right: 12px;
+      color: #666;
+    }
+    
+    .header-info strong {
+      color: #333;
+    }
+    
+    /* Secciones */
+    .section { 
+      margin-top: 8px;
+      page-break-inside: avoid;
+    }
+    
+    .section.first-section {
+      margin-top: 0;
+    }
+    
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #555;
+      margin: 0 0 8px 0;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #ccc;
+    }
+    
+    /* Gráficas minimalistas */
+    .charts {
+      margin: 8px 0;
+    }
+    
+    .chart-item {
+      margin-bottom: 12px;
+      page-break-inside: avoid;
+      text-align: center;
+    }
+    
+    .chart-title {
+      font-size: 8px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    
+    .chart-img {
+      max-width: 90%;
+      height: auto;
+      display: inline-block;
+      border: 1px solid #e5e5e5;
+    }
+    
+    /* Tablas minimalistas */
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-top: 8px;
+    }
+    
+    th, td { 
+      font-size: 8px; 
+      padding: 5px 6px; 
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    
+    th { 
+      background: #f0f0f0; 
+      font-weight: 600;
+      color: #555;
+      text-transform: uppercase;
+      font-size: 7px;
+    }
+    
+    tbody tr:nth-child(even) {
+      background: #fafafa;
+    }
+    
+    /* Badges simples */
+    .badge { 
+      display: inline-block; 
+      padding: 2px 6px; 
+      font-size: 7px; 
+      font-weight: 600;
+      background: #888;
+      color: white;
+      border-radius: 2px;
+    }
+    
+    .badge-ok { background: #999; }
+    .badge-warn { background: #777; }
+    
+    /* Utilidades */
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    
+    .empty {
+      text-align: center;
+      padding: 20px;
+      color: #999;
+      font-style: italic;
+      font-size: 8px;
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <div class="logo-section">
+        {% if logo_base64 %}
+          <img src="{{ logo_base64 }}" alt="VisionPulse" class="logo" />
+        {% endif %}
+        <h1 class="brand">VisionPulse</h1>
+      </div>
+      <div class="period-badge">Reporte {{ period_label_es }}</div>
+    </div>
+    <div style="clear: both;"></div>
+    <div class="header-info">
+      <span>Período: <strong>{{ period_label_es|capfirst }}</strong></span>
+      <span>Desde: <strong>{{ start_date }}</strong></span>
+      <span>Hasta: <strong>{{ end_date }}</strong></span>
+    </div>
+  </div>
+
+  <!-- Gráficas -->
+  {% if include_charts and charts %}
+  <div class="section first-section">
+    <h2 class="section-title">Gráficas Estadísticas</h2>
+    <div class="charts">
+      <div class="chart-item">
+        <div class="chart-title">Evolución de Fatiga</div>
+        <img src="{{ charts.fatigue_img }}" alt="Fatiga" class="chart-img" />
+      </div>
+      <div class="chart-item">
+        <div class="chart-title">Tiempo de Pantalla Diario</div>
+        <img src="{{ charts.screen_img }}" alt="Pantalla" class="chart-img" />
+      </div>
+      <div class="chart-item">
+        <div class="chart-title">Distribución de Alertas</div>
+        <img src="{{ charts.alerts_img }}" alt="Alertas" class="chart-img" />
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Sesiones -->
+  {% if include_sessions %}
+  <div class="section {% if not include_charts %}first-section{% endif %}">
+    <h2 class="section-title">Sesiones de Monitoreo</h2>
+    {% if sessions %}
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha/Hora</th>
+          <th>Duración</th>
+          <th class="text-center">Parpadeos/min</th>
+          <th class="text-center">Foco</th>
+          <th class="text-center">Alertas</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sessions %}
+        <tr>
+          <td>{{ s.date }}</td>
+          <td>{{ s.duration }}</td>
+          <td class="text-center">{{ s.blinks }}</td>
+          <td class="text-center">{{ s.focus }}</td>
+          <td class="text-center">
+            <span class="badge">{{ s.alerts }}</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">No hay sesiones en este período</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Alertas -->
+  {% if include_alerts %}
+  <div class="section {% if not include_charts and not include_sessions %}first-section{% endif %}">
+    <h2 class="section-title">Alertas Generadas</h2>
+    {% if alerts %}
+    <table>
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Fecha/Hora</th>
+          <th>Descripción</th>
+          <th class="text-center">Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in alerts %}
+        <tr>
+          <td><span class="badge">{{ a.type }}</span></td>
+          <td>{{ a.date }}</td>
+          <td>{{ a.description|default:"N/A" }}</td>
+          <td class="text-center">
+            <span class="badge {% if a.status == 'Resuelto' %}badge-ok{% else %}badge-warn{% endif %}">
+              {{ a.status }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">No hay alertas en este período</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Ejercicios -->
+  {% if include_exercises %}
+  <div class="section {% if not include_charts and not include_sessions and not include_alerts %}first-section{% endif %}">
+    <h2 class="section-title">Ejercicios Realizados</h2>
+    {% if exercises %}
+    <table>
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Fecha</th>
+          <th class="text-center">Estado</th>
+          <th class="text-right">Duración (min)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in exercises %}
+        <tr>
+          <td>{{ e.title }}</td>
+          <td>{{ e.date }}</td>
+          <td class="text-center">
+            <span class="badge {% if e.completed %}badge-ok{% else %}badge-warn{% endif %}">
+              {% if e.completed %}Completado{% else %}Incompleto{% endif %}
+            </span>
+          </td>
+          <td class="text-right">{{ e.duration_min|default:0 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">No hay ejercicios en este período</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</body>
+</html>

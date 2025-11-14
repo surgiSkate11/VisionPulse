@@ -1,0 +1,660 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Panel de Control - VisionPulse{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Animaciones suaves */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+    }
+    
+    .animate-fade-in-up {
+        animation: fadeInUp 0.6s ease-out forwards;
+    }
+    
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+    .stagger-4 { animation-delay: 0.4s; }
+    
+    /* Efectos de hover mejorados */
+    .metric-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-8px);
+    }
+    
+    .metric-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 1rem;
+        padding: 2px;
+        background: linear-gradient(135deg, currentColor, transparent);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    
+    .metric-card:hover::before {
+        opacity: 0.5;
+    }
+    
+    /* Glow effect */
+    .glow-effect {
+        position: relative;
+    }
+    
+    .glow-effect::after {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        background: inherit;
+        border-radius: inherit;
+        filter: blur(20px);
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: -1;
+    }
+    
+    .glow-effect:hover::after {
+        opacity: 0.3;
+    }
+    
+    /* Mejoras para tabla */
+    .table-row {
+        transition: all 0.2s ease;
+    }
+    
+    .table-row:hover {
+        transform: scale(1.01);
+    }
+    
+    /* Gradiente animado para header */
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    .animated-gradient {
+        background-size: 200% 200%;
+        animation: gradientShift 8s ease infinite;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header Premium con gradiente animado -->
+    <div class="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#F0D4C3] via-[#E89552] to-[#D4523F] dark:from-[#3D3028] dark:via-[#E89552] dark:to-[#D4523F] p-8 lg:p-10 shadow-2xl animated-gradient">
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute transform rotate-45 -right-8 -top-8 w-48 h-48 bg-[#FBF7F0] dark:bg-[#2C2C2C] rounded-full blur-3xl"></div>
+            <div class="absolute transform -rotate-12 -left-8 -bottom-8 w-40 h-40 bg-[#F0D4C3] dark:bg-[#3D3028] rounded-full blur-2xl"></div>
+            <div class="absolute transform rotate-90 right-1/3 top-1/3 w-32 h-32 bg-[#E89552] dark:bg-[#D4523F] rounded-full blur-3xl"></div>
+        </div>
+        <div class="absolute inset-0 opacity-5" style="background-image: radial-gradient(circle, #FBF7F0 1px, transparent 1px); background-size: 20px 20px;"></div>
+        
+        <div class="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+            <div class="flex items-center gap-5">
+                <div class="w-20 h-20 rounded-2xl bg-white/25 backdrop-blur-xl flex items-center justify-center shadow-2xl border-2 border-white/40 glow-effect">
+                    <i class="fas fa-chart-line text-white text-3xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-4xl lg:text-5xl font-black text-white mb-2 drop-shadow-lg tracking-tight">Panel de Control</h1>
+                    <p class="text-white/95 text-base lg:text-lg font-semibold drop-shadow flex items-center gap-2">
+                        <i class="fas fa-wave-square text-sm"></i>
+                        Métricas y estadísticas en tiempo real
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Date Filter Premium mejorado -->
+            <div class="flex items-center gap-3 bg-white/15 backdrop-blur-xl rounded-2xl p-4 border border-white/30 shadow-2xl glow-effect">
+                <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                    <i class="fas fa-calendar-alt text-white text-lg"></i>
+                </div>
+                <select id="dateFilter" class="bg-white/20 backdrop-blur-sm border-2 border-white/40 rounded-xl px-4 py-2.5 text-white font-bold focus:ring-4 focus:ring-white/50 focus:border-white/60 transition-all cursor-pointer hover:bg-white/30">
+                    <option value="7" {% if date_filter == '7' %}selected{% endif %} class="text-[#2C2C2C] bg-[#FBF7F0] dark:bg-[#2C2C2C] dark:text-[#E8E8E8]">📅 Últimos 7 días</option>
+                    <option value="30" {% if date_filter == '30' %}selected{% endif %} class="text-[#2C2C2C] bg-[#FBF7F0] dark:bg-[#2C2C2C] dark:text-[#E8E8E8]">📆 Últimos 30 días</option>
+                    <option value="90" {% if date_filter == '90' %}selected{% endif %} class="text-[#2C2C2C] bg-[#FBF7F0] dark:bg-[#2C2C2C] dark:text-[#E8E8E8]">🗓️ Últimos 90 días</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metrics Cards Premium mejoradas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Active Users Card -->
+        <div class="metric-card animate-fade-in-up stagger-1 group relative bg-gradient-to-br from-[#8FA490]/20 via-[#FBF7F0] to-[#F0D4C3] dark:from-[#8FA490]/10 dark:via-[#2C2C2C] dark:to-[#3D3028] rounded-2xl border-2 border-[#8FA490]/50 dark:border-[#8FA490]/40 p-6 shadow-xl hover:shadow-2xl overflow-hidden" style="color: #8FA490;">
+            <!-- Blob animado -->
+            <div class="absolute -right-10 -top-10 w-32 h-32 bg-[#8FA490]/20 dark:bg-[#8FA490]/10 rounded-full blur-3xl group-hover:scale-150 transition-all duration-700"></div>
+            <div class="absolute -left-6 -bottom-6 w-24 h-24 bg-[#8FA490]/15 dark:bg-[#8FA490]/10 rounded-full blur-2xl group-hover:scale-125 transition-all duration-700"></div>
+            
+            <div class="relative">
+                <div class="flex items-center justify-between mb-5">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#8FA490] to-[#8FA490]/80 dark:from-[#8FA490] dark:to-[#8FA490]/70 flex items-center justify-center shadow-xl group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 glow-effect">
+                        <i class="fas fa-users text-white text-2xl"></i>
+                    </div>
+                    <span class="text-xs font-black text-[#8FA490] dark:text-[#8FA490] bg-[#8FA490]/15 dark:bg-[#8FA490]/20 px-4 py-2 rounded-full shadow-sm border border-[#8FA490]/30">ACTIVOS</span>
+                </div>
+                <h3 class="text-5xl font-black text-[#2C2C2C] dark:text-[#E8E8E8] mb-2 tracking-tight">{{ active_users }}</h3>
+                <p class="text-sm font-bold text-[#5C5C5C] dark:text-[#B8B8B8]">Usuarios activos</p>
+                <div class="mt-4 h-1 w-full bg-[#8FA490]/20 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-[#8FA490] to-[#8FA490]/60 rounded-full" style="width: 85%; animation: pulse 2s ease-in-out infinite;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Sessions Card -->
+        <div class="metric-card animate-fade-in-up stagger-2 group relative bg-gradient-to-br from-[#E89552]/20 via-[#FBF7F0] to-[#F0D4C3] dark:from-[#E89552]/10 dark:via-[#2C2C2C] dark:to-[#3D3028] rounded-2xl border-2 border-[#E89552]/50 dark:border-[#E89552]/40 p-6 shadow-xl hover:shadow-2xl overflow-hidden" style="color: #E89552;">
+            <div class="absolute -right-10 -top-10 w-32 h-32 bg-[#E89552]/20 dark:bg-[#E89552]/10 rounded-full blur-3xl group-hover:scale-150 transition-all duration-700"></div>
+            <div class="absolute -left-6 -bottom-6 w-24 h-24 bg-[#E89552]/15 dark:bg-[#E89552]/10 rounded-full blur-2xl group-hover:scale-125 transition-all duration-700"></div>
+            
+            <div class="relative">
+                <div class="flex items-center justify-between mb-5">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#E89552] to-[#E89552]/80 dark:from-[#E89552] dark:to-[#E89552]/70 flex items-center justify-center shadow-xl group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 glow-effect">
+                        <i class="fas fa-desktop text-white text-2xl"></i>
+                    </div>
+                    <span class="text-xs font-black text-[#E89552] dark:text-[#E89552] bg-[#E89552]/15 dark:bg-[#E89552]/20 px-4 py-2 rounded-full shadow-sm border border-[#E89552]/30">SESIONES</span>
+                </div>
+                <h3 class="text-5xl font-black text-[#2C2C2C] dark:text-[#E8E8E8] mb-2 tracking-tight">{{ total_sessions }}</h3>
+                <p class="text-sm font-bold text-[#5C5C5C] dark:text-[#B8B8B8]">Sesiones totales</p>
+                <div class="mt-4 h-1 w-full bg-[#E89552]/20 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-[#E89552] to-[#E89552]/60 rounded-full" style="width: 92%; animation: pulse 2s ease-in-out infinite;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Average Fatigue Card -->
+        <div class="metric-card animate-fade-in-up stagger-3 group relative bg-gradient-to-br from-[#D4523F]/20 via-[#FBF7F0] to-[#F0D4C3] dark:from-[#D4523F]/10 dark:via-[#2C2C2C] dark:to-[#3D3028] rounded-2xl border-2 border-[#D4523F]/50 dark:border-[#D4523F]/40 p-6 shadow-xl hover:shadow-2xl overflow-hidden" style="color: #D4523F;">
+            <div class="absolute -right-10 -top-10 w-32 h-32 bg-[#D4523F]/20 dark:bg-[#D4523F]/10 rounded-full blur-3xl group-hover:scale-150 transition-all duration-700"></div>
+            <div class="absolute -left-6 -bottom-6 w-24 h-24 bg-[#D4523F]/15 dark:bg-[#D4523F]/10 rounded-full blur-2xl group-hover:scale-125 transition-all duration-700"></div>
+            
+            <div class="relative">
+                <div class="flex items-center justify-between mb-5">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#D4523F] to-[#D4523F]/80 dark:from-[#D4523F] dark:to-[#D4523F]/70 flex items-center justify-center shadow-xl group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 glow-effect">
+                        <i class="fas fa-eye-slash text-white text-2xl"></i>
+                    </div>
+                    <span class="text-xs font-black text-[#D4523F] dark:text-[#D4523F] bg-[#D4523F]/15 dark:bg-[#D4523F]/20 px-4 py-2 rounded-full shadow-sm border border-[#D4523F]/30">FATIGA</span>
+                </div>
+                <h3 class="text-5xl font-black text-[#2C2C2C] dark:text-[#E8E8E8] mb-2 tracking-tight">{{ avg_fatigue }}</h3>
+                <p class="text-sm font-bold text-[#5C5C5C] dark:text-[#B8B8B8]">Episodios de fatiga</p>
+                <div class="mt-4 h-1 w-full bg-[#F0D4C3]/20 rounded-full overflow-hidden" id="smallFatigueBarContainer" data-fatigue="{{ avg_fatigue }}">
+                    <div id="smallFatigueBar" class="h-full rounded-full" style="width:0%; background: linear-gradient(90deg,#D4523F,#C13A2E); animation: pulse 2s ease-in-out infinite;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compliance Card -->
+        <div class="metric-card animate-fade-in-up stagger-4 group relative bg-gradient-to-br from-[#F0D4C3]/30 via-[#FBF7F0] to-[#8FA490]/20 dark:from-[#3D3028]/30 dark:via-[#2C2C2C] dark:to-[#8FA490]/10 rounded-2xl border-2 border-[#F0D4C3]/60 dark:border-[#8FA490]/40 p-6 shadow-xl hover:shadow-2xl overflow-hidden" style="color: #8FA490;">
+            <div class="absolute -right-10 -top-10 w-32 h-32 bg-[#8FA490]/20 dark:bg-[#8FA490]/10 rounded-full blur-3xl group-hover:scale-150 transition-all duration-700"></div>
+            <div class="absolute -left-6 -bottom-6 w-24 h-24 bg-[#8FA490]/15 dark:bg-[#8FA490]/10 rounded-full blur-2xl group-hover:scale-125 transition-all duration-700"></div>
+            
+            <div class="relative">
+                <div class="flex items-center justify-between mb-5">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#8FA490] to-[#8FA490]/80 dark:from-[#8FA490] dark:to-[#8FA490]/70 flex items-center justify-center shadow-xl group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 glow-effect">
+                        <i class="fas fa-mug-hot text-white text-2xl"></i>
+                    </div>
+                    <span class="text-xs font-black text-[#8FA490] dark:text-[#8FA490] bg-[#8FA490]/15 dark:bg-[#8FA490]/20 px-4 py-2 rounded-full shadow-sm border border-[#8FA490]/30">DESCANSOS</span>
+                </div>
+                <h3 class="text-5xl font-black text-[#2C2C2C] dark:text-[#E8E8E8] mb-2 tracking-tight">{{ compliance_percent }}%</h3>
+                <p class="text-sm font-bold text-[#5C5C5C] dark:text-[#B8B8B8]">Cumplimiento</p>
+                <div class="mt-4 h-1 w-full bg-[#F0D4C3]/20 rounded-full overflow-hidden" id="smallComplianceBarContainer" data-compliance="{{ compliance_percent }}">
+                    <div id="smallComplianceBar" class="h-full rounded-full" style="width:0%; background: linear-gradient(90deg,#8FA490,#6F9B6F); animation: pulse 2s ease-in-out infinite;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado Visual Premium -->
+    
+    <div class="mb-8 animate-fade-in-up">
+    <div class="rounded-2xl p-8 flex flex-col md:flex-row items-center gap-8 shadow-xl border-2 border-border-color dark:border-dark-border-color bg-peach-100 dark:bg-dark-surface">
+            <div class="flex flex-col items-center justify-center gap-2">
+                <div class="w-16 h-16 rounded-full flex items-center justify-center shadow-lg 
+                    {% if color_visual == 'green' %}bg-[#C7F2D6] dark:bg-[#2E4D3A] 
+                    {% elif color_visual == 'orange' %}bg-[#FFE5C2] dark:bg-[#4D3A2E] 
+                    {% else %}bg-[#FFD6D6] dark:bg-[#4D2E2E] 
+                    {% endif %}">
+                    {% if color_visual == 'green' %}
+                        <i class="fas {{ icon }} text-accent-green text-3xl"></i>
+                    {% elif color_visual == 'orange' %}
+                        <i class="fas {{ icon }} text-warm-orange-400 text-3xl"></i>
+                    {% else %}
+                        <i class="fas {{ icon }} text-terracotta-400 text-3xl"></i>
+                    {% endif %}
+                </div>
+                <div class="text-lg font-bold text-text-primary dark:text-dark-text-primary">Estado Visual</div>
+                <div class="text-2xl font-black text-text-primary dark:text-dark-text-primary">{{ estado_visual }}</div>
+                <div class="text-sm text-text-secondary dark:text-dark-text-secondary">Tu estado visual actual es: <span class="font-bold">{{ estado_visual }}</span></div>
+            </div>
+            <div class="flex-1 flex flex-col gap-6">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-bold text-text-primary dark:text-dark-text-primary">Cumplimiento de descansos</span>
+                        <span class="text-xs font-bold {% if compliance_percent > 80 %}text-accent-green dark:text-accent-green{% elif compliance_percent > 60 %}text-warm-orange-400 dark:text-warm-orange-400{% else %}text-terracotta-400 dark:text-terracotta-400{% endif %}">{{ compliance_percent|floatformat:1 }}%</span>
+                    </div>
+                    <div class="w-full h-4 rounded-full bg-cream-200 dark:bg-dark-accent-peach overflow-hidden" id="complianceBarContainer" data-compliance="{{ compliance_percent }}">
+                        <div id="complianceBar" class="h-full rounded-full animate-pulse transition-all duration-700 bg-accent-green/40 dark:bg-accent-green/30" style="width:0%; background: linear-gradient(90deg,#8FA490,#6F9B6F);"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-bold text-text-primary dark:text-dark-text-primary">Episodios de fatiga</span>
+                        <span class="text-xs font-bold {% if avg_fatigue < 2 %}text-accent-green dark:text-accent-green{% elif avg_fatigue < 5 %}text-warm-orange-400 dark:text-warm-orange-400{% else %}text-terracotta-400 dark:text-terracotta-400{% endif %}">{{ avg_fatigue|floatformat:1 }}</span>
+                    </div>
+                    <div class="w-full h-4 rounded-full bg-cream-200 dark:bg-dark-accent-peach overflow-hidden" id="fatigueBarContainer" data-fatigue="{{ avg_fatigue }}">
+                        <div id="fatigueBar" class="h-full rounded-full animate-pulse transition-all duration-700 bg-terracotta-400/40 dark:bg-terracotta-400/30" style="width:0%; background: linear-gradient(90deg,#D4523F,#C13A2E);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row Premium mejorada -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Sessions by Day Chart -->
+        <div class="group relative bg-gradient-to-br from-[#FBF7F0] via-[#F0D4C3]/40 to-[#E89552]/10 dark:from-[#2C2C2C] dark:via-[#3D3028]/30 dark:to-[#E89552]/10 rounded-3xl border-2 border-[#E89552]/40 dark:border-[#E89552]/30 p-7 shadow-2xl hover:shadow-3xl transition-all duration-300 overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-[#E89552]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div class="relative">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#E89552] to-[#D4523F] dark:from-[#E89552] dark:to-[#D4523F]/80 flex items-center justify-center shadow-xl glow-effect">
+                        <i class="fas fa-chart-line text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-black text-[#2C2C2C] dark:text-[#E8E8E8] tracking-tight">Sesiones por Día</h3>
+                </div>
+                <div class="bg-white/70 dark:bg-[#1A1A1A]/50 rounded-2xl p-5 backdrop-blur-sm border border-[#F0D4C3]/30 dark:border-[#3D3028]">
+                    {% if not has_sessions_data %}
+                        <div class="flex items-center justify-center h-64 text-text-secondary dark:text-dark-text-secondary">
+                            <div class="text-center">
+                                <i class="fas fa-info-circle text-3xl mb-2"></i>
+                                <div>No hay sesiones en el período seleccionado</div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <canvas id="sessionsChart" height="250"></canvas>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Distribution Chart -->
+        <div class="group relative bg-gradient-to-br from-[#FBF7F0] via-[#F0D4C3]/40 to-[#D4523F]/10 dark:from-[#2C2C2C] dark:via-[#3D3028]/30 dark:to-[#D4523F]/10 rounded-3xl border-2 border-[#D4523F]/40 dark:border-[#D4523F]/30 p-7 shadow-2xl hover:shadow-3xl transition-all duration-300 overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-[#D4523F]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div class="relative">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4523F] to-[#E89552] dark:from-[#D4523F] dark:to-[#E89552]/80 flex items-center justify-center shadow-xl glow-effect">
+                        <i class="fas fa-chart-pie text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-black text-[#2C2C2C] dark:text-[#E8E8E8] tracking-tight">Distribución de Alertas</h3>
+                </div>
+                <div class="bg-white/70 dark:bg-[#1A1A1A]/50 rounded-2xl p-5 backdrop-blur-sm border border-[#F0D4C3]/30 dark:border-[#3D3028]">
+                    {% if not has_alerts_data %}
+                        <div class="flex items-center justify-center h-64 text-text-secondary dark:text-dark-text-secondary">
+                            <div class="text-center">
+                                <i class="fas fa-info-circle text-3xl mb-2"></i>
+                                <div>No hay alertas en el período seleccionado</div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <canvas id="alertsChart" height="250"></canvas>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Stats Table Premium mejorada -->
+    <div class="bg-gradient-to-br from-[#FBF7F0] via-[#F0D4C3]/40 to-[#E89552]/10 dark:from-[#2C2C2C] dark:via-[#3D3028]/30 dark:to-[#E89552]/10 rounded-3xl border-2 border-[#F0D4C3]/50 dark:border-[#E89552]/40 shadow-2xl overflow-hidden">
+        <div class="bg-gradient-to-r from-[#F0D4C3] via-[#FBF7F0]/60 to-[#E89552]/20 dark:from-[#3D3028] dark:via-[#E89552]/20 dark:to-[#D4523F]/10 p-7 border-b-2 border-[#F0D4C3]/60 dark:border-[#E89552]/40">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#E89552] to-[#D4523F] dark:from-[#E89552] dark:to-[#D4523F]/80 flex items-center justify-center shadow-xl glow-effect">
+                    <i class="fas fa-table text-white text-xl"></i>
+                </div>
+                <h3 class="text-2xl font-black text-[#2C2C2C] dark:text-[#E8E8E8] tracking-tight">Top 10 Usuarios</h3>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-gradient-to-r from-[#FBF7F0] via-[#F0D4C3]/40 to-[#E89552]/10 dark:from-[#2C2C2C] dark:via-[#3D3028]/30 dark:to-[#E89552]/10 border-b-2 border-[#F0D4C3]/60 dark:border-[#E89552]/40">
+                        <th class="px-6 py-5 text-left text-xs font-black text-[#2C2C2C] dark:text-[#E8E8E8] uppercase tracking-wider">Usuario</th>
+                        <th class="px-6 py-5 text-left text-xs font-black text-[#2C2C2C] dark:text-[#E8E8E8] uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-5 text-center text-xs font-black text-[#2C2C2C] dark:text-[#E8E8E8] uppercase tracking-wider">Sesiones</th>
+                        <th class="px-6 py-5 text-center text-xs font-black text-[#2C2C2C] dark:text-[#E8E8E8] uppercase tracking-wider">Ejercicios</th>
+                        <th class="px-6 py-5 text-center text-xs font-black text-[#2C2C2C] dark:text-[#E8E8E8] uppercase tracking-wider">Fatiga</th>
+                        <th class="px-6 py-5 text-center text-xs font-black text-[#2C2C2C] dark:text-[#E8E8E8] uppercase tracking-wider">Tiempo Total (hrs)</th>
+                        <th class="px-6 py-5 text-center text-xs font-black text-[#2C2C2C] dark:text-[#E8E8E8] uppercase tracking-wider">Último acceso</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[#F0D4C3]/40 dark:divide-[#E89552]/30 bg-[#FBF7F0]/80 dark:bg-[#2C2C2C]/80 backdrop-blur-sm">
+                    {% for user in user_stats %}
+                    <tr class="table-row hover:bg-gradient-to-r hover:from-[#F0D4C3]/20 hover:via-[#FBF7F0]/30 hover:to-[#F0D4C3]/20 dark:hover:from-[#3D3028]/20 dark:hover:via-[#2C2C2C]/30 dark:hover:to-[#3D3028]/20 transition-all duration-200">
+                        <td class="px-6 py-5 whitespace-nowrap">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#E89552] to-[#D4523F] dark:from-[#E89552] dark:to-[#D4523F]/80 flex items-center justify-center text-base font-black text-white shadow-lg glow-effect">
+                                    {{ user.username|first|upper }}
+                                </div>
+                                <span class="text-sm font-bold text-[#2C2C2C] dark:text-[#E8E8E8]">{{ user.get_full_name|default:user.username }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5 whitespace-nowrap text-sm font-semibold text-[#5C5C5C] dark:text-[#B8B8B8]">{{ user.email }}</td>
+                        <td class="px-6 py-5 whitespace-nowrap text-center">
+                            <span class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-[#E89552]/20 to-[#E89552]/30 dark:from-[#E89552]/20 dark:to-[#E89552]/10 text-[#E89552] dark:text-[#E89552] border border-[#E89552]/30 shadow-sm">
+                                <i class="fas fa-desktop mr-2"></i> {{ user.session_count }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-5 whitespace-nowrap text-center">
+                            <span class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-[#8FA490]/20 to-[#8FA490]/30 dark:from-[#8FA490]/20 dark:to-[#8FA490]/10 text-[#8FA490] dark:text-[#8FA490] border border-[#8FA490]/30 shadow-sm">
+                                <i class="fas fa-dumbbell mr-2"></i> {{ user.exercises_completed_count }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-5 whitespace-nowrap text-center">
+                            <span class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-[#D4523F]/20 to-[#D4523F]/30 dark:from-[#D4523F]/20 dark:to-[#D4523F]/10 text-[#D4523F] dark:text-[#D4523F] border border-[#D4523F]/30 shadow-sm">
+                                <i class="fas fa-eye-slash mr-2"></i> {{ user.fatigue_count }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-5 whitespace-nowrap text-center">
+                            <span class="text-sm font-bold text-[#2C2C2C] dark:text-[#E8E8E8] bg-[#F0D4C3]/40 dark:bg-[#3D3028]/60 px-4 py-2 rounded-xl border border-[#F0D4C3]/50 dark:border-[#3D3028]">
+                                        {% if user.total_time_hours %}
+                                            {{ user.total_time_hours|floatformat:2|default:"0.00" }} h
+                                        {% else %}
+                                            0.00 h
+                                        {% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-5 whitespace-nowrap text-center text-sm font-semibold text-[#5C5C5C] dark:text-[#B8B8B8]">
+                            {{ user.last_login|date:"d/m/Y H:i"|default:"Nunca" }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-20 text-center">
+                            <div class="flex flex-col items-center gap-4">
+                                <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#F0D4C3]/50 to-[#FBF7F0] dark:from-[#3D3028] dark:to-[#2C2C2C] flex items-center justify-center shadow-lg">
+                                    <i class="fas fa-inbox text-5xl text-[#5C5C5C] dark:text-[#B8B8B8] opacity-40"></i>
+                                </div>
+                                <p class="text-[#5C5C5C] dark:text-[#B8B8B8] font-bold text-lg">No hay datos disponibles en este período</p>
+                                <p class="text-[#5C5C5C] dark:text-[#B8B8B8] text-sm">Ajusta el filtro de fecha para ver más información</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // --- Dynamic Theme & Dashboard Reactive Updates ---
+    let sessionsChartInstance = null;
+    let alertsChartInstance = null;
+
+    function currentThemeValues() {
+        const isDark = document.documentElement.classList.contains('dark');
+        return {
+            isDark,
+            gridColor: isDark ? 'rgba(232,232,232,0.15)' : 'rgba(44,44,44,0.1)',
+            textColor: isDark ? '#E8E8E8' : '#2C2C2C',
+            tooltipBg: isDark ? '#2C2C2C' : '#FFFFFF',
+            borderColor: isDark ? '#E89552' : '#F0D4C3'
+        };
+    }
+
+    function applyChartTheme(chart) {
+        if (!chart) return;
+        const { textColor, gridColor, tooltipBg, borderColor, isDark } = currentThemeValues();
+        if (chart.config.type === 'bar') {
+            chart.options.scales.x.ticks.color = textColor;
+            chart.options.scales.y.ticks.color = textColor;
+            chart.options.scales.y.grid.color = gridColor;
+            chart.options.plugins.tooltip.backgroundColor = tooltipBg;
+            chart.options.plugins.tooltip.titleColor = textColor;
+            chart.options.plugins.tooltip.bodyColor = textColor;
+            chart.options.plugins.tooltip.borderColor = borderColor;
+        } else if (chart.config.type === 'doughnut') {
+            chart.options.plugins.legend.labels.color = textColor;
+            chart.options.plugins.tooltip.backgroundColor = tooltipBg;
+            chart.options.plugins.tooltip.titleColor = textColor;
+            chart.options.plugins.tooltip.bodyColor = textColor;
+            chart.options.plugins.tooltip.borderColor = borderColor;
+            chart.data.datasets.forEach(ds => { ds.borderColor = isDark ? '#1A1A1A' : '#FFFFFF'; });
+        }
+        chart.update();
+    }
+
+    function updateProgressBarsWidths() {
+        const clamp = v => Math.max(0, Math.min(100, v));
+        const complianceContainer = document.getElementById('complianceBarContainer');
+        const complianceBar = document.getElementById('complianceBar');
+        if (complianceContainer && complianceBar) {
+            const raw = parseFloat(complianceContainer.dataset.compliance || 0) || 0;
+            complianceBar.style.width = clamp(raw) + '%';
+        }
+        const fatigueContainer = document.getElementById('fatigueBarContainer');
+        const fatigueBar = document.getElementById('fatigueBar');
+        if (fatigueContainer && fatigueBar) {
+            const rawF = parseFloat(fatigueContainer.dataset.fatigue || 0) || 0;
+            fatigueBar.style.width = clamp(rawF * 10) + '%';
+        }
+        const smallComplianceContainer = document.getElementById('smallComplianceBarContainer');
+        const smallComplianceBar = document.getElementById('smallComplianceBar');
+        if (smallComplianceContainer && smallComplianceBar) {
+            const rawS = parseFloat(smallComplianceContainer.dataset.compliance || 0) || 0;
+            smallComplianceBar.style.width = clamp(rawS) + '%';
+        }
+        const smallFatigueContainer = document.getElementById('smallFatigueBarContainer');
+        const smallFatigueBar = document.getElementById('smallFatigueBar');
+        if (smallFatigueContainer && smallFatigueBar) {
+            const rawSF = parseFloat(smallFatigueContainer.dataset.fatigue || 0) || 0;
+            smallFatigueBar.style.width = clamp(rawSF * 10) + '%';
+        }
+    }
+
+    function applyThemeToProgressBars() {
+        // Ensure remainder background visible by toggling utility classes (Tailwind already compiled)
+        const isDark = document.documentElement.classList.contains('dark');
+        ['complianceBarContainer','fatigueBarContainer'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            // Classes already set in template; nothing dynamic besides potential future adjustments.
+        });
+    }
+
+    function handleThemeChange() {
+        applyChartTheme(sessionsChartInstance);
+        applyChartTheme(alertsChartInstance);
+        applyThemeToProgressBars();
+    }
+
+    // Observe dark class attribute changes
+    const themeObserver = new MutationObserver(mutations => {
+        for (const m of mutations) {
+            if (m.attributeName === 'class') {
+                handleThemeChange();
+                break;
+            }
+        }
+    });
+    themeObserver.observe(document.documentElement, { attributes: true });
+
+    // Initial bar widths
+    updateProgressBarsWidths();
+    // Theme and basic colors
+    const isDark = document.documentElement.classList.contains('dark');
+    const gridColor = isDark ? 'rgba(232,232,232,0.08)' : 'rgba(44,44,44,0.08)';
+    const textColor = isDark ? '#E8E8E8' : '#2C2C2C';
+
+    // Date filter: navigate with loading state
+    const dateFilter = document.getElementById('dateFilter');
+    if (dateFilter) {
+        dateFilter.addEventListener('change', function () {
+            this.style.opacity = '0.5';
+            this.style.pointerEvents = 'none';
+            const url = new URL(window.location.href);
+            url.searchParams.set('date_filter', this.value);
+            window.location.href = url.toString();
+        });
+    }
+
+    // Progress bars: set widths from data attributes, clamp to [0,100]
+    function clamp(v) { return Math.max(0, Math.min(100, v)); }
+
+    const complianceContainer = document.getElementById('complianceBarContainer');
+    const complianceBar = document.getElementById('complianceBar');
+    if (complianceContainer && complianceBar) {
+        const raw = parseFloat(complianceContainer.dataset.compliance || 0) || 0;
+        const pct = clamp(Math.round(raw * 10) / 10); // one decimal
+        complianceBar.style.width = pct + '%';
+    }
+
+    // Small compliance bar (in metrics area)
+    const smallComplianceContainer = document.getElementById('smallComplianceBarContainer');
+    const smallComplianceBar = document.getElementById('smallComplianceBar');
+    if (smallComplianceContainer && smallComplianceBar) {
+        const rawSmall = parseFloat(smallComplianceContainer.dataset.compliance || 0) || 0;
+        const pctSmall = clamp(Math.round(rawSmall * 10) / 10);
+        smallComplianceBar.style.width = pctSmall + '%';
+    }
+
+    const fatigueContainer = document.getElementById('fatigueBarContainer');
+    const fatigueBar = document.getElementById('fatigueBar');
+    if (fatigueContainer && fatigueBar) {
+        const raw = parseFloat(fatigueContainer.dataset.fatigue || 0) || 0;
+        // Map episodes to percent: 0..10 -> 0..100
+        const pct = clamp(raw * 10);
+        fatigueBar.style.width = pct + '%';
+    }
+
+    // Small fatigue bar (in metrics area)
+    const smallFatigueContainer = document.getElementById('smallFatigueBarContainer');
+    const smallFatigueBar = document.getElementById('smallFatigueBar');
+    if (smallFatigueContainer && smallFatigueBar) {
+        const rawSmall = parseFloat(smallFatigueContainer.dataset.fatigue || 0) || 0;
+        const pctSmall = clamp(rawSmall * 10);
+        smallFatigueBar.style.width = pctSmall + '%';
+    }
+
+    // Simple animation observer for cards
+    const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+    const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.style.opacity = '1'; entry.target.style.transform = 'translateY(0)'; } }); }, observerOptions);
+    document.querySelectorAll('.metric-card').forEach(card => { card.style.opacity = '0'; card.style.transform = 'translateY(20px)'; observer.observe(card); });
+
+    // Charts (Chart.js must be loaded in base template)
+    try {
+        // Sessions chart
+        const sessionsEl = document.getElementById('sessionsChart');
+        if (sessionsEl) {
+            const ctx = sessionsEl.getContext('2d');
+            const { isDark, textColor, gridColor, tooltipBg, borderColor } = currentThemeValues();
+            const sessionsGradient = ctx.createLinearGradient(0,0,0,300);
+            sessionsGradient.addColorStop(0, isDark ? 'rgba(232,149,82,0.8)' : 'rgba(232,149,82,0.9)');
+            sessionsGradient.addColorStop(1, isDark ? 'rgba(212,82,63,0.6)' : 'rgba(212,82,63,0.7)');
+
+            sessionsChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: {{ labels_by_day_json|safe }},
+                    datasets: [{ label: 'Sesiones', data: {{ sessions_by_day_json|safe }}, backgroundColor: sessionsGradient, borderColor: '#E89552', borderWidth: 2, borderRadius: 12 }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: tooltipBg,
+                            titleColor: textColor,
+                            bodyColor: textColor,
+                            borderColor: borderColor,
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, color: textColor, font: { size: 12 } },
+                            grid: { color: gridColor }
+                        },
+                        x: {
+                            ticks: { color: textColor, font: { size: 11 } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Alerts doughnut
+        const alertsEl = document.getElementById('alertsChart');
+        if (alertsEl) {
+            const aCtx = alertsEl.getContext('2d');
+            const { textColor, tooltipBg, borderColor, isDark } = currentThemeValues();
+            const alertLabels = {{ alert_labels_json|safe }};
+            const alertData = {{ alert_data_json|safe }};
+            const palette = ['#E89552','#8FA490','#D4523F','#F0D4C3','#FBF7F0'];
+
+            alertsChartInstance = new Chart(aCtx, {
+                type: 'doughnut', 
+                data: { 
+                    labels: alertLabels, 
+                    datasets: [{ 
+                        data: alertData, 
+                        backgroundColor: palette, 
+                        borderColor: isDark ? '#1A1A1A' : '#FFFFFF', 
+                        borderWidth: 3 
+                    }] 
+                }, 
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: textColor, font: { size: 12 }, padding: 15, usePointStyle: true, pointStyle: 'circle' }
+                        },
+                        tooltip: {
+                            backgroundColor: tooltipBg,
+                            titleColor: textColor,
+                            bodyColor: textColor,
+                            borderColor: borderColor,
+                            borderWidth: 1,
+                            titleFont: { size: 13 },
+                            bodyFont: { size: 12 }
+                        }
+                    }
+                }
+            });
+        }
+    } catch (e) { console.error('[DASHBOARD] Charts error', e); }
+    // Ensure theme applied initially
+    handleThemeChange();
+});
+</script>
+{% endblock %}

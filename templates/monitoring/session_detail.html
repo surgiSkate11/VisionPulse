@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalles de Sesión | VisionPulse{% endblock %}
+
+{% block extra_css %}
+<!-- Chart.js ya está incluido en base.html, no es necesario cargarlo aquí -->
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center w-full p-4">
+    <div class="w-full max-w-5xl">
+        <!-- Encabezado -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <a href="{% url 'monitoring:session_list' %}" class="text-secondary dark:text-dark-secondary hover:text-primary dark:hover:text-dark-primary transition-colors">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <h1 class="text-3xl font-semibold text-primary dark:text-dark-primary">Detalles de Sesión</h1>
+                </div>
+                <p class="text-secondary dark:text-dark-secondary">
+                    {{ session.start_time|date:"l, j \d\e F \d\e Y" }} · {{ session.start_time|date:"g:i a" }}
+                </p>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="downloadReport()" class="inline-flex items-center gap-2 bg-surface dark:bg-dark-surface hover:bg-gray-100 dark:hover:bg-gray-700 text-primary dark:text-dark-primary font-medium py-2 px-4 rounded-full transition-all duration-300">
+                    <i class="fas fa-download"></i>
+                    Descargar Reporte
+                </button>
+                <a href="{% url 'monitoring:live_session' %}" class="inline-flex items-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-2 px-4 rounded-full shadow-sm transition-all duration-300">
+                    <i class="fas fa-video"></i>
+                    Nueva Sesión
+                </a>
+            </div>
+        </div>
+
+        <!-- Resumen -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <!-- Duración -->
+            <div class="bg-surface dark:bg-dark-surface rounded-xl p-4 shadow-sm">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-secondary dark:text-dark-secondary text-sm mb-1">Duración Total</p>
+                        <p class="text-2xl font-semibold text-primary dark:text-dark-primary">{{ session.duration_minutes|floatformat:0 }} min</p>
+                    </div>
+                    <div class="w-10 h-10 bg-gray-100 dark:bg-dark-background rounded-full flex items-center justify-center">
+                        <i class="fas fa-clock text-accent-green"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parpadeos -->
+            <div class="bg-surface dark:bg-dark-surface rounded-xl p-4 shadow-sm">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-secondary dark:text-dark-secondary text-sm mb-1">Total Parpadeos</p>
+                        <p class="text-2xl font-semibold text-primary dark:text-dark-primary">{{ session.total_blinks }}</p>
+                    </div>
+                    <div class="w-10 h-10 bg-gray-100 dark:bg-dark-background rounded-full flex items-center justify-center">
+                        <i class="fas fa-eye text-accent-green"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enfoque -->
+            <div class="bg-surface dark:bg-dark-surface rounded-xl p-4 shadow-sm">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-secondary dark:text-dark-secondary text-sm mb-1">Puntuación Enfoque</p>
+                        <p class="text-2xl font-semibold text-primary dark:text-dark-primary">{{ session.focus_score|floatformat:0 }}%</p>
+                    </div>
+                    <div class="w-10 h-10 bg-gray-100 dark:bg-dark-background rounded-full flex items-center justify-center">
+                        <i class="fas fa-bullseye text-accent-green"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alertas -->
+            <div class="bg-surface dark:bg-dark-surface rounded-xl p-4 shadow-sm">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-secondary dark:text-dark-secondary text-sm mb-1">Total Alertas</p>
+                        <p class="text-2xl font-semibold text-primary dark:text-dark-primary">{{ session.alert_count }}</p>
+                    </div>
+                    <div class="w-10 h-10 bg-gray-100 dark:bg-dark-background rounded-full flex items-center justify-center">
+                        <i class="fas fa-bell text-accent-green"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Parpadeos por Minuto -->
+            <div class="bg-surface dark:bg-dark-surface rounded-xl p-6 shadow-sm">
+                <h3 class="text-lg font-medium text-primary dark:text-dark-primary mb-4">Parpadeos por Minuto</h3>
+                <canvas id="blinksChart" height="200"></canvas>
+            </div>
+
+            <!-- Nivel de Enfoque -->
+            <div class="bg-surface dark:bg-dark-surface rounded-xl p-6 shadow-sm">
+                <h3 class="text-lg font-medium text-primary dark:text-dark-primary mb-4">Nivel de Enfoque</h3>
+                <canvas id="focusChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Tabla de Eventos -->
+        <div class="bg-surface dark:bg-dark-surface rounded-xl p-6 shadow-sm">
+            <h3 class="text-lg font-medium text-primary dark:text-dark-primary mb-4">Registro de Eventos</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-secondary dark:text-dark-secondary uppercase tracking-wider">Hora</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-secondary dark:text-dark-secondary uppercase tracking-wider">Tipo</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-secondary dark:text-dark-secondary uppercase tracking-wider">Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for event in events %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-primary dark:text-dark-primary">
+                                {{ event.timestamp|date:"g:i:s a" }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if event.type == 'alert' %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
+                                    {% elif event.type == 'pause' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                                    {% else %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% endif %}">
+                                    {{ event.type|title }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-primary dark:text-dark-primary">
+                                {{ event.description }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configuración común para los gráficos
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            intersect: false,
+            mode: 'index'
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    display: false
+                }
+            },
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.1)'
+                }
+            }
+        }
+    };
+
+    // Datos de parpadeos
+    const blinksCtx = document.getElementById('blinksChart');
+    if (blinksCtx) {
+        new Chart(blinksCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: {{ time_labels|safe }},
+                datasets: [{
+                    label: 'Parpadeos',
+                    data: {{ blinks_data|safe }},
+                    borderColor: '#34D399',
+                    backgroundColor: 'rgba(52, 211, 153, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    ...commonOptions.scales,
+                    y: {
+                        ...commonOptions.scales.y,
+                        title: {
+                            display: true,
+                            text: 'Parpadeos por minuto'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Datos de enfoque
+    const focusCtx = document.getElementById('focusChart');
+    if (focusCtx) {
+        new Chart(focusCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: {{ time_labels|safe }},
+                datasets: [{
+                    label: 'Nivel de Enfoque',
+                    data: {{ focus_data|safe }},
+                    borderColor: '#34D399',
+                    backgroundColor: 'rgba(52, 211, 153, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    ...commonOptions.scales,
+                    y: {
+                        ...commonOptions.scales.y,
+                        title: {
+                            display: true,
+                            text: 'Nivel de Enfoque (%)'
+                        },
+                        max: 100
+                    }
+                }
+            }
+        });
+    }
+});
+
+function downloadReport() {
+    // Implementar lógica para descargar el reporte
+    alert('Funcionalidad de descarga en desarrollo');
+}
+</script>
+{% endblock %}

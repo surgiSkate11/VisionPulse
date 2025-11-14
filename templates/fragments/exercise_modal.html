@@ -1,0 +1,1011 @@
+<!-- Fragment: Exercise Modal -->
+<!-- Este fragmento contiene el modal reutilizable para ejecutar ejercicios -->
+<!-- Se usa tanto en el catálogo de ejercicios como en el sistema de alertas -->
+
+<!-- Modal Overlay -->
+<div id="exercise-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-[1050] hidden transition-opacity duration-300 opacity-0">
+    <div class="modal-wrapper w-full p-4" style="max-width: 720px; width: min(92vw, 720px);">
+        <!-- Modal Container -->
+        <div id="exercise-modal" class="bg-cream-50 dark:bg-dark-surface rounded-2xl shadow-2xl dark:shadow-black/50 w-full p-8 relative transform transition-all duration-300 scale-95 opacity-0 border-2 border-peach-200 dark:border-dark-border-color">
+                        <!-- El contenido se insertará dinámicamente aquí -->
+        </div>
+    </div>
+</div>
+
+<script>
+// Función global para acceso rápido al estado del modal
+window.isExerciseModalVisible = () => {
+    const overlay = document.getElementById('exercise-modal-overlay');
+    return overlay && !overlay.classList.contains('hidden');
+};
+</script>
+<style>
+/* Animaciones suaves para el texto de pasos y el badge */
+@keyframes vp-fade-in-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes vp-pulse-in {
+    0% { transform: scale(0.95); opacity: .6; }
+    60% { transform: scale(1.03); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+.step-anim-enter { animation: vp-fade-in-up 420ms cubic-bezier(.22,.61,.36,1) both; }
+.badge-anim-pop { animation: vp-pulse-in 300ms ease-out both; }
+
+/* Overlay spacing to avoid sticking to header/footer.
+   Display/grid are controlled at runtime (JS) to respect the hidden class. */
+#exercise-modal-overlay {
+    padding: clamp(56px, 10vh, 96px) 16px clamp(48px, 8vh, 80px);
+}
+
+/* Modal sizing and centering */
+#exercise-modal {
+    max-height: 85vh;          /* avoid overflowing viewport height */
+    overflow-y: auto;          /* scroll inside the modal if needed */
+    overscroll-behavior: contain;
+}
+
+/* Reduce media area height and use a wider aspect for better balance */
+#exercise-modal .exercise-media {
+    aspect-ratio: 16 / 9;      /* keep video area less tall */
+    max-height: 42vh;          /* cap media height */
+}
+
+@media (max-width: 640px) {
+    #exercise-modal { padding: 1rem; }
+}
+
+/* Buttons: ensure solid fills and clear hover states */
+#pause-btn {
+    background: #FED7AA !important; /* orange-200 */
+    color: #7C2D12 !important;      /* orange-900 */
+    border: 1px solid #FDBA74;      /* orange-300 */
+}
+#pause-btn:hover { background: #FDBA74 !important; }
+.dark #pause-btn {
+    background: #374151 !important; /* gray-700 */
+    color: #E5E7EB !important;      /* gray-200 */
+    border: 1px solid #4B5563;      /* gray-600 */
+}
+.dark #pause-btn:hover { background: #4B5563 !important; }
+
+#finish-btn {
+    background: #FFEDD5 !important; /* orange-100 */
+    color: #9A3412 !important;      /* orange-800 */
+    border: 1px solid #FDBA74;      /* orange-300 */
+}
+#finish-btn:hover { background: #FB923C !important; color: #ffffff !important; }
+.dark #finish-btn {
+    background: #3F2D23 !important; /* warm dark */
+    color: #FCD9BD !important;      /* warm light */
+    border: 1px solid #8B5E34;      /* warm border */
+}
+.dark #finish-btn:hover { background: #C2410C !important; color: #ffffff !important; }
+
+#close-completion-btn { box-shadow: 0 6px 20px rgba(16,185,129,0.25); }
+#close-completion-btn:hover { filter: brightness(0.95); }
+#pause-btn, #finish-btn, #close-completion-btn { outline: none; }
+#pause-btn:focus-visible, #finish-btn:focus-visible, #close-completion-btn:focus-visible {
+    box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.35); /* orange-400 ring */
+}
+</style>
+
+<script>
+// Clase para gestionar el modal de ejercicios
+class ExerciseModalManager {
+    constructor() {
+        this.modalOverlay = null;
+        this.modal = null;
+        this.currentExercise = null;
+        this.currentSessionId = null;  // ID de la sesión actual en la BD
+        this.currentStepIndex = 0;
+        this.stepTimeLeft = 0;
+        this.totalTimeLeft = 0;
+        this.timerInterval = null;
+        this.isPaused = false;
+        this.isClosing = false;  // Flag para prevenir operaciones durante cierre
+        this.unmuteBtn = null;
+        this.relatedAlertId = null;  // ID de la alerta relacionada (si aplica)
+        this.onCompleteCallback = null;  // Callback al completar
+        this.onCloseCallback = null;  // Callback al cerrar
+        
+        // Nuevo: Cache de videos y estado
+        this.videoCache = new Map();  // Cache de videos precargados
+        this.loadingStep = false;     // Flag para prevenir cargas simultáneas
+        this.retryAttempts = 0;       // Contador de reintentos para carga de videos
+        this.maxRetries = 3;          // Máximo número de reintentos
+
+        // Inicializar elementos del modal cuando se necesiten
+        this.initializeModal();
+    }
+
+    initializeModal() {
+        // Asegurar que los elementos del modal estén disponibles
+        this.modalOverlay = document.getElementById('exercise-modal-overlay');
+        this.modal = document.getElementById('exercise-modal');
+        
+        if (!this.modalOverlay || !this.modal) {
+            console.error('[EXERCISE] ❌ No se encontraron los elementos del modal');
+            return false;
+        }
+
+        // Asegurar que el overlay esté bajo <body>
+        if (this.modalOverlay.parentElement !== document.body) {
+            document.body.appendChild(this.modalOverlay);
+        }
+
+        // Asegurar que los event listeners estén configurados
+        this.modalOverlay.addEventListener('click', (e) => {
+            if (e.target === this.modalOverlay) {
+                this.close(false);
+            }
+        });
+
+        return true;
+    }
+
+    isMonitoringContext() {
+        try {
+            const p = (window.location && window.location.pathname) ? window.location.pathname : '';
+            const isMonitoring = typeof p === 'string' && p.startsWith('/monitoring/');
+            console.log('[EXERCISE] Contexto de monitoreo:', isMonitoring, '(pathname:', p, ')');
+            return isMonitoring;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    async open(exerciseId, options = {}) {
+        try {
+            console.log('[EXERCISE] Iniciando apertura del modal para ejercicio:', exerciseId);
+            
+            // Asegurar que el modal esté inicializado
+            if (!this.modalOverlay || !this.modal) {
+                console.log('[EXERCISE] Modal no inicializado, intentando inicializar...');
+                if (!this.initializeModal()) {
+                    throw new Error('No se pudo inicializar el modal de ejercicios');
+                }
+            }
+            
+            this.isClosing = false;
+            
+            // 🔥 CRÍTICO: Detener el poller de métricas ANTES de pausar
+            if (this.isMonitoringContext()) {
+                try {
+                    // 1. Detener el poller de métricas para evitar que siga haciendo requests
+                    if (typeof window.stopMetricsPoller === 'function') {
+                        window.stopMetricsPoller();
+                        console.log('[EXERCISE] ✓ Poller de métricas detenido');
+                    }
+                    
+                    // 2. Pausar el monitoreo en el backend
+                    await fetch('/monitoring/api/pause/', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': this.getCsrfToken(),
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    console.log('[EXERCISE] ✓ Monitoreo pausado correctamente');
+                    
+                    // 3. Actualizar variables globales
+                    window.isMonitoringActive = true;
+                    window.isPaused = true;
+                    
+                    // 4. Crear el contenedor de pausa visual usando AlertManager
+                    if (window.alertManager && typeof window.alertManager.showPausedState === 'function') {
+                        window.alertManager.showPausedState('exercise');
+                        console.log('[EXERCISE] ✓ Contenedor paused-content creado vía AlertManager');
+                    }
+                    
+                    // 5. Actualizar UI de botones para mostrar estado pausado
+                    if (typeof window.setMonitoringState === 'function') {
+                        window.setMonitoringState(true, true); // isActive=true, paused=true
+                        console.log('[EXERCISE] ✓ Botones actualizados a estado pausado');
+                    }
+                } catch (e) {
+                    console.error('[EXERCISE] Error pausando monitoreo:', e);
+                    // Continuar de todos modos
+                }
+            }
+            
+            const maybeId = options.alertId;
+            this.relatedAlertId = (/^\d+$/.test(String(maybeId)) ? String(maybeId) : null);
+            this.onCompleteCallback = options.onComplete || null;
+            this.onCloseCallback = options.onClose || null;
+
+            // Cargar datos del ejercicio
+            const url = `/exercises/api/exercise/${exerciseId}/`;
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error('No se pudo cargar el ejercicio.');
+            }
+            
+            this.currentExercise = await response.json();
+            
+            if (!this.currentExercise.steps?.length) {
+                throw new Error('Este ejercicio no tiene pasos definidos.');
+            }
+
+            // Iniciar sesión después de pausar y cargar ejercicio
+            await this.startSession();
+
+            // Inicializar estado
+            this.currentStepIndex = 0;
+            this.isPaused = false;
+            const totalDurationRaw = Number(this.currentExercise.total_duration);
+            this.totalTimeLeft = Number.isFinite(totalDurationRaw) && totalDurationRaw > 0 ? Math.floor(totalDurationRaw) : 0;
+            if (this.totalTimeLeft === 0 && Array.isArray(this.currentExercise.steps)) {
+                this.totalTimeLeft = this.currentExercise.steps.reduce((acc, step) => {
+                    const stepDuration = Number(step?.duration_seconds);
+                    return acc + (Number.isFinite(stepDuration) && stepDuration > 0 ? Math.floor(stepDuration) : 0);
+                }, 0);
+            }
+            
+            // Renderizar y abrir
+            this.renderContent();
+            this.startStep();
+            this.showModal();
+
+        } catch (error) {
+            alert(error.message || 'Error al cargar el ejercicio');
+        }
+    }
+
+    async startSession() {
+        try {
+            const response = await fetch(`/exercises/api/session/start/${this.currentExercise.id}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': this.getCsrfToken(),
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('No se pudo iniciar la sesión');
+            }
+
+            const data = await response.json();
+            this.currentSessionId = data.session_id;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    getCsrfToken() {
+        const name = 'csrftoken';
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    showModal() {
+        console.log('[EXERCISE] Intentando mostrar modal...');
+        
+        // Asegurar que tenemos los elementos del modal
+        if (!this.modalOverlay || !this.modal) {
+            console.error('[EXERCISE] ❌ Elementos del modal no encontrados');
+            if (!this.initializeModal()) {
+                console.error('[EXERCISE] ❌ No se pudo inicializar el modal');
+                return;
+            }
+        }
+        
+        // Asegurar que el modal esté en el DOM
+        if (this.modalOverlay.parentElement !== document.body) {
+            console.log('[EXERCISE] Moviendo modal al body...');
+            document.body.appendChild(this.modalOverlay);
+        }
+
+        // Restablecer estilos y clases
+        this.modalOverlay.style.display = 'grid';
+        this.modalOverlay.style.placeItems = 'center';
+        
+        // Limpiar clases que podrían estar causando problemas
+        this.modalOverlay.classList.remove('hidden', 'opacity-0');
+        this.modal.classList.remove('scale-95', 'opacity-0');
+        
+        // Forzar un reflow para asegurar que las transiciones funcionen
+        void this.modalOverlay.offsetWidth;
+        
+        // Aplicar clases para mostrar
+        this.modal.classList.add('scale-100', 'opacity-100');
+        
+        console.log('[EXERCISE] ✓ Modal mostrado correctamente');
+    }
+
+    close(completed = false) {
+        this.isClosing = true;
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
+
+        const videoEl = document.getElementById('step-video');
+        if (videoEl) {
+            // Detener completamente el audio y video
+            videoEl.pause();
+            videoEl.currentTime = 0;
+            videoEl.volume = 0;
+            videoEl.muted = true;
+            
+            // Limpiar los audio tracks si existen
+            try {
+                const audioTracks = videoEl.audioTracks;
+                if (audioTracks) {
+                    for (let i = 0; i < audioTracks.length; i++) {
+                        audioTracks[i].enabled = false;
+                    }
+                }
+            } catch (e) {
+                console.log('[EXERCISE] No se pudieron limpiar audio tracks:', e);
+            }
+            
+            // Limpiar completamente el elemento de video
+            videoEl.removeAttribute('src');
+            videoEl.srcObject = null;
+            videoEl.load();
+        }
+
+        this.modal.classList.remove('scale-100', 'opacity-100');
+        this.modal.classList.add('scale-95', 'opacity-0');
+        this.modalOverlay.classList.add('opacity-0');
+        
+        setTimeout(() => {
+            this.modalOverlay.classList.add('hidden');
+            this.modalOverlay.style.display = 'none';
+            this.modal.innerHTML = '';
+            this.unmuteBtn = null;
+        }, 200);
+
+        // Notificar solo el estado final
+        if (this.isMonitoringContext()) {
+            window.dispatchEvent(new CustomEvent('exerciseModalClosed', {
+                detail: { completed: completed }
+            }));
+        }
+
+        this._performCleanup(completed).finally(() => {
+            if (this.onCloseCallback) {
+                this.onCloseCallback(completed);
+            }
+        });
+    }
+
+    async _performCleanup(completed) {
+        try {
+            this.videoCache.clear();
+            this.loadingStep = false;
+            if (this.placeholderTimeoutId) {
+                clearTimeout(this.placeholderTimeoutId);
+                this.placeholderTimeoutId = null;
+            }
+            
+            if (!completed && this.currentSessionId) {
+                await fetch(`/exercises/api/session/cancel/${this.currentSessionId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.getCsrfToken(),
+                        'Content-Type': 'application/json'
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('[EXERCISE] Error en limpieza:', err);
+        } finally {
+            this.currentSessionId = null;
+            this.currentExercise = null;
+            this.relatedAlertId = null;
+            this.isClosing = false;
+            this.unmuteBtn = null;
+        }
+    }
+
+    renderContent() {
+        this.modal.innerHTML = `
+            <button id="modal-close-btn" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-peach-200 dark:bg-dark-background-secondary hover:bg-peach-300 dark:hover:bg-gray-600 flex items-center justify-center text-xl transition-all hover:rotate-90 text-text-primary dark:text-dark-text-primary">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="mb-6">
+                <h2 id="exercise-title" class="text-2xl font-bold text-text-primary dark:text-dark-text-primary mb-1"></h2>
+                <p id="total-timer" class="text-sm text-text-secondary dark:text-dark-text-secondary"></p>
+            </div>
+            
+            <!-- Video/Animación Container -->
+            <div class="exercise-media relative w-full max-w-md mx-auto bg-peach-100 dark:bg-dark-accent-peach rounded-2xl flex items-center justify-center mb-6 overflow-hidden border-2 border-peach-200 dark:border-dark-border-color">
+                <video id="step-video" class="w-full h-full object-cover rounded-2xl" autoplay loop playsinline></video>
+                <div id="video-placeholder" class="flex flex-col items-center text-center p-4"></div>
+                <button id="unmute-btn" type="button" class="hidden absolute bottom-4 right-4 bg-gray-900/80 text-white text-xs font-semibold px-3 py-2 rounded-full shadow-md backdrop-blur-sm transition hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-green">
+                    <i class="fas fa-volume-mute mr-2"></i>
+                    <span>Activar audio</span>
+                </button>
+            </div>
+            
+            <!-- Step Info -->
+            <div class="bg-cream-100 dark:bg-dark-background-secondary rounded-2xl p-5 shadow-inner mb-4 border border-peach-200 dark:border-dark-border-color">
+                <div class="flex justify-between items-center text-xs text-text-secondary dark:text-dark-text-secondary mb-3 uppercase tracking-wide">
+                    <span>Paso Actual</span>
+                    <span id="step-badge" class="font-semibold text-warm-orange-400 dark:text-dark-alert-coral"></span>
+                </div>
+                <p id="step-instruction" class="text-xl md:text-2xl font-semibold mb-4 text-text-primary dark:text-dark-text-primary leading-relaxed text-center tracking-tight selection:bg-accent-green/20"></p>
+                
+                <!-- Progress Bar -->
+                <div class="w-full bg-peach-200 dark:bg-dark-border-color rounded-full h-2 overflow-hidden">
+                    <div id="progress-bar" class="bg-accent-green dark:bg-dark-accent-green h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <!-- Control Buttons -->
+            <div class="flex gap-3">
+                <button id="pause-btn" class="flex-1 bg-peach-200 dark:bg-dark-background-secondary text-text-primary dark:text-dark-text-primary font-medium py-3 rounded-lg transition-colors hover:bg-peach-300 dark:hover:bg-gray-600 flex items-center justify-center gap-2">
+                    <i class="fas fa-pause"></i>
+                    <span>Pausar</span>
+                </button>
+                <button id="finish-btn" class="flex-1 bg-warm-orange-400/20 dark:bg-dark-alert-coral/30 text-warm-orange-400 dark:text-dark-alert-coral font-medium py-3 rounded-lg transition-colors hover:bg-warm-orange-400 hover:text-white dark:hover:bg-dark-alert-coral dark:hover:text-white flex items-center justify-center gap-2">
+                    <i class="fas fa-times"></i>
+                    <span>Salir</span>
+                </button>
+            </div>
+        `;
+
+        this.unmuteBtn = document.getElementById('unmute-btn');
+        if (this.unmuteBtn) {
+            this.unmuteBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                const videoEl = document.getElementById('step-video');
+                if (videoEl) {
+                    videoEl.muted = false;
+                    videoEl.volume = 1;
+                    videoEl.play().then(() => {
+                        this.unmuteBtn.classList.add('hidden');
+                    }).catch((err) => {
+                        console.warn('[EXERCISE] No se pudo habilitar audio automáticamente:', err);
+                        videoEl.muted = true;
+                        this.unmuteBtn.classList.remove('hidden');
+                    });
+                }
+            });
+        }
+
+        // Agregar event listeners con manejo robusto
+        setTimeout(() => {
+            const pauseBtn = document.getElementById('pause-btn');
+            const finishBtn = document.getElementById('finish-btn');
+            const closeBtn = document.getElementById('modal-close-btn');
+            
+            if (pauseBtn) {
+                pauseBtn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.togglePause();
+                };
+            }
+            
+            if (finishBtn) {
+                finishBtn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.close(false);
+                };
+            }
+            
+            if (closeBtn) {
+                closeBtn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.close(false);
+                };
+            }
+        }, 0);
+    }
+
+    updateStepUI() {
+        if (this.isClosing) return;
+        
+        const step = this.currentExercise.steps[this.currentStepIndex];
+        
+        console.log(`[EXERCISE] 📽️ Actualizando UI para paso ${this.currentStepIndex + 1}/${this.currentExercise.steps.length}`);
+        
+        document.getElementById('exercise-title').textContent = this.currentExercise.title;
+        const instructionEl = document.getElementById('step-instruction');
+        const badgeEl = document.getElementById('step-badge');
+
+        // Actualizar textos
+        instructionEl.textContent = step.instruction;
+        badgeEl.textContent = `${this.currentStepIndex + 1} / ${this.currentExercise.steps.length}`;
+
+        // Reiniciar y aplicar animaciones suaves
+        instructionEl.classList.remove('step-anim-enter');
+        badgeEl.classList.remove('badge-anim-pop');
+        void instructionEl.offsetWidth; // forzar reflow para reiniciar animación
+        void badgeEl.offsetWidth;
+        instructionEl.classList.add('step-anim-enter');
+        badgeEl.classList.add('badge-anim-pop');
+        
+        const videoEl = document.getElementById('step-video');
+        const placeholderEl = document.getElementById('video-placeholder');
+        const unmuteBtn = this.unmuteBtn || document.getElementById('unmute-btn');
+        if (unmuteBtn) {
+            unmuteBtn.classList.add('hidden');
+        }
+        if (!videoEl) {
+            console.warn('[EXERCISE] ⚠️ Elemento de video no encontrado');
+            return;
+        }
+        if (step.video_url) {
+            const src = this.normalizeMediaUrl(step.video_url);
+            try {
+                videoEl.pause();
+                videoEl.currentTime = 0;
+                videoEl.removeAttribute('src');
+                videoEl.load();
+                videoEl.loop = true;
+                videoEl.playsInline = true;
+                videoEl.preload = 'auto';
+                videoEl.muted = false;
+                videoEl.volume = 1;
+                videoEl.src = src;
+                placeholderEl.classList.remove('hidden');
+                videoEl.classList.remove('hidden');
+                const onLoaded = () => {
+                    if (this.isClosing) return;
+                    videoEl.play().then(() => {
+                        videoEl.muted = false;
+                        videoEl.volume = 1;
+                        placeholderEl.classList.add('hidden');
+                    }).catch(() => {
+                        if (unmuteBtn) unmuteBtn.classList.remove('hidden');
+                    });
+                };
+                videoEl.onloadeddata = onLoaded;
+                videoEl.onerror = (e) => {
+                    videoEl.classList.add('hidden');
+                    placeholderEl.classList.remove('hidden');
+                    if (unmuteBtn) unmuteBtn.classList.add('hidden');
+                    if (window.notificationManager) {
+                        window.notificationManager.addNotification({
+                            title: 'Error de Video',
+                            message: 'No se pudo cargar el video del ejercicio. Intenta nuevamente.',
+                            type: 'error',
+                            duration: 5000
+                        });
+                    }
+                };
+                this.loadingStep = false;
+            } catch (e) {
+                videoEl.classList.add('hidden');
+                placeholderEl.classList.remove('hidden');
+                if (unmuteBtn) unmuteBtn.classList.add('hidden');
+            }
+        } else {
+            videoEl.classList.add('hidden');
+            placeholderEl.classList.remove('hidden');
+            if (unmuteBtn) unmuteBtn.classList.add('hidden');
+        }
+    }
+
+    updateTimerUI() {
+        const minutes = Math.floor(this.totalTimeLeft / 60);
+        const seconds = this.totalTimeLeft % 60;
+        document.getElementById('total-timer').textContent = 
+            `Tiempo restante: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        const progressPercentage = ((this.currentStepIndex + 1) / this.currentExercise.steps.length) * 100;
+        document.getElementById('progress-bar').style.width = `${progressPercentage}%`;
+    }
+
+    async startStep() {
+        if (this.isClosing || this.loadingStep) return;
+        
+        try {
+            this.loadingStep = true;
+            
+            if (!this.currentExercise?.steps?.[this.currentStepIndex]) {
+                console.error('[EXERCISE] Paso no encontrado o ejercicio no cargado');
+                return;
+            }
+
+            const step = this.currentExercise.steps[this.currentStepIndex];
+            const stepDurationRaw = Number(step.duration_seconds);
+            if (!Number.isFinite(stepDurationRaw) || stepDurationRaw <= 0) {
+                console.warn('[EXERCISE] Duración inválida para el paso', this.currentStepIndex + 1, 'valor:', step.duration_seconds);
+                this.stepTimeLeft = 1;
+            } else {
+                this.stepTimeLeft = Math.floor(stepDurationRaw);
+            }
+            this.updateTimerUI();
+            
+            // Detener timer anterior si existe
+            if (this.timerInterval) {
+                clearInterval(this.timerInterval);
+                this.timerInterval = null;
+            }
+            
+            // Actualizar UI y comenzar reproducción
+            await this.updateStepUI();
+            
+            // Iniciar nuevo timer
+            this.timerInterval = setInterval(() => this.tick(), 1000);
+            
+        } catch (error) {
+            console.error('[EXERCISE] Error al iniciar paso:', error);
+        }
+    }
+
+    tick() {
+        if (this.isPaused) return;
+
+        this.stepTimeLeft--;
+        this.totalTimeLeft--;
+        this.updateTimerUI();
+
+        if (this.stepTimeLeft <= 0) {
+            this.moveToNextStep();
+        }
+    }
+
+    async moveToNextStep() {
+        if (this.isClosing) return;
+
+        if (this.currentStepIndex < this.currentExercise.steps.length - 1) {
+            const currentVideo = document.getElementById('step-video');
+            if (currentVideo) {
+                // Detener completamente el audio y video actual
+                currentVideo.pause();
+                currentVideo.currentTime = 0;
+                currentVideo.volume = 0;
+                currentVideo.muted = true;
+                
+                // Limpiar completamente los recursos de audio
+                try {
+                    const audioTracks = currentVideo.audioTracks;
+                    if (audioTracks) {
+                        for (let i = 0; i < audioTracks.length; i++) {
+                            audioTracks[i].enabled = false;
+                        }
+                    }
+                } catch (e) {
+                    console.log('[EXERCISE] No se pudieron limpiar audio tracks:', e);
+                }
+            }
+            
+            this.currentStepIndex++;
+            this.loadingStep = false;
+            await this.startStep();
+        } else {
+            // Limpieza completa cuando el ejercicio termina
+            const currentVideo = document.getElementById('step-video');
+            if (currentVideo) {
+                currentVideo.pause();
+                currentVideo.currentTime = 0;
+                currentVideo.volume = 0;
+                currentVideo.muted = true;
+                currentVideo.src = '';
+                currentVideo.load();
+            }
+            this.completeExercise();
+        }
+    }
+
+    togglePause() {
+        this.isPaused = !this.isPaused;
+        const pauseBtn = document.getElementById('pause-btn');
+        const videoEl = document.getElementById('step-video');
+        const placeholderEl = document.getElementById('video-placeholder');
+        
+        if (this.isPaused) {
+            pauseBtn.innerHTML = '<i class="fas fa-play"></i><span>Reanudar</span>';
+            if (videoEl && !videoEl.classList.contains('hidden')) {
+                videoEl.pause();
+            }
+            // Mostrar imagen/placeholder de pausa
+            if (placeholderEl) placeholderEl.classList.remove('hidden');
+        } else {
+            pauseBtn.innerHTML = '<i class="fas fa-pause"></i><span>Pausar</span>';
+            if (videoEl && !videoEl.classList.contains('hidden')) {
+                videoEl.play().then(() => {
+                    if (placeholderEl) placeholderEl.classList.add('hidden');
+                }).catch(() => {
+                    // Si no puede reproducir automáticamente, dejar placeholder hasta que el usuario interactúe
+                });
+            }
+        }
+    }
+
+    async completeExercise() {
+        clearInterval(this.timerInterval);
+        
+        // Guardar el ejercicio completado en la base de datos (sin calificación aún)
+        try {
+            const response = await fetch(`/exercises/api/session/complete/${this.currentSessionId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': this.getCsrfToken(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            });
+
+            if (!response.ok) {
+                throw new Error('No se pudo guardar la sesión');
+            }
+
+            await response.json();
+        } catch (error) {
+            // Continuar mostrando pantalla de completado aunque falle el guardado
+        }
+        
+        // Mostrar pantalla de completado con sistema de calificación
+        this.modal.innerHTML = `
+            <div class="text-center py-8 px-4">
+                <i class="fas fa-check-circle text-7xl text-accent-green dark:text-dark-accent-green mb-4 animate-pulse"></i>
+                <h2 class="text-3xl font-bold text-text-primary dark:text-dark-text-primary mb-3">¡Ejercicio Completado!</h2>
+                <p class="text-text-secondary dark:text-dark-text-secondary mb-6 max-w-sm mx-auto">
+                    ¡Excelente trabajo! Has fortalecido tu salud visual.
+                </p>
+                
+                <!-- Sistema de Calificación con Estrellas -->
+                <div class="bg-cream-100 dark:bg-dark-background-secondary rounded-2xl p-6 mb-6 max-w-md mx-auto border-2 border-peach-200 dark:border-dark-border-color">
+                    <p class="text-sm font-medium text-text-secondary dark:text-dark-text-secondary mb-4">
+                        ¿Qué tan útil te pareció esta sesión?
+                    </p>
+                    <div id="rating-stars" class="flex justify-center gap-3 mb-3">
+                        ${[1, 2, 3, 4, 5].map(star => `
+                            <button 
+                                class="rating-star text-5xl transition-all duration-200 hover:scale-125 focus:outline-none"
+                                data-rating="${star}"
+                                aria-label="Calificar con ${star} estrellas"
+                            >
+                                <i class="fas fa-star" style="color: #D1D5DB;"></i>
+                            </button>
+                        `).join('')}
+                    </div>
+                    <p id="rating-text" class="text-sm text-text-secondary dark:text-dark-text-secondary opacity-0 transition-opacity duration-300 font-medium">
+                        Selecciona las estrellas
+                    </p>
+                </div>
+                
+                <button id="close-completion-btn" class="w-full max-w-xs mx-auto bg-accent-green dark:bg-dark-accent-green text-white font-semibold py-3 rounded-lg hover:bg-sage-200 dark:hover:bg-green-800 transition-colors shadow-lg">
+                    Continuar
+                </button>
+            </div>
+        `;
+        
+        // Sistema de calificación interactivo
+        const stars = document.querySelectorAll('.rating-star');
+        const starIcons = document.querySelectorAll('.rating-star i');
+        const ratingText = document.getElementById('rating-text');
+        let selectedRating = 0;
+        
+        const ratingMessages = {
+            1: 'Poco útil',
+            2: 'Regular',
+            3: 'Útil',
+            4: 'Muy útil',
+            5: '¡Excelente!'
+        };
+        
+        // Hover effect
+        stars.forEach((star, index) => {
+            star.addEventListener('mouseenter', () => {
+                starIcons.forEach((icon, i) => {
+                    if (i <= index) {
+                        icon.style.color = '#FBBF24'; // Amarillo brillante
+                        icon.style.filter = 'drop-shadow(0 2px 8px rgba(251, 191, 36, 0.5))';
+                        icon.classList.remove('far');
+                        icon.classList.add('fas');
+                    } else {
+                        if (selectedRating > i) {
+                            icon.style.color = '#FBBF24';
+                            icon.style.filter = 'drop-shadow(0 2px 8px rgba(251, 191, 36, 0.5))';
+                            icon.classList.remove('far');
+                            icon.classList.add('fas');
+                        } else {
+                            icon.style.color = '#D1D5DB';
+                            icon.style.filter = 'none';
+                            icon.classList.remove('fas');
+                            icon.classList.add('far');
+                        }
+                    }
+                });
+                ratingText.textContent = ratingMessages[index + 1];
+                ratingText.style.opacity = '1';
+            });
+            
+            // Click para seleccionar
+            star.addEventListener('click', async () => {
+                selectedRating = index + 1;
+                
+                // Animación de selección
+                starIcons.forEach((icon, i) => {
+                    if (i <= index) {
+                        icon.style.color = '#FBBF24';
+                        icon.style.filter = 'drop-shadow(0 2px 8px rgba(251, 191, 36, 0.5))';
+                        icon.classList.remove('far');
+                        icon.classList.add('fas');
+                        // Animación bounce
+                        star.style.transform = 'scale(1.3)';
+                        setTimeout(() => {
+                            star.style.transform = 'scale(1)';
+                        }, 200);
+                    } else {
+                        icon.style.color = '#D1D5DB';
+                        icon.style.filter = 'none';
+                        icon.classList.remove('fas');
+                        icon.classList.add('far');
+                    }
+                });
+                
+                ratingText.textContent = `${ratingMessages[selectedRating]} - ¡Gracias por tu calificación!`;
+                ratingText.style.color = '#10B981';
+                ratingText.style.fontWeight = '700';
+                ratingText.style.opacity = '1';
+                
+                // Enviar calificación al backend
+                try {
+                    await fetch(`/exercises/api/session/complete/${this.currentSessionId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': this.getCsrfToken(),
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            rating: selectedRating
+                        })
+                    });
+                } catch (error) {
+                    // Silenciar errores
+                }
+            });
+        });
+        
+        // Restaurar colores al salir
+        document.getElementById('rating-stars').addEventListener('mouseleave', () => {
+            starIcons.forEach((icon, i) => {
+                if (i < selectedRating) {
+                    icon.style.color = '#FBBF24';
+                    icon.style.filter = 'drop-shadow(0 2px 8px rgba(251, 191, 36, 0.5))';
+                    icon.classList.remove('far');
+                    icon.classList.add('fas');
+                } else {
+                    icon.style.color = '#D1D5DB';
+                    icon.style.filter = 'none';
+                    icon.classList.remove('fas');
+                    icon.classList.add('far');
+                }
+            });
+            if (selectedRating === 0) {
+                ratingText.style.opacity = '0';
+            }
+        });
+        
+        document.getElementById('close-completion-btn').addEventListener('click', async () => {
+            console.log('[EXERCISE] Cerrando pantalla de completado...');
+            this.close(true);
+        });
+
+        // Notificar al backend si hay alerta relacionada
+        if (this.relatedAlertId && this.currentSessionId) {
+            try {
+                await fetch('/monitoring/api/alerts/resolve-exercise/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.getCsrfToken(),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        alert_id: this.relatedAlertId,
+                        exercise_session_id: this.currentSessionId
+                    })
+                });
+            } catch (error) {
+                // Silenciar errores
+            }
+        }
+
+        // Ejecutar callback
+        if (this.onCompleteCallback) {
+            this.onCompleteCallback(this.currentSessionId);
+        }
+    }
+}
+
+// Instancia global del gestor de modal
+window.exerciseModalManager = new ExerciseModalManager();
+
+// Cerrar con Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && window.exerciseModalManager.modalOverlay && 
+        !window.exerciseModalManager.modalOverlay.classList.contains('hidden')) {
+        window.exerciseModalManager.close(false);
+    }
+});
+
+// Cerrar al hacer click fuera
+document.getElementById('exercise-modal-overlay')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('exercise-modal-overlay')) {
+        window.exerciseModalManager.close(false);
+    }
+});
+
+// Utilidad compartida para URLs de media del modal
+ExerciseModalManager.prototype.normalizeMediaUrl = function(url) {
+    try {
+        console.log('[EXERCISE] 🔍 Normalizando URL:', url);
+        
+        if (!url) {
+            console.warn('[EXERCISE] URL vacía');
+            return url;
+        }
+
+        // Si ya es una URL completa (http, data, blob), devolverla tal cual
+        if (/^(https?:)?\/\//i.test(url) || url.startsWith('data:') || url.startsWith('blob:')) {
+            console.log('[EXERCISE] URL completa detectada, usando tal cual');
+            return url;
+        }
+
+        // Si empieza con /media/, quitamos /media/ para evitar duplicación
+        if (url.startsWith('/media/')) {
+            url = url.substring(7);
+        }
+
+        // Si empieza con media/, quitamos media/ para evitar duplicación
+        if (url.startsWith('media/')) {
+            url = url.substring(6);
+        }
+
+        // Si empieza con /, quitamos / para evitar duplicación
+        if (url.startsWith('/')) {
+            url = url.substring(1);
+        }
+
+        // Construir la URL final siempre con /media/ al principio
+        const finalUrl = '/media/' + encodeURI(url);
+        console.log('[EXERCISE] URL normalizada:', finalUrl);
+        return finalUrl;
+
+    } catch (e) {
+        console.error('[EXERCISE] ❌ Error normalizando URL:', e);
+        return url;
+    }
+};
+
+// Método para precargar videos
+ExerciseModalManager.prototype.precacheVideo = async function(url) {
+    if (!url || this.videoCache.has(url)) return;
+    
+    try {
+        const video = document.createElement('video');
+        video.muted = true;
+        video.preload = 'auto';
+        
+        const loadPromise = new Promise((resolve, reject) => {
+            video.onloadeddata = () => {
+                this.videoCache.set(url, video);
+                console.log(`[EXERCISE] ✓ Video precargado: ${url}`);
+                resolve(video);
+            };
+            video.onerror = (e) => {
+                console.warn(`[EXERCISE] ⚠️ Error precargando video: ${url}`, e);
+                reject(e);
+            };
+        });
+        
+        video.src = url;
+        await loadPromise;
+    } catch (e) {
+        console.error(`[EXERCISE] ❌ Error fatal precargando video: ${url}`, e);
+    }
+};
+</script>

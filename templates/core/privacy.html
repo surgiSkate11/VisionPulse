@@ -1,0 +1,623 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad - VisionPulse</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary-bg: #0A0A0B;
+            --secondary-bg: #111114;
+            --accent-bg: #1A1A1F;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+            
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A0A3;
+            --text-muted: #6B6B70;
+            
+            --glow-primary: 0 0 40px rgba(102, 126, 234, 0.3);
+            --glow-secondary: 0 0 40px rgba(0, 198, 255, 0.3);
+            
+            --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            line-height: 1.8;
+            overflow-x: hidden;
+        }
+
+        .cosmic-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(ellipse at top, #1e2761 0%, #0A0A0B 50%);
+        }
+
+        /* Navigation */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(10, 10, 11, 0.95);
+            backdrop-filter: blur(30px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 2rem;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-secondary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--glow-secondary);
+        }
+
+        .back-link {
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Main Content */
+        .content-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .header-title {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .header-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .last-updated {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .content-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--gradient-secondary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .section-content {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .section-content p {
+            margin-bottom: 1rem;
+        }
+
+        .section-content ul, .section-content ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .section-content strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .highlight-box {
+            background: rgba(102, 126, 234, 0.08);
+            border: 1.5px solid rgba(102, 126, 234, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .security-box {
+            background: rgba(56, 239, 125, 0.08);
+            border: 1.5px solid rgba(56, 239, 125, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .contact-info {
+            background: rgba(0, 198, 255, 0.08);
+            border: 1.5px solid rgba(0, 198, 255, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .contact-info a {
+            color: #00c6ff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .data-table th {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 4rem;
+        }
+
+        @media (max-width: 768px) {
+            .content-card {
+                padding: 2rem 1.5rem;
+            }
+            
+            .nav-container {
+                padding: 0.5rem;
+            }
+
+            .data-table {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cosmic-bg"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{% url 'security:landing' %}" class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <span>VisionPulse</span>
+            </a>
+            <a href="{% url 'security:signup' %}" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+                Volver al Registro
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="content-container">
+        <div class="header-section">
+            <h1 class="header-title">Política de Privacidad</h1>
+            <p class="header-subtitle">Cómo protegemos y manejamos tu información</p>
+            <p class="last-updated">Última actualización: 11 de noviembre de 2025</p>
+        </div>
+
+        <div class="content-card">
+            <!-- Introducción -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon"><i class="fas fa-shield-alt"></i></span>
+                    Tu Privacidad es Nuestra Prioridad
+                </h2>
+                <div class="section-content">
+                    <p>En VisionPulse, nos tomamos muy en serio la protección de tu privacidad. Esta política explica qué información recopilamos, cómo la usamos y tus derechos sobre ella.</p>
+                    <div class="security-box">
+                        <strong style="color: #38ef7d;"><i class="fas fa-lock"></i> Compromiso de Seguridad:</strong>
+                        <ul style="margin-top: 0.5rem;">
+                            <li>Las imágenes de tu cámara <strong>NUNCA</strong> se almacenan ni transmiten a nuestros servidores</li>
+                            <li>Todo el procesamiento de video ocurre localmente en tu navegador</li>
+                            <li>Tus datos están encriptados y protegidos</li>
+                            <li>Cumplimos con estándares internacionales de privacidad</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 1. Información que Recopilamos -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon"><i class="fas fa-database"></i></span>
+                    1. Información que Recopilamos
+                </h2>
+                <div class="section-content">
+                    <h3 style="color: var(--text-primary); margin-top: 1rem; margin-bottom: 0.5rem;">1.1 Información de Cuenta</h3>
+                    <p>Cuando creas una cuenta, recopilamos:</p>
+                    <ul>
+                        <li>Nombre y apellido</li>
+                        <li>Dirección de correo electrónico</li>
+                        <li>Contraseña (encriptada)</li>
+                        <li>Fecha de nacimiento (opcional)</li>
+                        <li>Foto de perfil (opcional)</li>
+                    </ul>
+
+                    <h3 style="color: var(--text-primary); margin-top: 1.5rem; margin-bottom: 0.5rem;">1.2 Datos de Monitoreo</h3>
+                    <p>Durante las sesiones de monitoreo, recopilamos <strong>únicamente métricas procesadas</strong>:</p>
+                    
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Tipo de Dato</th>
+                                <th>Qué Almacenamos</th>
+                                <th>Qué NO Almacenamos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Video</strong></td>
+                                <td>Nada</td>
+                                <td>❌ Imágenes de cámara</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Parpadeo</strong></td>
+                                <td>Frecuencia y patrones</td>
+                                <td>❌ Video de tus ojos</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Postura</strong></td>
+                                <td>Coordenadas faciales</td>
+                                <td>❌ Reconocimiento facial</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Alertas</strong></td>
+                                <td>Tipo y timestamp</td>
+                                <td>❌ Capturas de pantalla</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Sesiones</strong></td>
+                                <td>Duración y estadísticas</td>
+                                <td>❌ Grabaciones</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3 style="color: var(--text-primary); margin-top: 1.5rem; margin-bottom: 0.5rem;">1.3 Información Técnica</h3>
+                    <ul>
+                        <li>Dirección IP (anonimizada)</li>
+                        <li>Tipo de navegador y sistema operativo</li>
+                        <li>Resolución de pantalla</li>
+                        <li>Cookies de sesión</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 2. Cómo Usamos tu Información -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon"><i class="fas fa-tasks"></i></span>
+                    2. Cómo Usamos tu Información
+                </h2>
+                <div class="section-content">
+                    <p>Utilizamos la información recopilada para:</p>
+                    <ol>
+                        <li><strong>Proporcionar el Servicio:</strong> Monitorear tu salud visual y generar recomendaciones</li>
+                        <li><strong>Personalización:</strong> Adaptar ejercicios y alertas a tus patrones de uso</li>
+                        <li><strong>Análisis Estadístico:</strong> Mejorar nuestros algoritmos con datos agregados y anónimos</li>
+                        <li><strong>Comunicación:</strong> Enviarte actualizaciones importantes del servicio</li>
+                        <li><strong>Seguridad:</strong> Detectar y prevenir fraudes o uso indebido</li>
+                        <li><strong>Cumplimiento Legal:</strong> Responder a requerimientos legales cuando sea necesario</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- 3. Procesamiento Local de Video -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon"><i class="fas fa-video"></i></span>
+                    3. Procesamiento Local de Video
+                </h2>
+                <div class="section-content">
+                    <div class="highlight-box">
+                        <strong><i class="fas fa-laptop"></i> Tecnología Privacy-First:</strong>
+                        <p style="margin-top: 0.5rem;">VisionPulse utiliza procesamiento <strong>100% local en tu navegador</strong>:</p>
+                        <ul style="margin-top: 0.5rem;">
+                            <li>Los fotogramas de tu cámara se procesan en tiempo real usando TensorFlow.js</li>
+                            <li>Los modelos de IA se ejecutan completamente en tu dispositivo</li>
+                            <li>Solo se envían métricas numéricas al servidor (ej: "15 parpadeos/min")</li>
+                            <li>Ninguna imagen o frame sale de tu computadora</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Compartir Información -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon"><i class="fas fa-share-alt"></i></span>
+                    4. Compartir Información con Terceros
+                </h2>
+                <div class="section-content">
+                    <p>VisionPulse <strong>NO vende</strong> tu información personal. Podemos compartir datos solo en estos casos:</p>
+                    
+                    <h3 style="color: var(--text-primary); margin-top: 1rem; margin-bottom: 0.5rem;">Con tu Consentimiento</h3>
+                    <p>Si autorizas explícitamente compartir tu información (ej: con un profesional de salud).</p>
+
+                    <h3 style="color: var(--text-primary); margin-top: 1.5rem; margin-bottom: 0.5rem;">Proveedores de Servicios</h3>
+                    <p>Con terceros que nos ayudan a operar el servicio:</p>
+                    <ul>
+                        <li><strong>Hosting:</strong> Servidores seguros para almacenar datos</li>
+                        <li><strong>Analytics:</strong> Estadísticas anónimas de uso</li>
+                        <li><strong>Email:</strong> Servicio de notificaciones</li>
+                    </ul>
+                    <p>Todos los proveedores están sujetos a estrictos acuerdos de confidencialidad.</p>
+
+                    <h3 style="color: var(--text-primary); margin-top: 1.5rem; margin-bottom: 0.5rem;">Requerimientos Legales</h3>
+                    <p>Si es requerido por ley o para proteger nuestros derechos legales.</p>
+                </div>
+            </div>
+
+            <!-- 5. Seguridad de Datos -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon"><i class="fas fa-lock"></i></span>
+                    5. Seguridad de Datos
+                </h2>
+                <div class="section-content">
+                    <p>Implementamos medidas de seguridad de nivel empresarial:</p>
+                    <div class="security-box">
+                        <ul style="margin: 0;">
+                            <li><strong>Encriptación:</strong> TLS/SSL para todas las transmisiones</li>
+                            <li><strong>Hashing:</strong> Contraseñas hasheadas con bcrypt</li>
+                            <li><strong>Firewalls:</strong> Protección contra accesos no autorizados</li>
+                            <li><strong>Auditorías:</strong> Revisiones de seguridad periódicas</li>
+                            <li><strong>Backups:</strong> Copias de seguridad encriptadas</li>
+                            <li><strong>Monitoreo:</strong> Detección de actividad sospechosa 24/7</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. Tus Derechos -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon"><i class="fas fa-user-shield"></i></span>
+                    6. Tus Derechos sobre tus Datos
+                </h2>
+                <div class="section-content">
+                    <p>Tienes derecho a:</p>
+                    <ol>
+                        <li><strong>Acceso:</strong> Solicitar una copia de todos tus datos</li>
+                        <li><strong>Corrección:</strong> Actualizar información incorrecta</li>
+                        <li><strong>Eliminación:</strong> Solicitar el borrado de tu cuenta y datos</li>
+                        <li><strong>Portabilidad:</strong> Obtener tus datos en formato legible</li>
+                        <li><strong>Oposición:</strong> Negarte al procesamiento de ciertos datos</li>
+                        <li><strong>Restricción:</strong> Limitar cómo usamos tus datos</li>
+                    </ol>
+                    <p>Para ejercer estos derechos, contáctanos en <a href="mailto:privacy@visionpulse.com" style="color: #667eea; font-weight: 600;">privacy@visionpulse.com</a></p>
+                </div>
+            </div>
+
+            <!-- 7. Retención de Datos -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon"><i class="fas fa-clock"></i></span>
+                    7. Retención de Datos
+                </h2>
+                <div class="section-content">
+                    <p>Conservamos tus datos mientras:</p>
+                    <ul>
+                        <li>Tu cuenta esté activa</li>
+                        <li>Sea necesario para proporcionar el servicio</li>
+                        <li>Sea requerido por obligaciones legales</li>
+                    </ul>
+                    <p><strong>Tras eliminar tu cuenta:</strong></p>
+                    <ul>
+                        <li>Datos de cuenta: Eliminados en 30 días</li>
+                        <li>Métricas: Anonimizadas permanentemente</li>
+                        <li>Backups: Eliminados en 90 días</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 8. Cookies -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon"><i class="fas fa-cookie-bite"></i></span>
+                    8. Cookies y Tecnologías Similares
+                </h2>
+                <div class="section-content">
+                    <p>Utilizamos cookies para:</p>
+                    <ul>
+                        <li><strong>Esenciales:</strong> Mantener tu sesión activa (no se pueden desactivar)</li>
+                        <li><strong>Preferencias:</strong> Recordar tu configuración (modo oscuro, idioma)</li>
+                        <li><strong>Analytics:</strong> Entender cómo usas el servicio (anónimas)</li>
+                    </ul>
+                    <p>Puedes gestionar cookies desde la configuración de tu navegador.</p>
+                </div>
+            </div>
+
+            <!-- 9. Menores de Edad -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon"><i class="fas fa-child"></i></span>
+                    9. Privacidad de Menores
+                </h2>
+                <div class="section-content">
+                    <p>VisionPulse requiere que los usuarios tengan al menos 13 años. Si eres menor de 18, necesitas el consentimiento de un padre o tutor.</p>
+                    <p>Si descubrimos que hemos recopilado datos de menores de 13 años sin consentimiento, eliminaremos esa información inmediatamente.</p>
+                </div>
+            </div>
+
+            <!-- 10. Transferencias Internacionales -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon"><i class="fas fa-globe"></i></span>
+                    10. Transferencias Internacionales
+                </h2>
+                <div class="section-content">
+                    <p>Tus datos pueden ser procesados en servidores ubicados fuera de tu país. Garantizamos que todas las transferencias cumplan con:</p>
+                    <ul>
+                        <li>Regulaciones GDPR (Europa)</li>
+                        <li>Cláusulas contractuales estándar</li>
+                        <li>Certificaciones de privacidad internacionales</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 11. Cambios a esta Política -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon"><i class="fas fa-sync-alt"></i></span>
+                    11. Cambios a esta Política
+                </h2>
+                <div class="section-content">
+                    <p>Podemos actualizar esta política ocasionalmente. Te notificaremos de cambios importantes mediante:</p>
+                    <ul>
+                        <li>Correo electrónico a tu cuenta registrada</li>
+                        <li>Aviso destacado en la plataforma</li>
+                        <li>Actualización de la fecha "Última actualización" en esta página</li>
+                    </ul>
+                    <p>Tu uso continuado del servicio después de los cambios constituye aceptación de la nueva política.</p>
+                </div>
+            </div>
+
+            <!-- Contacto -->
+            <div class="contact-info">
+                <h3 style="color: #00c6ff; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-envelope"></i> Contacto sobre Privacidad
+                </h3>
+                <p style="color: var(--text-secondary);">
+                    Si tienes preguntas o inquietudes sobre cómo manejamos tu información:
+                </p>
+                <p style="margin-top: 1rem;">
+                    <strong>Oficial de Privacidad:</strong><br>
+                    <strong>Email:</strong> <a href="mailto:privacy@visionpulse.com">privacy@visionpulse.com</a><br>
+                    <strong>Teléfono:</strong> +593 999 999 999<br>
+                    <strong>Dirección:</strong> Av. Principal 123, Quito, Ecuador<br>
+                    <strong>Horario:</strong> Lunes a Viernes, 9:00 AM - 6:00 PM (GMT-5)
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>&copy; 2025 VisionPulse. Todos los derechos reservados.</p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem;">
+            <a href="{% url 'security:terms' %}" style="color: var(--text-muted); text-decoration: none; margin: 0 1rem;">Términos y Condiciones</a> | 
+            <a href="{% url 'security:privacy' %}" style="color: var(--text-muted); text-decoration: none; margin: 0 1rem;">Política de Privacidad</a>
+        </p>
+    </div>
+</body>
+</html>

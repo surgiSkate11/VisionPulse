@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Historial de Sesiones | VisionPulse{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center w-full p-4">
+    <div class="w-full max-w-5xl">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-semibold text-primary dark:text-dark-primary mb-2">Historial de Sesiones</h1>
+                <p class="text-secondary dark:text-dark-secondary">Revisa tus sesiones anteriores de monitoreo</p>
+            </div>
+            <a href="{% url 'monitoring:live_session' %}" class="inline-flex items-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-2 px-4 rounded-full shadow-sm transition-all duration-300">
+                <i class="fas fa-video"></i>
+                Nueva Sesión
+            </a>
+        </div>
+
+        <!-- Lista de Sesiones -->
+        <div class="bg-surface dark:bg-dark-surface rounded-2xl shadow-lg dark:shadow-xl dark:shadow-black/20 divide-y divide-gray-200 dark:divide-gray-700">
+            {% for session in sessions %}
+            <div class="p-6 flex flex-col md:flex-row gap-4 md:items-center justify-between">
+                <div class="space-y-1">
+                    <h3 class="text-lg font-medium text-primary dark:text-dark-primary">
+                        {{ session.start_time|date:"l, j \d\e F" }}
+                    </h3>
+                    <p class="text-sm text-secondary dark:text-dark-secondary">
+                        {{ session.start_time|date:"g:i a" }} - 
+                        {% if session.end_time %}
+                            {{ session.end_time|date:"g:i a" }}
+                        {% else %}
+                            En curso
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="flex flex-wrap gap-4">
+                    <!-- Métricas -->
+                    <div class="flex items-center gap-2">
+                        <div class="w-10 h-10 bg-gray-100 dark:bg-dark-background rounded-full flex items-center justify-center">
+                            <i class="fas fa-eye text-accent-green"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-secondary dark:text-dark-secondary">Parpadeos</p>
+                            <p class="text-sm font-medium text-primary dark:text-dark-primary">{{ session.total_blinks|default:0 }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <div class="w-10 h-10 bg-gray-100 dark:bg-dark-background rounded-full flex items-center justify-center">
+                            <i class="fas fa-clock text-accent-green"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-secondary dark:text-dark-secondary">Duración</p>
+                            <p class="text-sm font-medium text-primary dark:text-dark-primary">
+                                {{ session.duration_seconds|default:0|floatformat:0 }}s
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <div class="w-10 h-10 bg-gray-100 dark:bg-dark-background rounded-full flex items-center justify-center">
+                            <i class="fas fa-bell text-accent-green"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-secondary dark:text-dark-secondary">Alertas</p>
+                            <p class="text-sm font-medium text-primary dark:text-dark-primary">{{ session.alert_count }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <div class="w-10 h-10 bg-gray-100 dark:bg-dark-background rounded-full flex items-center justify-center">
+                            <i class="fas fa-bullseye text-accent-green"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-secondary dark:text-dark-secondary">Enfoque</p>
+                            <p class="text-sm font-medium text-primary dark:text-dark-primary">{{ session.focus_score|floatformat:0 }}%</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botón Ver Detalles -->
+                <a href="{% url 'monitoring:session_detail' session.id %}" class="inline-flex items-center gap-2 bg-gray-100 dark:bg-dark-background hover:bg-gray-200 dark:hover:bg-gray-700 text-primary dark:text-dark-primary font-medium py-2 px-4 rounded-full transition-all duration-300">
+                    <i class="fas fa-chart-line"></i>
+                    Ver Detalles
+                </a>
+            </div>
+            {% empty %}
+            <div class="p-8 text-center">
+                <div class="w-16 h-16 bg-gray-100 dark:bg-dark-background rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-history text-2xl text-secondary dark:text-dark-secondary"></i>
+                </div>
+                <h3 class="text-lg font-medium text-primary dark:text-dark-primary mb-2">No hay sesiones registradas</h3>
+                <p class="text-secondary dark:text-dark-secondary mb-4">Comienza tu primera sesión de monitoreo ahora</p>
+                <a href="{% url 'monitoring:live_session' %}" class="inline-flex items-center gap-2 bg-accent-green hover:bg-green-700 text-white font-medium py-2 px-4 rounded-full shadow-sm transition-all duration-300">
+                    <i class="fas fa-play"></i>
+                    Iniciar Monitoreo
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if sessions %}
+        <!-- Paginación -->
+        <div class="mt-6 flex justify-center gap-2">
+            {% if sessions.has_previous %}
+            <a href="?page={{ sessions.previous_page_number }}" class="inline-flex items-center gap-1 px-4 py-2 bg-surface dark:bg-dark-surface text-primary dark:text-dark-primary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300">
+                <i class="fas fa-chevron-left"></i>
+                Anterior
+            </a>
+            {% endif %}
+            
+            <span class="px-4 py-2 bg-surface dark:bg-dark-surface text-primary dark:text-dark-primary rounded-lg">
+                Página {{ sessions.number }} de {{ sessions.paginator.num_pages }}
+            </span>
+            
+            {% if sessions.has_next %}
+            <a href="?page={{ sessions.next_page_number }}" class="inline-flex items-center gap-1 px-4 py-2 bg-surface dark:bg-dark-surface text-primary dark:text-dark-primary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300">
+                Siguiente
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

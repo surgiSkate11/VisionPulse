@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisionPulse - Inicializando Sistema</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'shimmer': 'shimmer 1.5s infinite',
+                        'float': 'float 6s infinite ease-in-out',
+                        'glow': 'glow 2s infinite alternate',
+                        'scan': 'scan 2s infinite ease-in-out',
+                        'pulse-slow': 'pulse 3s infinite'
+                    },
+                    keyframes: {
+                        shimmer: {
+                            '0%': { transform: 'translateX(-100%)' },
+                            '100%': { transform: 'translateX(100%)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' }
+                        },
+                        glow: {
+                            '0%': { filter: 'brightness(1)', boxShadow: '0 0 20px rgba(0, 198, 255, 0.3)' },
+                            '100%': { filter: 'brightness(1.3)', boxShadow: '0 0 40px rgba(0, 198, 255, 0.6)' }
+                        },
+                        scan: {
+                            '0%, 100%': { transform: 'translateY(-100%)' },
+                            '50%': { transform: 'translateY(100%)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .eye-scanner {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00c6ff, transparent);
+            animation: scan 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="h-full m-0 overflow-hidden">
+    <!-- Main Loading Container -->
+    <div id="visionLoading" class="fixed inset-0 w-screen h-screen z-[20000] flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900 backdrop-blur-3xl overflow-hidden transition-opacity duration-500">
+        
+        <!-- Animated Background Circles -->
+        <div class="absolute inset-0 overflow-hidden opacity-20">
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500 rounded-full blur-3xl animate-pulse-slow"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500 rounded-full blur-3xl animate-pulse-slow" style="animation-delay: 1s;"></div>
+        </div>
+        
+        <!-- Loading Content Container -->
+        <div class="loading-container relative flex flex-col items-center justify-center p-8 rounded-3xl text-center bg-white/[0.08] backdrop-blur-xl border border-white/10 shadow-2xl max-w-lg">
+            
+            <!-- Eye Icon with Scanner Effect -->
+            <div class="relative w-28 h-28 mb-8 animate-float">
+                <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 animate-glow"></div>
+                <div class="eye-scanner absolute inset-0">
+                    <div class="scan-line"></div>
+                </div>
+                <svg class="relative w-full h-full text-white p-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+            </div>
+
+            <!-- Loading Title -->
+            <h1 id="loaderTitle" class="text-4xl font-bold text-white mb-3 tracking-tight">
+                VisionPulse
+            </h1>
+            
+            <p class="text-sm text-cyan-300 mb-6 font-medium">
+                Sistema de Monitoreo Visual
+            </p>
+
+            <!-- Loading Subtitle -->
+            <p id="loadingSubtitle" class="text-lg text-cyan-100 mb-6 min-h-[28px]">
+                Inicializando cámara...
+            </p>
+
+            <!-- Progress Bar -->
+            <div class="progress-container w-80 h-2.5 bg-slate-800/70 rounded-full overflow-hidden shadow-inner">
+                <div id="progressFill" class="h-full w-0 bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-400 rounded-full transition-all duration-300 ease-out shadow-lg shadow-cyan-500/50"></div>
+            </div>
+            
+            <!-- Progress Percentage -->
+            <div id="progressPercent" class="mt-3 text-cyan-200 font-semibold text-lg">0%</div>
+
+            <!-- Status Grid -->
+            <div class="grid grid-cols-3 gap-3 mt-8 w-full">
+                <!-- Camera Status -->
+                <div id="status-camera" class="flex flex-col items-center space-y-2 p-4 rounded-xl bg-white/5 border border-white/10 transition-all duration-300">
+                    <div class="text-slate-400 transition-colors duration-300">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs text-white font-medium">Cámara</span>
+                </div>
+
+                <!-- AI Engine Status -->
+                <div id="status-ai" class="flex flex-col items-center space-y-2 p-4 rounded-xl bg-white/5 border border-white/10 transition-all duration-300">
+                    <div class="text-slate-400 transition-colors duration-300">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs text-white font-medium">Motor IA</span>
+                </div>
+
+                <!-- Security Status -->
+                <div id="status-privacy" class="flex flex-col items-center space-y-2 p-4 rounded-xl bg-white/5 border border-white/10 transition-all duration-300">
+                    <div class="text-slate-400 transition-colors duration-300">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs text-white font-medium">Privacidad</span>
+                </div>
+            </div>
+            
+            <!-- Info Text -->
+            <p class="mt-6 text-xs text-slate-400 max-w-xs">
+                Procesamiento local · Sin almacenamiento de imágenes
+            </p>
+        </div>
+    </div>
+
+    <!-- Loading script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const progressFill = document.getElementById('progressFill');
+            const progressPercent = document.getElementById('progressPercent');
+            const subtitle = document.getElementById('loadingSubtitle');
+            const statusCamera = document.getElementById('status-camera');
+            const statusAi = document.getElementById('status-ai');
+            const statusPrivacy = document.getElementById('status-privacy');
+
+            const messages = [
+                'Inicializando cámara...',
+                'Calibrando detección facial...',
+                'Cargando algoritmos de visión...',
+                'Activando protocolos de privacidad...',
+                '¡Sistema listo para monitorear!'
+            ];
+
+            const statusElements = [
+                { el: statusCamera, percent: 25 },
+                { el: statusAi, percent: 50 },
+                { el: statusPrivacy, percent: 75 }
+            ];
+
+            let percent = 0;
+            let msgIndex = 0;
+            const duration = 4500; // 4.5 seconds
+            
+            const interval = setInterval(() => {
+                percent += 1;
+                progressFill.style.width = `${percent}%`;
+                progressPercent.textContent = `${percent}%`;
+
+                // Update messages and status indicators
+                if (percent >= 25 && msgIndex === 0) {
+                    subtitle.textContent = messages[1];
+                    activateStatus(statusCamera);
+                    msgIndex++;
+                }
+                if (percent >= 50 && msgIndex === 1) {
+                    subtitle.textContent = messages[2];
+                    activateStatus(statusAi);
+                    msgIndex++;
+                }
+                if (percent >= 75 && msgIndex === 2) {
+                    subtitle.textContent = messages[3];
+                    activateStatus(statusPrivacy);
+                    msgIndex++;
+                }
+                if (percent >= 100) {
+                    subtitle.textContent = messages[4];
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        document.getElementById('visionLoading').classList.add('opacity-0');
+                        setTimeout(() => {
+                            document.getElementById('visionLoading').style.display = 'none';
+                        }, 500);
+                    }, 1000);
+                }
+            }, duration / 100);
+
+            function activateStatus(element) {
+                element.classList.remove('bg-white/5');
+                element.classList.add('bg-cyan-500/20', 'border-cyan-400/50');
+                const icon = element.querySelector('div');
+                icon.classList.remove('text-slate-400');
+                icon.classList.add('text-cyan-400');
+                
+                // Add pulse effect
+                element.style.animation = 'pulse 1s ease-in-out';
+                setTimeout(() => {
+                    element.style.animation = '';
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>
